@@ -91,7 +91,8 @@ export function LandingPage() {
           <p className={styles.subtitle}>
             לומדים SQL בעולם חי של <span className={styles.titleAccent}>AI</span>
           </p>
-          <p className={styles.desc}>{he.landingTagline}, משימות אמיתיות ומורה AI אישי שילווה אותך בכל שלב בדרך לשליטה ב־SQL.</p>
+          <p className={styles.desc}>{he.landingTagline}</p>
+          <p className={styles.desc}>משימות אמיתיות ומורה AI אישי שילווה אותך בכל שלב בדרך לשליטה ב־SQL.</p>
 
           <div className={styles.ctaRow}>
             <Link
