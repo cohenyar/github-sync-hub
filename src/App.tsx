@@ -11,10 +11,6 @@ import { DesignSystemPage } from './pages/DesignSystemPage'
  * completely unwrapped, so its behavior stays byte-for-byte unchanged.
  * Every other route is a minimal placeholder shell; each gets its own real
  * design in a later phase.
- *
- * `/dev/design-system` is a dev-only QA surface for platform UI
- * primitives. Guarded by `import.meta.env.DEV` so it is stripped from
- * production builds and never linked from user-facing navigation.
  */
 export function AppRoutes() {
   return (
@@ -27,7 +23,8 @@ export function AppRoutes() {
       <Route path="/tutor" element={<Tutor />} />
       <Route path="/progress" element={<Progress />} />
       <Route path="/profile" element={<Profile />} />
-      {import.meta.env.DEV ? <Route path="/dev/design-system" element={<DesignSystemPage />} /> : null}
+      {/* Hidden Phase 0 QA route — not linked from any user-facing nav. */}
+      <Route path="/dev/design-system" element={<DesignSystemPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   )

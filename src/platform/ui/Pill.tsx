@@ -1,14 +1,24 @@
 import type { HTMLAttributes, ReactNode } from 'react'
 import styles from './primitives.module.css'
 
+export type PillTone = 'neutral' | 'ai'
+
 export interface PillProps extends HTMLAttributes<HTMLSpanElement> {
-  children: ReactNode
+  tone?: PillTone
+  children?: ReactNode
 }
 
-/** Rounded filter-chip style container. */
-export function Pill({ className, children, ...rest }: PillProps) {
+/**
+ * Compact status/label pill. The `ai` tone lights a small AI indicator dot
+ * — this is our visual "AI is here" cue used across the platform.
+ */
+export function Pill({ tone = 'neutral', className, children, ...rest }: PillProps) {
   return (
-    <span className={[styles.pill, className].filter(Boolean).join(' ')} {...rest}>
+    <span
+      {...rest}
+      data-tone={tone === 'neutral' ? undefined : tone}
+      className={[styles.pill, className].filter(Boolean).join(' ')}
+    >
       {children}
     </span>
   )

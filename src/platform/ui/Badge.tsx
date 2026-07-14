@@ -1,24 +1,20 @@
 import type { HTMLAttributes, ReactNode } from 'react'
 import styles from './primitives.module.css'
 
-export type BadgeTone = 'neutral' | 'accent' | 'success' | 'danger'
+export type BadgeTone = 'neutral' | 'success' | 'warning' | 'danger' | 'ai'
 
 export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
   tone?: BadgeTone
-  children: ReactNode
-}
-
-const TONE_CLASS: Record<BadgeTone, string | undefined> = {
-  neutral: undefined,
-  accent: styles.badgeAccent,
-  success: styles.badgeSuccess,
-  danger: styles.badgeDanger,
+  children?: ReactNode
 }
 
 export function Badge({ tone = 'neutral', className, children, ...rest }: BadgeProps) {
-  const classes = [styles.badge, TONE_CLASS[tone], className].filter(Boolean).join(' ')
   return (
-    <span className={classes} {...rest}>
+    <span
+      {...rest}
+      data-tone={tone === 'neutral' ? undefined : tone}
+      className={[styles.badge, className].filter(Boolean).join(' ')}
+    >
       {children}
     </span>
   )

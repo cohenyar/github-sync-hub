@@ -1,26 +1,42 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
 import styles from './primitives.module.css'
 
-export type ButtonVariant = 'primary' | 'ghost' | 'glass' | 'danger'
+export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'ai'
+export type ButtonSize = 'sm' | 'md' | 'lg'
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant
-  children: ReactNode
+  size?: ButtonSize
+  leadingIcon?: ReactNode
+  trailingIcon?: ReactNode
 }
 
-const VARIANT_CLASS: Record<ButtonVariant, string> = {
-  primary: styles.variantPrimary,
-  ghost: styles.variantGhost,
-  glass: styles.variantGlass,
-  danger: styles.variantDanger,
-}
-
-/** Minimal platform button — one of four visual variants. */
-export function Button({ variant = 'primary', className, children, ...rest }: ButtonProps) {
-  const classes = [styles.button, VARIANT_CLASS[variant], className].filter(Boolean).join(' ')
+/**
+ * Platform button primitive. Variants are expressed as `data-variant` on the
+ * DOM so CSS owns the visual states — the React layer only decides *what*
+ * variant to render, never *how* it looks.
+ */
+export function Button({
+  variant = 'secondary',
+  size = 'md',
+  leadingIcon,
+  trailingIcon,
+  className,
+  children,
+  type = 'button',
+  ...rest
+}: ButtonProps) {
   return (
-    <button className={classes} {...rest}>
+    <button
+      {...rest}
+      type={type}
+      data-variant={variant}
+      data-size={size}
+      className={[styles.button, className].filter(Boolean).join(' ')}
+    >
+      {leadingIcon ? <span aria-hidden>{leadingIcon}</span> : null}
       {children}
+      {trailingIcon ? <span aria-hidden>{trailingIcon}</span> : null}
     </button>
   )
 }

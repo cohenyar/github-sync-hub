@@ -1,157 +1,172 @@
+import { AppShell, type AppShellNavItem } from '../platform/shell/AppShell'
 import { Badge, Button, Card, Pill } from '../platform/ui'
 
 /**
- * Development-only design system showcase. Not linked from anywhere in
- * the product; conditionally mounted at /dev/design-system only when
- * `import.meta.env.DEV` is true, so it is stripped from production builds.
- *
- * Wrapped in a `.dsScope` class that opts INTO the platform typography
- * (Rubik / Heebo). The rest of the app — and especially /world — keeps
- * its existing system font. This is the guarantee that adding platform
- * fonts to index.html does not visually change the game.
+ * Hidden QA route (/dev/design-system). Not linked from any user-facing
+ * navigation — reachable only by typing the URL — so it never leaks into
+ * production surfaces while still giving Phase 0 something visible to
+ * verify against in Playwright / manual screenshots.
  */
+const NAV: AppShellNavItem[] = [
+  { to: '/', label: 'בית', icon: '⌂' },
+  { to: '/dashboard', label: 'לוח', icon: '◆' },
+  { to: '/courses', label: 'קורסים', icon: '❦' },
+  { to: '/world', label: 'עולם', icon: '◉' },
+  { to: '/tutor', label: 'מנטור', icon: '✧' },
+  { to: '/profile', label: 'פרופיל', icon: '☺' },
+]
+
 export function DesignSystemPage() {
   return (
-    <div
-      className="dsScope"
-      style={{
-        minHeight: '100vh',
-        background: 'var(--ds-grad-hero)',
-        color: 'var(--ds-fg)',
-        fontFamily: 'var(--ds-font-body)',
-        padding: '32px 20px',
-        display: 'flex',
-        justifyContent: 'center',
-      }}
+    <AppShell
+      navItems={NAV}
+      actions={
+        <Button variant="ai" size="sm" leadingIcon={<span>✦</span>}>
+          שאל את המנטור
+        </Button>
+      }
     >
-      <div style={{ width: '100%', maxWidth: 960, display: 'flex', flexDirection: 'column', gap: 32 }}>
-        <header style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <span style={{ fontSize: 12, letterSpacing: '0.14em', color: 'var(--ds-fg-subtle)' }}>
-            DEV · DESIGN SYSTEM
-          </span>
-          <h1
+      <header style={{ marginBlockEnd: 'var(--ds-space-10)' }}>
+        <Pill tone="ai">מערכת עיצוב · שלב 0</Pill>
+        <h1
+          style={{
+            fontSize: 'var(--ds-text-4xl)',
+            letterSpacing: 'var(--ds-tracking-tighter)',
+            lineHeight: 'var(--ds-leading-tight)',
+            margin: 'var(--ds-space-4) 0 var(--ds-space-3)',
+            color: 'var(--ds-text-strong)',
+          }}
+        >
+          שפה חזותית עבור מרידיאן
+        </h1>
+        <p style={{ color: 'var(--ds-text-muted)', maxInlineSize: 640 }}>
+          יסודות בלבד: טוקנים, טיפוגרפיה, פרימיטיבים, וקליפה ראשית. אין שינויים במסכי משתמש
+          קיימים ולא במשחק שרץ ב־/world.
+        </p>
+      </header>
+
+      <section
+        style={{
+          display: 'grid',
+          gap: 'var(--ds-space-6)',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+          marginBlockEnd: 'var(--ds-space-10)',
+        }}
+      >
+        <Card>
+          <h2
             style={{
               margin: 0,
-              fontFamily: 'var(--ds-font-display)',
-              fontWeight: 700,
-              fontSize: 44,
-              letterSpacing: '-0.02em',
-              color: 'var(--ds-fg)',
+              fontSize: 'var(--ds-text-lg)',
+              color: 'var(--ds-text-strong)',
             }}
           >
-            מרידיאן — מערכת עיצוב
-          </h1>
-          <p style={{ margin: 0, color: 'var(--ds-fg-muted)', maxWidth: 560 }}>
-            הצגה של הפרימיטיבים הבסיסיים לשלב 0: כפתורים, כרטיסים, תגים וצ׳יפים. המסך הזה מיועד לפיתוח בלבד
-            ולא מקושר מהאפליקציה.
+            כרטיס בסיס
+          </h2>
+          <p style={{ color: 'var(--ds-text-muted)', marginBlockStart: 'var(--ds-space-2)' }}>
+            משטח זכוכית עם גבול עדין וטשטוש רקע.
           </p>
-        </header>
-
-        <section style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <SectionTitle>Buttons</SectionTitle>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
-            <Button variant="primary">התחל ללמוד</Button>
-            <Button variant="ghost">רקע שקוף</Button>
-            <Button variant="glass">זכוכית</Button>
-            <Button variant="danger">אפס התקדמות</Button>
-            <Button variant="primary" disabled>
-              נעול
-            </Button>
-          </div>
-        </section>
-
-        <section style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <SectionTitle>Badges &amp; Pills</SectionTitle>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
-            <Badge>ניטרלי</Badge>
-            <Badge tone="accent">חדש</Badge>
-            <Badge tone="success">הושלם</Badge>
-            <Badge tone="danger">נכשל</Badge>
-            <Pill>SQL SELECT</Pill>
-            <Pill>JOIN</Pill>
-            <Pill>אגרגציות</Pill>
-          </div>
-        </section>
-
-        <section style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <SectionTitle>Cards</SectionTitle>
-          <div
+        </Card>
+        <Card tone="accent">
+          <Badge>מודגש</Badge>
+          <h2
             style={{
-              display: 'grid',
-              gap: 16,
-              gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+              margin: 'var(--ds-space-3) 0 0',
+              fontSize: 'var(--ds-text-lg)',
+              color: 'var(--ds-text-strong)',
             }}
           >
-            <Card>
-              <h3 style={{ margin: '0 0 8px', fontFamily: 'var(--ds-font-display)' }}>משימה נוכחית</h3>
-              <p style={{ margin: 0, color: 'var(--ds-fg-muted)' }}>
-                המשך את המשימה שלך והשלם את שאילתת ה־JOIN הראשונה שלך.
-              </p>
-              <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
-                <Pill>קל</Pill>
-                <Pill>~5 דק׳</Pill>
-              </div>
-            </Card>
-            <Card>
-              <h3 style={{ margin: '0 0 8px', fontFamily: 'var(--ds-font-display)' }}>המלצת AI</h3>
-              <p style={{ margin: 0, color: 'var(--ds-fg-muted)' }}>
-                אודין ממליץ לתרגל GROUP BY לפני המעבר לשלב הבא.
-              </p>
-              <div style={{ marginTop: 12 }}>
-                <Button variant="ghost">קבל המלצה</Button>
-              </div>
-            </Card>
-          </div>
-        </section>
+            כרטיס אקסנט
+          </h2>
+        </Card>
+        <Card tone="ai">
+          <Badge tone="ai">AI</Badge>
+          <h2
+            style={{
+              margin: 'var(--ds-space-3) 0 0',
+              fontSize: 'var(--ds-text-lg)',
+              color: 'var(--ds-text-strong)',
+            }}
+          >
+            תובנת מנטור
+          </h2>
+          <p style={{ color: 'var(--ds-text-muted)', marginBlockStart: 'var(--ds-space-2)' }}>
+            צבע ייעודי לתכנים שמופקים על ידי מנוע ה־AI.
+          </p>
+        </Card>
+      </section>
 
-        <section style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <SectionTitle>Palette</SectionTitle>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {(
-              [
-                ['bg', 'var(--ds-bg)'],
-                ['surface', 'var(--ds-surface)'],
-                ['surface-elev', 'var(--ds-surface-elev)'],
-                ['accent', 'var(--ds-accent)'],
-                ['accent-2', 'var(--ds-accent-2)'],
-                ['success', 'var(--ds-success)'],
-                ['danger', 'var(--ds-danger)'],
-              ] as const
-            ).map(([name, value]) => (
-              <div
-                key={name}
-                style={{
-                  width: 96,
-                  padding: 8,
-                  borderRadius: 12,
-                  border: '1px solid var(--ds-border)',
-                  background: 'var(--ds-surface)',
-                  fontSize: 12,
-                }}
-              >
-                <div style={{ height: 40, borderRadius: 8, background: value, marginBottom: 6 }} />
-                <div style={{ color: 'var(--ds-fg-muted)' }}>{name}</div>
-              </div>
-            ))}
-          </div>
-        </section>
-      </div>
-    </div>
+      <section
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 'var(--ds-space-3)',
+          marginBlockEnd: 'var(--ds-space-10)',
+        }}
+      >
+        <Button variant="primary">התחל עכשיו</Button>
+        <Button variant="ai" leadingIcon={<span>✦</span>}>
+          שאל את המנטור
+        </Button>
+        <Button variant="secondary">משני</Button>
+        <Button variant="ghost">רפאים</Button>
+        <Button variant="primary" size="lg">
+          גדול
+        </Button>
+        <Button variant="secondary" size="sm">
+          קטן
+        </Button>
+        <Button variant="secondary" disabled>
+          מושבת
+        </Button>
+      </section>
+
+      <section
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 'var(--ds-space-2)',
+          marginBlockEnd: 'var(--ds-space-10)',
+        }}
+      >
+        <Badge>ניטרלי</Badge>
+        <Badge tone="success">הושלם</Badge>
+        <Badge tone="warning">בהמתנה</Badge>
+        <Badge tone="danger">חסום</Badge>
+        <Badge tone="ai">AI</Badge>
+        <Pill>תווית</Pill>
+        <Pill tone="ai">מנטור פעיל</Pill>
+      </section>
+
+      <section>
+        <h2
+          style={{
+            fontSize: 'var(--ds-text-2xl)',
+            color: 'var(--ds-text-strong)',
+            letterSpacing: 'var(--ds-tracking-tight)',
+            margin: '0 0 var(--ds-space-4)',
+          }}
+        >
+          טיפוגרפיה
+        </h2>
+        <div style={{ display: 'grid', gap: 'var(--ds-space-3)' }}>
+          <span style={{ fontSize: 'var(--ds-text-5xl)', color: 'var(--ds-text-strong)', lineHeight: 1.1, letterSpacing: 'var(--ds-tracking-tighter)' }}>
+            כותרת ראשית — Display 5xl
+          </span>
+          <span style={{ fontSize: 'var(--ds-text-3xl)', color: 'var(--ds-text-strong)' }}>
+            כותרת משנה — 3xl
+          </span>
+          <span style={{ fontSize: 'var(--ds-text-lg)' }}>גוף טקסט — 18 פיקסלים</span>
+          <span style={{ fontSize: 'var(--ds-text-sm)', color: 'var(--ds-text-muted)' }}>
+            טקסט משני — 14 פיקסלים
+          </span>
+          <code style={{ fontFamily: 'var(--ds-font-mono)', color: 'var(--ds-accent-strong)' }}>
+            SELECT * FROM courses WHERE tutor = 'AI';
+          </code>
+        </div>
+      </section>
+    </AppShell>
   )
 }
 
-function SectionTitle({ children }: { children: React.ReactNode }) {
-  return (
-    <h2
-      style={{
-        margin: 0,
-        fontFamily: 'var(--ds-font-display)',
-        fontWeight: 600,
-        fontSize: 18,
-        color: 'var(--ds-fg)',
-      }}
-    >
-      {children}
-    </h2>
-  )
-}
+export default DesignSystemPage
