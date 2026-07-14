@@ -1,0 +1,190 @@
+/* Meridian platform UI primitives — Phase 0.
+ * All rules consume --ds-* tokens only. No hardcoded palette values.
+ * Uses logical properties (inline-start/end, margin-inline, etc.) so the
+ * primitives render correctly under both RTL (default) and LTR. */
+
+/* ------------------------------ Button --------------------------------- */
+.button {
+  --_bg: var(--ds-surface-strong);
+  --_fg: var(--ds-text-strong);
+  --_border: var(--ds-border-strong);
+  --_shadow: var(--ds-shadow-sm);
+
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ds-space-2);
+  font-family: var(--ds-font-sans);
+  font-weight: 600;
+  font-size: var(--ds-text-sm);
+  letter-spacing: var(--ds-tracking-tight);
+  line-height: 1;
+  padding-inline: var(--ds-space-5);
+  padding-block: var(--ds-space-3);
+  border: 1px solid var(--_border);
+  background: var(--_bg);
+  color: var(--_fg);
+  border-radius: var(--ds-radius-md);
+  box-shadow: var(--_shadow);
+  cursor: pointer;
+  transition:
+    transform var(--ds-duration-fast) var(--ds-ease-out),
+    background var(--ds-duration-base) var(--ds-ease-out),
+    box-shadow var(--ds-duration-base) var(--ds-ease-out),
+    border-color var(--ds-duration-base) var(--ds-ease-out);
+  min-height: 44px; /* touch target */
+}
+
+.button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: var(--ds-border-strong);
+}
+
+.button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--ds-accent);
+  outline-offset: 2px;
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.button[data-variant='primary'] {
+  --_bg: var(--ds-gradient-brand);
+  --_fg: var(--ds-on-accent);
+  --_border: transparent;
+  --_shadow: var(--ds-glow-accent);
+}
+
+.button[data-variant='ai'] {
+  --_bg: var(--ds-gradient-ai);
+  --_fg: var(--ds-on-accent);
+  --_border: transparent;
+  --_shadow: var(--ds-glow-ai);
+}
+
+.button[data-variant='ghost'] {
+  --_bg: transparent;
+  --_border: transparent;
+  --_shadow: none;
+  color: var(--ds-text);
+}
+
+.button[data-variant='ghost']:hover:not(:disabled) {
+  --_bg: var(--ds-surface-muted);
+}
+
+.button[data-size='sm'] {
+  font-size: var(--ds-text-xs);
+  padding-inline: var(--ds-space-4);
+  padding-block: var(--ds-space-2);
+  min-height: 36px;
+  border-radius: var(--ds-radius-sm);
+}
+
+.button[data-size='lg'] {
+  font-size: var(--ds-text-md);
+  padding-inline: var(--ds-space-6);
+  padding-block: var(--ds-space-4);
+  min-height: 52px;
+  border-radius: var(--ds-radius-lg);
+}
+
+/* ------------------------------- Card ---------------------------------- */
+.card {
+  position: relative;
+  background: var(--ds-surface);
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-radius-lg);
+  padding: var(--ds-space-6);
+  color: var(--ds-text);
+  box-shadow: var(--ds-shadow-md);
+  backdrop-filter: var(--ds-glass-blur);
+  -webkit-backdrop-filter: var(--ds-glass-blur);
+}
+
+.card[data-tone='ai'] {
+  border-color: rgba(167, 139, 250, 0.28);
+  background:
+    linear-gradient(180deg, rgba(167, 139, 250, 0.08), rgba(5, 7, 13, 0)),
+    var(--ds-surface);
+}
+
+.card[data-tone='accent'] {
+  border-color: rgba(124, 156, 255, 0.3);
+  background:
+    linear-gradient(180deg, rgba(124, 156, 255, 0.08), rgba(5, 7, 13, 0)),
+    var(--ds-surface);
+}
+
+/* ------------------------------- Badge --------------------------------- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ds-space-1);
+  padding-inline: var(--ds-space-3);
+  padding-block: 4px;
+  font-family: var(--ds-font-sans);
+  font-size: var(--ds-text-2xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  border-radius: var(--ds-radius-pill);
+  background: var(--ds-surface-muted);
+  border: 1px solid var(--ds-border);
+  color: var(--ds-text);
+  line-height: 1;
+}
+
+.badge[data-tone='success'] {
+  background: rgba(52, 211, 153, 0.14);
+  border-color: rgba(52, 211, 153, 0.35);
+  color: var(--ds-success);
+}
+.badge[data-tone='warning'] {
+  background: rgba(251, 191, 36, 0.14);
+  border-color: rgba(251, 191, 36, 0.35);
+  color: var(--ds-warning);
+}
+.badge[data-tone='danger'] {
+  background: rgba(248, 113, 113, 0.14);
+  border-color: rgba(248, 113, 113, 0.35);
+  color: var(--ds-danger);
+}
+.badge[data-tone='ai'] {
+  background: var(--ds-ai-soft);
+  border-color: rgba(167, 139, 250, 0.35);
+  color: var(--ds-accent-strong);
+}
+
+/* ------------------------------- Pill ---------------------------------- */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ds-space-2);
+  padding-inline: var(--ds-space-4);
+  padding-block: var(--ds-space-2);
+  font-size: var(--ds-text-xs);
+  font-weight: 500;
+  border-radius: var(--ds-radius-pill);
+  background: var(--ds-surface);
+  border: 1px solid var(--ds-border);
+  color: var(--ds-text);
+  backdrop-filter: var(--ds-glass-blur);
+  -webkit-backdrop-filter: var(--ds-glass-blur);
+}
+
+.pill[data-tone='ai']::before {
+  content: '';
+  inline-size: 6px;
+  block-size: 6px;
+  border-radius: 50%;
+  background: var(--ds-ai);
+  box-shadow: 0 0 8px var(--ds-ai);
+}
