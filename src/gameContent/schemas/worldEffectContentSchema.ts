@@ -1,0 +1,1 @@
+export const VALID_WORLD_EFFECT_KINDS = ['ADJUST_STAT', 'SET_STAT', 'ADVANCE_TURN'] as const

@@ -1,0 +1,8 @@
+export { LandingPage } from './LandingPage'
+export { Dashboard } from './Dashboard'
+export { Courses } from './Courses'
+export { CourseDetail } from './CourseDetail'
+export { Tutor } from './Tutor'
+export { Progress } from './Progress'
+export { Profile } from './Profile'
+export { NotFound } from './NotFound'

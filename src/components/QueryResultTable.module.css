@@ -1,0 +1,19 @@
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+  font-size: 0.85rem;
+}
+
+.table th,
+.table td {
+  border: 1px solid var(--border);
+  padding: 4px 8px;
+  text-align: start;
+}
+
+.empty {
+  margin-top: 8px;
+  color: var(--text-muted);
+  font-style: italic;
+}

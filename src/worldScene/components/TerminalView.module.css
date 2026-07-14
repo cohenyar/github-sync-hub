@@ -1,0 +1,161 @@
+.terminal {
+  max-width: 480px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--core-glow) 45%, var(--border));
+  background:
+    radial-gradient(circle at 50% -10%, color-mix(in srgb, var(--core-glow) 16%, transparent), transparent 60%),
+    var(--panel-bg);
+  animation: coreAmbientPulse 6s ease-in-out infinite;
+}
+
+/*
+ * A bounded "room," not an open-ended page — the Core's own long query
+ * results scroll inside this frame instead of pushing the whole document
+ * taller. Keeps the header (with the live status pill) always in view, and
+ * keeps the world-level Odin subtitle from ever landing on top of content
+ * that would otherwise grow past the viewport.
+ */
+.scrollArea {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+  max-height: min(60vh, 520px);
+  padding-inline-end: 4px;
+}
+
+@keyframes coreAmbientPulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--core-glow) 18%, transparent) inset,
+      0 0 26px -10px color-mix(in srgb, var(--core-glow) 45%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--core-glow) 32%, transparent) inset,
+      0 0 38px -6px color-mix(in srgb, var(--core-glow) 65%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .terminal {
+    animation: none;
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--core-glow) 25%, transparent) inset;
+  }
+}
+
+/*
+ * The completion beat: a short, brighter flash overriding the idle ambient
+ * pulse for one pass, timed to the exact moment a query succeeds. The
+ * compound selector's higher specificity beats .terminal's own animation
+ * for the flash's duration, then cleanly falls back to the idle pulse once
+ * the celebrating class is removed.
+ */
+.terminal.celebrating {
+  animation: coreCelebration 1200ms ease-out;
+}
+
+@keyframes coreCelebration {
+  0% {
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--core-glow) 30%, transparent) inset,
+      0 0 28px -10px color-mix(in srgb, var(--core-glow) 45%, transparent);
+  }
+  20% {
+    box-shadow:
+      0 0 0 2px color-mix(in srgb, var(--core-glow) 90%, transparent) inset,
+      0 0 64px 6px color-mix(in srgb, var(--core-glow) 95%, transparent);
+  }
+  100% {
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--core-glow) 18%, transparent) inset,
+      0 0 26px -10px color-mix(in srgb, var(--core-glow) 45%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .terminal.celebrating {
+    animation: none;
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.titleGroup {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.statusPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  color: var(--text);
+  border: 1px solid color-mix(in srgb, var(--status-color) 60%, var(--border));
+  background: color-mix(in srgb, var(--status-color) 22%, var(--panel-bg));
+}
+
+.statusPill::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--status-color);
+}
+
+/* Hub World, A1 — which course/world this Terminal belongs to, and how far
+   the player has gotten in it. Sits between the header and the reused
+   MissionPanel/SqlEditorPanel, so it reads as context for what follows. */
+.destinationLine {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.destinationName {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.returnButton {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 200ms ease, box-shadow 200ms ease;
+}
+
+/* A quiet, static invitation to go see the change outside — no motion of
+   its own, so it stays visible (and accessible) for reduced-motion users
+   even though the chamber's own flash is suppressed for them. */
+.returnButton.celebrating {
+  border-color: var(--core-glow);
+  box-shadow: 0 0 14px -2px color-mix(in srgb, var(--core-glow) 70%, transparent);
+}

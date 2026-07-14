@@ -1,0 +1,491 @@
+import { useEffect, useRef, useState } from 'react'
+import './App.css'
+import { AdminPanel } from './admin'
+import { defaultCampaign, getCampaignSummary, isCampaignComplete, type CampaignProgress } from './campaign'
+import { CampaignCompleteBanner, MissionPanel, MissionSelect, NpcBioPanel, SqlEditorPanel, WorldMap } from './components'
+import { createProgressionMissionCompletedHandler, createUnlockReactionHandler, gameEventBus } from './events'
+import { he } from './i18n'
+import { getDefaultMission, getMissionById, missionRegistry, useMissionManager } from './missions'
+import { getNpcById } from './npcs'
+import { OdinPanel, useOdin } from './odin'
+import { clearSavedGame, loadCurrentGame, saveCurrentGame } from './persistence'
+import {
+  createInitialPlayerProgress,
+  getPlayerProgressSummary,
+  useProgression,
+  type PlayerProgress,
+} from './progression'
+import { getMissionContentStatus, getUnlockedNpcIds } from './unlocks'
+import { applyEffect, createWorldState, getDistrictStatus, initialDistricts, type WorldState } from './worldState'
+import {
+  closeDialogue,
+  CoreTransitionOverlay,
+  createInitialSceneState,
+  DESTINATION_IDS,
+  type DestinationPromptInfo,
+  enterDestination,
+  exitTerminal,
+  getDestinationConfig,
+  getDestinationContentStatus,
+  getDestinationEntryMission,
+  getDestinationProgress,
+  getDistrictStatusColor,
+  moveToDistrict,
+  NpcDialogue,
+  type NpcDialogueContext,
+  OdinPresence,
+  openNpcDialogue,
+  TerminalView,
+  useGameAudio,
+  WorldScene3D,
+} from './worldScene'
+
+const initialWorldState: WorldState = createWorldState(initialDistricts)
+
+function GameApp() {
+  // Checked once, synchronously, on the very first render — a valid save
+  // boots the app straight into it; no save (or a corrupted one, since
+  // loadCurrentGame already returns null for that) falls back to the same
+  // fresh start as before.
+  const [bootSave] = useState(() => loadCurrentGame())
+  const [world, setWorld] = useState<WorldState>(() => bootSave?.world ?? initialWorldState)
+  const [showAdmin, setShowAdmin] = useState(false)
+  // Raw world-state JSON is a debug view, not something a player needs to
+  // see by default — collapsed until explicitly opened.
+  const [showDebug, setShowDebug] = useState(false)
+  // Transient "Saved." confirmation and the New Game confirmation step are
+  // both pure UI state — nothing here touches persistence or progression.
+  const [justSaved, setJustSaved] = useState(false)
+  const [confirmingNewGame, setConfirmingNewGame] = useState(false)
+  // Which NPC's bio is open, if any — session-scoped UI state, same as
+  // showDebug/confirmingNewGame. Not part of SaveGame.
+  const [selectedNpcId, setSelectedNpcId] = useState<string | null>(null)
+  // The primary 3D world scene (Phase 2) — still an additional view
+  // alongside the classic dashboard, not a replacement of it (that's a
+  // separate future decision). sceneState is exactly as session-scoped as
+  // selectedNpcId/showDebug above: never persisted, never touches an
+  // engine, just tracks where the player currently is in the scene.
+  const [showWorldScene, setShowWorldScene] = useState(false)
+  const [sceneState, setSceneState] = useState(() => createInitialSceneState('north'))
+  const savedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => {
+    return () => {
+      if (savedTimeoutRef.current) clearTimeout(savedTimeoutRef.current)
+    }
+  }, [])
+  // Which mission is loaded in the SQL console — session-scoped UI state,
+  // not part of SaveGame (Save/Load persists world/progress only, same as
+  // before Step 28). useMissionManager already resets its own runtime and
+  // reloads the mission database whenever the mission it's given changes,
+  // so switching missions needed no changes there.
+  const [activeMissionId, setActiveMissionId] = useState(() => getDefaultMission().id)
+  const activeMission = getMissionById(activeMissionId) ?? getDefaultMission()
+  const {
+    progress: playerProgress,
+    recordCompletion,
+    restoreProgress,
+  } = useProgression(defaultCampaign, bootSave?.playerProgress)
+  const { latestMessage: odinMessage, history: odinHistory } = useOdin()
+  // The single most recent narration entry, if any — the same history
+  // useOdin already tracks, just handed to OdinPresence as one object so it
+  // can key its own reveal/dismiss timing on a stable id (see Living World
+  // Sprint, Batch 1). Odin itself is unchanged: still read-only, still only
+  // ever narrating the same six subscribed event types as before.
+  const latestOdinEntry = odinHistory.length > 0 ? odinHistory[odinHistory.length - 1] : null
+
+  // Living World Sprint, Batch 5: one shared, presentation-only audio
+  // player for the whole session. Every cue is best-effort (see
+  // gameAudioPlayer.ts) — a blocked/unavailable AudioContext, or the player
+  // muted, behaves identically to silence, with no effect on any engine.
+  const { isMuted, toggleMuted, playPass, playFail, playNpcTalk, playStatusChange, setAmbientMode } = useGameAudio()
+
+  // Ambient bed follows where the player currently is: off outside the
+  // world scene entirely, a plaza bed in the open world, a distinct
+  // Terminal bed once inside the Core.
+  useEffect(() => {
+    if (!showWorldScene) {
+      setAmbientMode('off')
+    } else if (sceneState.mode.kind === 'terminal') {
+      setAmbientMode('terminal')
+    } else {
+      setAmbientMode('plaza')
+    }
+  }, [showWorldScene, sceneState.mode.kind, setAmbientMode])
+
+  // Progression subscribes to MissionCompleted via the bus instead of being
+  // called directly. recordCompletion is re-created every render (Step 15's
+  // useProgression is unchanged), so it's read through a ref to keep this
+  // subscription stable across renders while always calling the latest one.
+  const recordCompletionRef = useRef(recordCompletion)
+  recordCompletionRef.current = recordCompletion
+
+  useEffect(() => {
+    const handler = createProgressionMissionCompletedHandler((missionId) => recordCompletionRef.current(missionId))
+    gameEventBus.subscribe('MissionCompleted', handler)
+    return () => gameEventBus.unsubscribe(handler)
+  }, [])
+
+  // Lets Odin (and any future subscriber) learn about newly unlocked
+  // content without the Unlock Engine or Progression changing at all: this
+  // re-checks unlock state via the same read-only engine from Step 16
+  // whenever playerProgress changes, publishing ContentUnlocked for
+  // anything that's newly available (e.g. District Ties once First Contact
+  // completes). playerProgress is read through a ref so the handler
+  // instance (created once) always sees the latest value.
+  const playerProgressRef = useRef(playerProgress)
+  playerProgressRef.current = playerProgress
+  const [unlockReactionHandler, setUnlockReactionHandler] = useState(() =>
+    createUnlockReactionHandler(gameEventBus, () => playerProgressRef.current),
+  )
+  useEffect(() => {
+    unlockReactionHandler()
+  }, [playerProgress, unlockReactionHandler])
+
+  // Rebuilds the unlock-reaction baseline from a just-restored progress
+  // (assigned synchronously so the handler's eager getProgress() capture
+  // sees it immediately) so already-unlocked content isn't re-announced by
+  // Odin as newly unlocked. Shared by Load and New Game.
+  function resetUnlockBaseline(progress: PlayerProgress) {
+    playerProgressRef.current = progress
+    setUnlockReactionHandler(() => createUnlockReactionHandler(gameEventBus, () => playerProgressRef.current))
+  }
+
+  // Save/Load/New Game only ever go through the persistence service's
+  // saveCurrentGame/loadCurrentGame/clearSavedGame — this component has no
+  // idea localStorage exists.
+  function handleSave() {
+    saveCurrentGame(world, playerProgress)
+
+    setJustSaved(true)
+    if (savedTimeoutRef.current) clearTimeout(savedTimeoutRef.current)
+    savedTimeoutRef.current = setTimeout(() => setJustSaved(false), 2000)
+  }
+
+  function handleLoad() {
+    const saved = loadCurrentGame()
+    if (!saved) return
+
+    setWorld(saved.world)
+    restoreProgress(saved.playerProgress)
+    resetUnlockBaseline(saved.playerProgress)
+  }
+
+  // New Game is destructive, so the header only ever wires it up behind an
+  // explicit confirmation step — this function is the actual reset.
+  function handleConfirmNewGame() {
+    clearSavedGame()
+
+    const freshProgress = createInitialPlayerProgress(defaultCampaign)
+    setWorld(initialWorldState)
+    restoreProgress(freshProgress)
+    resetUnlockBaseline(freshProgress)
+    setConfirmingNewGame(false)
+  }
+
+  // Guards against selecting a locked mission even though MissionSelect
+  // already disables those buttons — defense in depth, not a new rule.
+  function handleSelectMission(missionId: string) {
+    if (getMissionContentStatus(playerProgress, missionId) === 'locked') return
+    setActiveMissionId(missionId)
+  }
+
+  function handleSelectNpc(npcId: string) {
+    setSelectedNpcId(npcId)
+  }
+
+  const contentStatus = getMissionContentStatus(playerProgress, activeMission.id)
+
+  const { status, run } = useMissionManager(activeMission, {
+    initiallyCompleted: contentStatus === 'completed',
+    onComplete: (mission) => {
+      const effect = mission.successEffect
+      // Living World Sprint, Batch 5: whether any district's status label
+      // actually flips as a result of this effect — drives a presentation-
+      // only sting, the same moment the district markers/HUD would show it.
+      let anyDistrictStatusChanged = false
+      if (effect) {
+        // Compute the next world synchronously from this render's closure
+        // (not inside setWorld's updater, which React defers until the
+        // commit phase) so WorldStateChanged publishes before the rest of
+        // this handler, in the order these events actually happen.
+        const next = applyEffect(world, effect)
+        anyDistrictStatusChanged = Object.values(world.districts).some((district) => {
+          const updated = next.districts[district.id]
+          return updated !== undefined && getDistrictStatus(updated) !== getDistrictStatus(district)
+        })
+        gameEventBus.publish({ type: 'WorldStateChanged', world: next })
+        setWorld(next)
+      }
+
+      const wasComplete = isCampaignComplete(defaultCampaign, {
+        completedMissionIds: playerProgress.completedMissionIds,
+      })
+      const willBeComplete = isCampaignComplete(defaultCampaign, {
+        completedMissionIds: [...playerProgress.completedMissionIds, mission.id],
+      })
+
+      gameEventBus.publish({ type: 'MissionCompleted', missionId: mission.id })
+
+      if (!wasComplete && willBeComplete) {
+        gameEventBus.publish({ type: 'CampaignCompleted', campaignId: defaultCampaign.id })
+      }
+
+      playPass()
+      if (anyDistrictStatusChanged) playStatusChange()
+    },
+    onFailure: (mission, result) => {
+      gameEventBus.publish({
+        type: 'QueryFailed',
+        missionId: mission.id,
+        reason: result.kind === 'error' ? 'sql-error' : 'mismatch',
+      })
+      playFail()
+    },
+  })
+
+  // Fires once, the moment the mission's database finishes preparing.
+  const previousPhaseRef = useRef(status.phase)
+  useEffect(() => {
+    if (previousPhaseRef.current !== 'active' && status.phase === 'active') {
+      gameEventBus.publish({ type: 'MissionStarted', missionId: activeMission.id })
+    }
+    previousPhaseRef.current = status.phase
+  }, [status.phase])
+
+  const campaignProgress: CampaignProgress = { completedMissionIds: playerProgress.completedMissionIds }
+  const campaignSummary = getCampaignSummary(defaultCampaign, campaignProgress)
+  const progressSummary = getPlayerProgressSummary(playerProgress)
+  const unlockedNpcIds = getUnlockedNpcIds(playerProgress)
+  const selectedNpc = selectedNpcId ? getNpcById(selectedNpcId) : undefined
+  const missionOptions = missionRegistry.map((mission) => ({
+    mission,
+    status: getMissionContentStatus(playerProgress, mission.id),
+  }))
+
+  // The mission after the one actually loaded in the SQL console — not
+  // campaign/selectors.ts's getNextMission(), which tracks the campaign's
+  // own "current" (first-incomplete) pointer and would skip ahead of
+  // whatever the player has manually selected via MissionSelect.
+  const activeCampaignEntry = defaultCampaign.missions.find((entry) => entry.missionId === activeMission.id)
+  const nextCampaignEntry = activeCampaignEntry
+    ? defaultCampaign.missions.find((entry) => entry.order === activeCampaignEntry.order + 1)
+    : undefined
+  const nextMission = nextCampaignEntry ? getMissionById(nextCampaignEntry.missionId) : undefined
+  const nextMissionContentStatus = nextMission ? getMissionContentStatus(playerProgress, nextMission.id) : undefined
+
+  // Living World Sprint, Batch 2: everything an NPC's dialogue state needs
+  // to acknowledge the player's progress, assembled from selectors these
+  // engines already expose (Unlock Engine's getMissionContentStatus, Mission
+  // Runtime's status.lastResult, World State's getDistrictStatus) — no new
+  // engine, no new persisted state.
+  const npcDialogueContext: NpcDialogueContext = {
+    missionContentStatusByMissionId: Object.fromEntries(
+      missionRegistry.map((mission) => [mission.id, getMissionContentStatus(playerProgress, mission.id)]),
+    ),
+    activeMissionId: activeMission.id,
+    hasAttemptedActiveMission: status.lastResult !== null,
+    districtStatusByDistrictId: Object.fromEntries(
+      Object.values(world.districts).map((district) => [district.id, getDistrictStatus(district)]),
+    ),
+  }
+
+  // Living World Sprint, Batch 3: the Records Core's own current status,
+  // read the same way the world scene's HUD already does — TerminalView's
+  // ambient framing and the entry/exit transition both key off this so the
+  // Terminal visibly reflects the same state the player just saw outside.
+  const coreStatus = getDistrictStatus(world.districts.core)
+
+  // Hub World, A1: every destination's prompt info, derived fresh from
+  // playerProgress on every render — no independent progression engine, no
+  // new persisted state (see destinationContent.ts).
+  const destinationInfoById: Readonly<Record<string, DestinationPromptInfo>> = Object.fromEntries(
+    DESTINATION_IDS.map((destinationId) => [
+      destinationId,
+      {
+        name: getDestinationConfig(destinationId)?.name ?? destinationId,
+        status: getDestinationContentStatus(destinationId, playerProgress),
+        progress: getDestinationProgress(destinationId, playerProgress),
+      },
+    ]),
+  )
+  const currentDestinationInfo = destinationInfoById[sceneState.playerDistrictId]
+  const currentDestinationName = currentDestinationInfo?.name ?? sceneState.playerDistrictId
+  const currentDestinationProgress = currentDestinationInfo?.progress ?? { completed: 0, total: 0 }
+
+  // Locked destinations never open a Terminal — the InteractionPrompt
+  // already shows this before the player even tries, so this is a
+  // deliberate, explained no-op, not a silent failure. Entering an
+  // unlocked destination opens whichever mission getDestinationEntryMission
+  // says is next (see destinationContent.ts) and only then switches the
+  // scene into Terminal mode.
+  function handleEnterDestination(destinationId: string) {
+    if (getDestinationContentStatus(destinationId, playerProgress) === 'locked') return
+
+    const entryMission = getDestinationEntryMission(destinationId, playerProgress)
+    if (entryMission) handleSelectMission(entryMission.id)
+    setSceneState((current) => enterDestination(current, destinationId))
+  }
+
+  function handleContinue() {
+    if (nextMission) handleSelectMission(nextMission.id)
+  }
+
+  return (
+    <div id="app-root">
+      <header>
+        <h1>Meridian</h1>
+        <div className="headerActions">
+          <button type="button" className="adminToggle" data-testid="save-button" onClick={handleSave}>
+            Save
+          </button>
+          {justSaved && (
+            <span className="savedConfirmation" role="status" data-testid="saved-confirmation">
+              Saved.
+            </span>
+          )}
+          <button type="button" className="adminToggle" data-testid="load-button" onClick={handleLoad}>
+            Load
+          </button>
+          {confirmingNewGame ? (
+            <span className="confirmPrompt" data-testid="reset-confirm-prompt">
+              <span className="confirmPromptText">Reset all progress?</span>
+              <button
+                type="button"
+                className="adminToggle confirmDanger"
+                data-testid="confirm-reset-yes-button"
+                onClick={handleConfirmNewGame}
+              >
+                Yes, Reset
+              </button>
+              <button
+                type="button"
+                className="adminToggle"
+                data-testid="confirm-reset-cancel-button"
+                onClick={() => setConfirmingNewGame(false)}
+              >
+                Cancel
+              </button>
+            </span>
+          ) : (
+            <button
+              type="button"
+              className="adminToggle"
+              data-testid="new-game-button"
+              onClick={() => setConfirmingNewGame(true)}
+            >
+              New Game
+            </button>
+          )}
+          <button type="button" className="adminToggle" onClick={() => setShowAdmin((current) => !current)}>
+            {showAdmin ? 'Hide Admin' : 'Admin'}
+          </button>
+          <button
+            type="button"
+            className="adminToggle"
+            data-testid="toggle-world-scene-button"
+            onClick={() => setShowWorldScene((current) => !current)}
+          >
+            {showWorldScene ? he.dashboardToggle : he.worldSceneToggle}
+          </button>
+          <button
+            type="button"
+            className="adminToggle"
+            data-testid="mute-toggle-button"
+            aria-pressed={!isMuted}
+            onClick={toggleMuted}
+          >
+            {isMuted ? he.soundToggleOff : he.soundToggleOn}
+          </button>
+        </div>
+      </header>
+      {campaignSummary.isComplete && <CampaignCompleteBanner totalMissions={campaignSummary.totalMissions} />}
+      {showWorldScene ? (
+        <>
+          {sceneState.mode.kind === 'terminal' ? (
+            <TerminalView
+              mission={activeMission}
+              status={status}
+              onRun={run}
+              campaignSummary={campaignSummary}
+              nextMission={nextMission}
+              nextMissionContentStatus={nextMissionContentStatus}
+              completionPercentage={progressSummary.completionPercentage}
+              contentStatus={contentStatus}
+              coreStatus={coreStatus}
+              destinationName={currentDestinationName}
+              destinationProgress={currentDestinationProgress}
+              onContinue={handleContinue}
+              onReturnToWorld={() => setSceneState(exitTerminal)}
+            />
+          ) : (
+            <>
+              <WorldScene3D
+                world={world}
+                unlockedNpcIds={unlockedNpcIds}
+                sceneState={sceneState}
+                destinationInfoById={destinationInfoById}
+                onMoveToDistrict={(districtId) => setSceneState((current) => moveToDistrict(current, districtId))}
+                onEnterDestination={handleEnterDestination}
+                onSelectNpc={(npcId) => setSceneState((current) => openNpcDialogue(current, npcId))}
+              />
+              {sceneState.mode.kind === 'dialogue' &&
+                (() => {
+                  const dialogueNpc = getNpcById(sceneState.mode.npcId)
+                  return dialogueNpc ? (
+                    <NpcDialogue
+                      npc={dialogueNpc}
+                      context={npcDialogueContext}
+                      onOpen={playNpcTalk}
+                      onClose={() => setSceneState(closeDialogue)}
+                    />
+                  ) : null
+                })()}
+            </>
+          )}
+          {/* Both stay mounted across the world<->Terminal switch above: Odin
+              so an already-shown line doesn't replay just because the scene
+              underneath remounted, and the transition overlay so it can
+              detect the switch itself as an edge (see CoreTransitionOverlay). */}
+          <OdinPresence latestEntry={latestOdinEntry} />
+          <CoreTransitionOverlay active={sceneState.mode.kind === 'terminal'} glowColor={getDistrictStatusColor(coreStatus)} />
+        </>
+      ) : (
+        <main className="layout">
+          <section className="world">
+            <WorldMap world={world} unlockedNpcIds={unlockedNpcIds} onSelectNpc={handleSelectNpc} />
+            {selectedNpc && <NpcBioPanel npc={selectedNpc} onClose={() => setSelectedNpcId(null)} />}
+            <button type="button" className="debugToggle" onClick={() => setShowDebug((current) => !current)}>
+              {showDebug ? 'Hide Raw World State' : 'Show Raw World State'}
+            </button>
+            {showDebug && <pre className="worldStateDump">{JSON.stringify(world, null, 2)}</pre>}
+          </section>
+          <aside className="sidebar">
+            <MissionSelect options={missionOptions} activeMissionId={activeMission.id} onSelect={handleSelectMission} />
+            <SqlEditorPanel status={status} onRun={run} />
+            <MissionPanel
+              mission={activeMission}
+              phase={status.phase}
+              campaignSummary={campaignSummary}
+              nextMission={nextMission}
+              nextMissionContentStatus={nextMissionContentStatus}
+              completionPercentage={progressSummary.completionPercentage}
+              contentStatus={contentStatus}
+              onContinue={handleContinue}
+            />
+            <OdinPanel latestMessage={odinMessage} history={odinHistory} />
+          </aside>
+        </main>
+      )}
+      {showAdmin && (
+        // Admin is an English-only builder/debug surface (unchanged since v0.1) —
+        // pinned to LTR explicitly so it renders correctly regardless of the
+        // document's own RTL default.
+        <section className="adminSection" dir="ltr" lang="en">
+          <AdminPanel />
+        </section>
+      )}
+    </div>
+  )
+}
+
+export default GameApp

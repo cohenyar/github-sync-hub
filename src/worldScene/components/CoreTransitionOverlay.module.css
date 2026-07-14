@@ -1,0 +1,30 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 30;
+  opacity: 0;
+  background: radial-gradient(circle at center, transparent 0%, var(--core-glow) 160%);
+}
+
+.pulsing {
+  animation: corePulse 450ms ease-in-out;
+}
+
+@keyframes corePulse {
+  0% {
+    opacity: 0;
+  }
+  40% {
+    opacity: 0.35;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulsing {
+    animation: none;
+  }
+}
