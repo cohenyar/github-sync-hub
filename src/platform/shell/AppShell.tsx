@@ -39,13 +39,8 @@ export function AppShell({ navItems = [], actions, children }: AppShellProps) {
                 key={item.to}
                 to={item.to}
                 end={item.to === '/'}
-                data-active={undefined}
-                className={({ isActive }) => (isActive ? 'active' : '')}
-                {...({} as Record<string, unknown>)}
               >
-                {({ isActive }: { isActive: boolean }) => (
-                  <span data-active={isActive}>{item.label}</span>
-                )}
+                {({ isActive }) => <span data-active={isActive}>{item.label}</span>}
               </NavLink>
             ))}
           </nav>
@@ -66,14 +61,16 @@ export function AppShell({ navItems = [], actions, children }: AppShellProps) {
               className={styles.bottomTab}
             >
               {({ isActive }) => (
-                <span data-active={isActive} className={styles.bottomTab}>
-                  {item.icon ? (
-                    <span aria-hidden className={styles.bottomTabIcon}>
-                      {item.icon}
-                    </span>
-                  ) : null}
-                  <span>{item.label}</span>
-                </span>
+                <>
+                  <span
+                    aria-hidden
+                    className={styles.bottomTabIcon}
+                    data-active={isActive}
+                  >
+                    {item.icon ?? '•'}
+                  </span>
+                  <span data-active={isActive}>{item.label}</span>
+                </>
               )}
             </NavLink>
           ))}
