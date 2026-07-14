@@ -1,3 +1,5 @@
+@import './platform/design-system/tokens.css';
+
 :root {
   /* Meridian is a database city at night — one deliberate dark theme,
      not a light/dark split. Every panel pulls from these variables so

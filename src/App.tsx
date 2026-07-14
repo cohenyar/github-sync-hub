@@ -1,6 +1,7 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import GameApp from './GameApp'
 import { CourseDetail, Courses, Dashboard, LandingPage, NotFound, Profile, Progress, Tutor } from './pages'
+import { DesignSystemPage } from './pages/DesignSystemPage'
 
 /**
  * The route table itself, separated from the BrowserRouter wrapper below so
@@ -22,6 +23,8 @@ export function AppRoutes() {
       <Route path="/tutor" element={<Tutor />} />
       <Route path="/progress" element={<Progress />} />
       <Route path="/profile" element={<Profile />} />
+      {/* Hidden Phase 0 QA route — not linked from any user-facing nav. */}
+      <Route path="/dev/design-system" element={<DesignSystemPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   )
