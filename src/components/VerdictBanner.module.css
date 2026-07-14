@@ -1,0 +1,27 @@
+.pass,
+.fail {
+  margin-top: 8px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-weight: 700;
+  display: inline-block;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
+}
+
+.pass {
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.fail {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+.hint {
+  margin-top: 6px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
