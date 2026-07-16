@@ -4,7 +4,7 @@ import { runSql, verdictIsPass, waitForMissionReady } from './helpers.js'
 test.describe('Admin CRUD for Missions and NPCs', () => {
   test('creates, edits, and deletes a mission through the Admin form', async ({ page }) => {
     await page.goto('/world')
-    await page.getByRole('button', { name: 'Admin' }).click()
+    await page.getByTestId('admin-toggle-button').click()
 
     const missionsCard = page.locator('[data-section-id="missions"]')
     await expect(missionsCard).toContainText('Items: 6')
@@ -35,7 +35,7 @@ test.describe('Admin CRUD for Missions and NPCs', () => {
 
   test('creates, edits, and deletes an NPC through the Admin form', async ({ page }) => {
     await page.goto('/world')
-    await page.getByRole('button', { name: 'Admin' }).click()
+    await page.getByTestId('admin-toggle-button').click()
 
     const npcsCard = page.locator('[data-section-id="npcs"]')
     await expect(npcsCard).toContainText('Items: 7')
@@ -76,7 +76,7 @@ test.describe('Admin CRUD for Missions and NPCs', () => {
     page.on('pageerror', (err) => errors.push(String(err)))
 
     await page.goto('/world')
-    await page.getByRole('button', { name: 'Admin' }).click()
+    await page.getByTestId('admin-toggle-button').click()
 
     const missionsCard = page.locator('[data-section-id="missions"]')
     await missionsCard.getByLabel('Mission id').fill('e2e-noop-mission')
@@ -87,7 +87,7 @@ test.describe('Admin CRUD for Missions and NPCs', () => {
     await missionsCard.getByLabel('Mission reference SQL').fill('SELECT * FROM t;')
     await missionsCard.getByRole('button', { name: 'Add Mission' }).click()
 
-    await page.getByRole('button', { name: 'Hide Admin' }).click()
+    await page.getByTestId('admin-toggle-button').click()
 
     // The live SQL console still targets First Contact, unaffected by the
     // new (unwired) mission sitting in the registry.

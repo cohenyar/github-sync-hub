@@ -114,6 +114,39 @@ export const he = {
   courseDetailPrefix: 'מסלול: ',
   notFoundTitle: 'העמוד לא נמצא',
   notFoundBackLink: 'חזרה לעמוד הראשי',
+
+  // Game dashboard redesign — new presentation chrome only (game-ui/).
+  // None of this replaces the strings above; MissionPanel/SqlEditorPanel/
+  // OdinPanel/etc. keep their own existing (tested) text untouched.
+  journeySummaryTitle: 'סיכום המסע',
+  currentDistrictLabel: 'מחוז נוכחי',
+  companionFieldLabel: 'מלווה',
+  nextActionLabel: 'הפעולה הבאה',
+  continueMissionCta: 'המשך משימה',
+  companionPanelTitle: 'המלווה שלך',
+  companionNoContext: 'אין כרגע הודעה מהמלווה.',
+  activeJourneyTitle: 'היעד הפעיל',
+  worldMapSectionTitle: 'מפת האזורים',
+  devToolsSectionTitle: 'כלי מפתחים',
+  eventMissionCompleted: 'משימה הושלמה!',
+  eventMissionUnlocked: 'משימה נפתחה',
+  eventNpcUnlocked: 'דמות חדשה נפתחה',
+  eventDistrictUnlocked: 'אזור נפתח',
+  eventCampaignCompleted: 'הקמפיין הושלם!',
+  eventQueryFailed: 'השאילתה לא עברה',
+  eventSaveSuccess: 'המשחק נשמר בהצלחה',
+  eventLoadSuccess: 'המשחק נטען בהצלחה',
+  eventNextStepAvailable: 'השלב הבא זמין',
+  dismissEventLabel: 'סגור התראה',
+
+  // Command Deck recomposition — cinematic game-interface chrome.
+  stageLabel: 'שלב',
+  notificationsTitle: 'אירועים אחרונים',
+  questTrackTitle: 'מסלול הקמפיין',
+  missionStageTitle: 'המשימה הפעילה',
+  worldMapTitle: 'מפת מרידיאן',
+  mapActiveLabel: 'מחוז פעיל',
+  advisorTitle: 'היועץ',
 } as const
 
 export type HebrewStringKey = keyof typeof he

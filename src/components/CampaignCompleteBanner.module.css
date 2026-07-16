@@ -1,22 +1,27 @@
 .banner {
-  border: 1px solid var(--success);
-  background: var(--success-bg);
-  border-radius: 8px;
-  padding: 20px 24px;
-  margin: 0 24px 16px;
+  border: 1px solid rgba(52, 211, 153, 0.4);
+  background: linear-gradient(180deg, rgba(52, 211, 153, 0.12), rgba(5, 7, 13, 0)), var(--ds-surface);
+  backdrop-filter: var(--ds-glass-blur);
+  -webkit-backdrop-filter: var(--ds-glass-blur);
+  border-radius: var(--ds-radius-lg);
+  padding: var(--ds-space-6);
+  margin: 0 var(--ds-space-6) var(--ds-space-4);
   text-align: center;
-  animation: reveal 0.4s ease-out;
+  box-shadow: var(--ds-glow-accent);
+  animation: reveal var(--ds-duration-slow) var(--ds-ease-out);
 }
 
 .title {
-  margin: 0 0 6px;
-  font-size: 1.3rem;
-  color: var(--success);
+  margin: 0 0 var(--ds-space-2);
+  font-family: var(--ds-font-display);
+  font-size: var(--ds-text-2xl);
+  color: var(--ds-success);
 }
 
 .body {
   margin: 0;
-  color: var(--text);
+  color: var(--ds-text);
+  line-height: var(--ds-leading-normal);
 }
 
 @keyframes reveal {

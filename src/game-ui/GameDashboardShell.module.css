@@ -1,0 +1,189 @@
+/* "Command Deck" composition + layered CSS-only deep-space background.
+ * Mobile: single flex column (source order). Desktop: CSS grid areas.
+ * All values from --ds-* tokens. */
+
+.shell {
+  position: relative;
+  flex: 1;
+  min-block-size: 0;
+  isolation: isolate;
+  color: var(--ds-text);
+}
+
+/* --- Background layers (decorative, non-interactive) ------------------ */
+.backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  background:
+    radial-gradient(1100px 640px at 16% 6%, rgba(124, 156, 255, 0.16), transparent 60%),
+    radial-gradient(900px 620px at 90% 10%, rgba(56, 120, 220, 0.12), transparent 60%),
+    radial-gradient(1100px 820px at 50% 112%, rgba(167, 139, 250, 0.18), transparent 62%),
+    linear-gradient(180deg, var(--ds-bg) 0%, #070a14 55%, var(--ds-bg) 100%);
+}
+
+.nebula {
+  position: absolute;
+  inset: -10%;
+  background:
+    radial-gradient(40% 30% at 28% 36%, rgba(124, 156, 255, 0.1), transparent 70%),
+    radial-gradient(36% 28% at 72% 62%, rgba(167, 139, 250, 0.1), transparent 70%);
+  filter: blur(34px);
+}
+
+.stars {
+  position: absolute;
+  inset: 0;
+  opacity: 0.5;
+  background-image:
+    radial-gradient(1px 1px at 20% 30%, rgba(230, 236, 255, 0.9), transparent),
+    radial-gradient(1px 1px at 70% 80%, rgba(203, 213, 255, 0.7), transparent),
+    radial-gradient(1.5px 1.5px at 42% 62%, rgba(255, 255, 255, 0.8), transparent),
+    radial-gradient(1px 1px at 85% 18%, rgba(165, 180, 252, 0.7), transparent),
+    radial-gradient(1px 1px at 12% 78%, rgba(230, 236, 255, 0.7), transparent),
+    radial-gradient(1.5px 1.5px at 55% 26%, rgba(224, 231, 255, 0.8), transparent);
+}
+
+/* --- Content (mobile: flex column, source order) ---------------------- */
+.content {
+  position: relative;
+  z-index: 1;
+  inline-size: 100%;
+  max-inline-size: var(--ds-container);
+  margin-inline: auto;
+  padding-inline: var(--ds-space-4);
+  padding-block: var(--ds-space-5);
+  /* room so the sticky mobile CTA never covers the last content */
+  padding-block-end: calc(64px + var(--ds-safe-bottom) + var(--ds-space-5));
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-5);
+}
+
+.missionArea,
+.questArea,
+.advisorArea,
+.mapArea,
+.headerArea,
+.notificationsArea {
+  min-inline-size: 0;
+}
+
+/* --- Developer tools: de-emphasized, bottom --------------------------- */
+.devArea {
+  margin-block-start: var(--ds-space-2);
+  padding: var(--ds-space-3) var(--ds-space-4);
+  border: 1px dashed var(--ds-border);
+  border-radius: var(--ds-radius-md);
+  background: var(--ds-surface-muted);
+  opacity: 0.7;
+}
+
+.devToolsLabel {
+  display: block;
+  margin-block-end: var(--ds-space-2);
+  font-size: var(--ds-text-2xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ds-text-subtle);
+}
+
+.devToolsBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-2);
+}
+
+/* --- Mobile sticky primary CTA ---------------------------------------- */
+.stickyBar {
+  position: fixed;
+  inset-inline: 0;
+  inset-block-end: 0;
+  z-index: 30;
+  padding: var(--ds-space-3) var(--ds-space-4);
+  padding-block-end: calc(var(--ds-space-3) + var(--ds-safe-bottom));
+  background: rgba(5, 7, 13, 0.9);
+  backdrop-filter: var(--ds-glass-blur);
+  -webkit-backdrop-filter: var(--ds-glass-blur);
+  border-block-start: 1px solid var(--ds-border);
+}
+
+.stickyCta {
+  inline-size: 100%;
+  min-block-size: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ds-space-3);
+  border: 1px solid transparent;
+  border-radius: var(--ds-radius-md);
+  background: var(--ds-gradient-brand);
+  color: var(--ds-on-accent);
+  font-family: var(--ds-font-sans);
+  font-size: var(--ds-text-md);
+  font-weight: 700;
+  letter-spacing: var(--ds-tracking-tight);
+  cursor: pointer;
+  box-shadow: var(--ds-glow-accent);
+}
+
+.stickyCta:focus-visible {
+  outline: 2px solid var(--ds-accent-strong);
+  outline-offset: 2px;
+}
+
+/* --- Desktop composition (≥900px): grid with named areas -------------- */
+@media (min-width: 900px) {
+  .content {
+    padding-inline: var(--ds-space-6);
+    padding-block: var(--ds-space-8);
+    gap: var(--ds-space-6);
+    display: grid;
+    grid-template-columns: minmax(0, 2.3fr) minmax(300px, 1fr);
+    align-items: start;
+    grid-template-areas:
+      'header        header'
+      'notifications notifications'
+      'map           map'
+      'mission       quest'
+      'mission       advisor'
+      'dev           dev';
+  }
+
+  .headerArea {
+    grid-area: header;
+  }
+  .notificationsArea {
+    grid-area: notifications;
+  }
+  .mapArea {
+    grid-area: map;
+  }
+  .missionArea {
+    grid-area: mission;
+  }
+  .questArea {
+    grid-area: quest;
+  }
+  .advisorArea {
+    grid-area: advisor;
+  }
+  .devArea {
+    grid-area: dev;
+  }
+
+  /* Sticky CTA is mobile-only; the header CTA is always in view on desktop. */
+  .stickyBar {
+    display: none;
+  }
+}
+
+/* Reduce heavy blur on small screens for performance (per brief). */
+@media (max-width: 899.98px) {
+  .nebula {
+    filter: blur(16px);
+  }
+}

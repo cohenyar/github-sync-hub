@@ -27,14 +27,14 @@ describe('Save confirmation', () => {
     render(<GameApp />)
     await readyRunButton()
 
-    expect(screen.queryByText('Saved.')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('saved-confirmation')).not.toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
-    expect(screen.getByText('Saved.')).toBeInTheDocument()
+    fireEvent.click(screen.getByTestId('save-button'))
+    expect(screen.getByTestId('saved-confirmation')).toBeInTheDocument()
 
     act(() => {
       vi.advanceTimersByTime(2000)
     })
-    expect(screen.queryByText('Saved.')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('saved-confirmation')).not.toBeInTheDocument()
   })
 })

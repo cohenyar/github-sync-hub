@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import './App.css'
 import { AdminPanel } from './admin'
 import { defaultCampaign, getCampaignSummary, isCampaignComplete, type CampaignProgress } from './campaign'
-import { CampaignCompleteBanner, MissionPanel, MissionSelect, NpcBioPanel, SqlEditorPanel, WorldMap } from './components'
+import { CampaignCompleteBanner, MissionPanel, MissionSelect, SqlEditorPanel } from './components'
 import { createProgressionMissionCompletedHandler, createUnlockReactionHandler, gameEventBus } from './events'
 import { he } from './i18n'
 import { getDefaultMission, getMissionById, missionRegistry, useMissionManager } from './missions'
@@ -30,6 +30,8 @@ import {
   getDestinationEntryMission,
   getDestinationProgress,
   getDistrictStatusColor,
+  getNpcDialogue,
+  getNpcDialogueState,
   moveToDistrict,
   NpcDialogue,
   type NpcDialogueContext,
@@ -39,6 +41,21 @@ import {
   useGameAudio,
   WorldScene3D,
 } from './worldScene'
+import {
+  bannerFromOdinEntry,
+  GameControlBar,
+  GameDashboardShell,
+  type GameEventBannerModel,
+  getCompanionNpc,
+  getDistrictIdForMission,
+  JourneyHeader,
+  loadBanner,
+  MissionStage,
+  NotificationsRail,
+  QuestTrack,
+  saveBanner,
+  WorldMapPanel,
+} from './game-ui'
 
 const initialWorldState: WorldState = createWorldState(initialDistricts)
 
@@ -57,6 +74,12 @@ function GameApp() {
   // both pure UI state — nothing here touches persistence or progression.
   const [justSaved, setJustSaved] = useState(false)
   const [confirmingNewGame, setConfirmingNewGame] = useState(false)
+  // Transient Save/Load feedback shown in the notifications rail. The recent
+  // *game* events shown alongside it are derived directly from odinHistory
+  // (see recentNotifications below) — no new event system, no subscription.
+  // bannerNonceRef just gives Save/Load banners a unique key.
+  const [eventBanner, setEventBanner] = useState<GameEventBannerModel | null>(null)
+  const bannerNonceRef = useRef(0)
   // Which NPC's bio is open, if any — session-scoped UI state, same as
   // showDebug/confirmingNewGame. Not part of SaveGame.
   const [selectedNpcId, setSelectedNpcId] = useState<string | null>(null)
@@ -157,6 +180,8 @@ function GameApp() {
     saveCurrentGame(world, playerProgress)
 
     setJustSaved(true)
+    bannerNonceRef.current += 1
+    setEventBanner(saveBanner(bannerNonceRef.current))
     if (savedTimeoutRef.current) clearTimeout(savedTimeoutRef.current)
     savedTimeoutRef.current = setTimeout(() => setJustSaved(false), 2000)
   }
@@ -168,6 +193,8 @@ function GameApp() {
     setWorld(saved.world)
     restoreProgress(saved.playerProgress)
     resetUnlockBaseline(saved.playerProgress)
+    bannerNonceRef.current += 1
+    setEventBanner(loadBanner(bannerNonceRef.current))
   }
 
   // New Game is destructive, so the header only ever wires it up behind an
@@ -252,6 +279,7 @@ function GameApp() {
     previousPhaseRef.current = status.phase
   }, [status.phase])
 
+
   const campaignProgress: CampaignProgress = { completedMissionIds: playerProgress.completedMissionIds }
   const campaignSummary = getCampaignSummary(defaultCampaign, campaignProgress)
   const progressSummary = getPlayerProgressSummary(playerProgress)
@@ -312,6 +340,44 @@ function GameApp() {
   const currentDestinationName = currentDestinationInfo?.name ?? sceneState.playerDistrictId
   const currentDestinationProgress = currentDestinationInfo?.progress ?? { completed: 0, total: 0 }
 
+  // Dashboard presentation-only derivations (no new engine state):
+  // which district owns the active mission (lights the map's active node),
+  // and the companion NPC + their existing authored dialogue line.
+  const activeDistrictId = getDistrictIdForMission(activeMission.id)
+  const activeDestinationName = activeDistrictId ? destinationInfoById[activeDistrictId]?.name : undefined
+  const companion = getCompanionNpc(activeMission.id, unlockedNpcIds)
+  const companionDialogue = companion
+    ? getNpcDialogue(companion.id, getNpcDialogueState(companion, npcDialogueContext))
+    : undefined
+  const companionMessage = companionDialogue
+    ? [companionDialogue.greeting, companionDialogue.missionContext].filter(Boolean).join('\n')
+    : undefined
+
+  // Recent game events for the notifications rail, derived from the same
+  // structured GameEvents that already ride on Odin's narration history —
+  // no new event system, no subscription. Newest first, capped at 4.
+  const recentNotifications = odinHistory
+    .slice(-4)
+    .map((entry) => bannerFromOdinEntry(entry))
+    .filter((model): model is GameEventBannerModel => model !== null)
+    .reverse()
+
+  // The single primary action behind both the header CTA and the mobile
+  // sticky CTA: advance to the next mission when one is actually ready
+  // (same gate MissionPanel uses for its Continue button), otherwise bring
+  // the player to the mission console. The scroll is pure presentation.
+  const MISSION_STAGE_ID = 'mission-stage'
+  const canContinueMission =
+    status.phase === 'completed' && Boolean(nextMission) && nextMissionContentStatus !== 'locked'
+  function handlePrimaryAction() {
+    if (canContinueMission) {
+      handleContinue()
+      return
+    }
+    const stage = document.getElementById(MISSION_STAGE_ID)
+    if (stage) stage.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
   // Locked destinations never open a Terminal — the InteractionPrompt
   // already shows this before the player even tries, so this is a
   // deliberate, explained no-op, not a silent failure. Entering an
@@ -332,72 +398,21 @@ function GameApp() {
 
   return (
     <div id="app-root">
-      <header>
-        <h1>Meridian</h1>
-        <div className="headerActions">
-          <button type="button" className="adminToggle" data-testid="save-button" onClick={handleSave}>
-            Save
-          </button>
-          {justSaved && (
-            <span className="savedConfirmation" role="status" data-testid="saved-confirmation">
-              Saved.
-            </span>
-          )}
-          <button type="button" className="adminToggle" data-testid="load-button" onClick={handleLoad}>
-            Load
-          </button>
-          {confirmingNewGame ? (
-            <span className="confirmPrompt" data-testid="reset-confirm-prompt">
-              <span className="confirmPromptText">Reset all progress?</span>
-              <button
-                type="button"
-                className="adminToggle confirmDanger"
-                data-testid="confirm-reset-yes-button"
-                onClick={handleConfirmNewGame}
-              >
-                Yes, Reset
-              </button>
-              <button
-                type="button"
-                className="adminToggle"
-                data-testid="confirm-reset-cancel-button"
-                onClick={() => setConfirmingNewGame(false)}
-              >
-                Cancel
-              </button>
-            </span>
-          ) : (
-            <button
-              type="button"
-              className="adminToggle"
-              data-testid="new-game-button"
-              onClick={() => setConfirmingNewGame(true)}
-            >
-              New Game
-            </button>
-          )}
-          <button type="button" className="adminToggle" onClick={() => setShowAdmin((current) => !current)}>
-            {showAdmin ? 'Hide Admin' : 'Admin'}
-          </button>
-          <button
-            type="button"
-            className="adminToggle"
-            data-testid="toggle-world-scene-button"
-            onClick={() => setShowWorldScene((current) => !current)}
-          >
-            {showWorldScene ? he.dashboardToggle : he.worldSceneToggle}
-          </button>
-          <button
-            type="button"
-            className="adminToggle"
-            data-testid="mute-toggle-button"
-            aria-pressed={!isMuted}
-            onClick={toggleMuted}
-          >
-            {isMuted ? he.soundToggleOff : he.soundToggleOn}
-          </button>
-        </div>
-      </header>
+      <GameControlBar
+        justSaved={justSaved}
+        confirmingNewGame={confirmingNewGame}
+        showAdmin={showAdmin}
+        showWorldScene={showWorldScene}
+        isMuted={isMuted}
+        onSave={handleSave}
+        onLoad={handleLoad}
+        onRequestNewGame={() => setConfirmingNewGame(true)}
+        onConfirmNewGame={handleConfirmNewGame}
+        onCancelNewGame={() => setConfirmingNewGame(false)}
+        onToggleAdmin={() => setShowAdmin((current) => !current)}
+        onToggleWorldScene={() => setShowWorldScene((current) => !current)}
+        onToggleMuted={toggleMuted}
+      />
       {campaignSummary.isComplete && <CampaignCompleteBanner totalMissions={campaignSummary.totalMissions} />}
       {showWorldScene ? (
         <>
@@ -450,31 +465,70 @@ function GameApp() {
           <CoreTransitionOverlay active={sceneState.mode.kind === 'terminal'} glowColor={getDistrictStatusColor(coreStatus)} />
         </>
       ) : (
-        <main className="layout">
-          <section className="world">
-            <WorldMap world={world} unlockedNpcIds={unlockedNpcIds} onSelectNpc={handleSelectNpc} />
-            {selectedNpc && <NpcBioPanel npc={selectedNpc} onClose={() => setSelectedNpcId(null)} />}
-            <button type="button" className="debugToggle" onClick={() => setShowDebug((current) => !current)}>
-              {showDebug ? 'Hide Raw World State' : 'Show Raw World State'}
-            </button>
-            {showDebug && <pre className="worldStateDump">{JSON.stringify(world, null, 2)}</pre>}
-          </section>
-          <aside className="sidebar">
-            <MissionSelect options={missionOptions} activeMissionId={activeMission.id} onSelect={handleSelectMission} />
-            <SqlEditorPanel status={status} onRun={run} />
-            <MissionPanel
-              mission={activeMission}
-              phase={status.phase}
-              campaignSummary={campaignSummary}
-              nextMission={nextMission}
-              nextMissionContentStatus={nextMissionContentStatus}
+        <GameDashboardShell
+          header={
+            <JourneyHeader
+              destinationName={activeDestinationName}
+              activeMission={activeMission}
               completionPercentage={progressSummary.completionPercentage}
-              contentStatus={contentStatus}
-              onContinue={handleContinue}
+              campaignSummary={campaignSummary}
+              companion={companion}
+              companionMessage={companionMessage}
+              onPrimary={handlePrimaryAction}
             />
-            <OdinPanel latestMessage={odinMessage} history={odinHistory} />
-          </aside>
-        </main>
+          }
+          notifications={
+            <NotificationsRail
+              transient={eventBanner}
+              recent={recentNotifications}
+              onDismiss={() => setEventBanner(null)}
+            />
+          }
+          worldMap={
+            <WorldMapPanel
+              world={world}
+              unlockedNpcIds={unlockedNpcIds}
+              activeDistrictId={activeDistrictId}
+              onSelectNpc={handleSelectNpc}
+              selectedNpc={selectedNpc}
+              onCloseNpc={() => setSelectedNpcId(null)}
+            />
+          }
+          mission={
+            <MissionStage
+              id={MISSION_STAGE_ID}
+              panel={
+                <MissionPanel
+                  mission={activeMission}
+                  phase={status.phase}
+                  campaignSummary={campaignSummary}
+                  nextMission={nextMission}
+                  nextMissionContentStatus={nextMissionContentStatus}
+                  completionPercentage={progressSummary.completionPercentage}
+                  contentStatus={contentStatus}
+                  onContinue={handleContinue}
+                />
+              }
+              terminal={<SqlEditorPanel status={status} onRun={run} />}
+            />
+          }
+          questTrack={
+            <QuestTrack>
+              <MissionSelect options={missionOptions} activeMissionId={activeMission.id} onSelect={handleSelectMission} />
+            </QuestTrack>
+          }
+          advisor={<OdinPanel latestMessage={odinMessage} history={odinHistory} />}
+          devTools={
+            <>
+              <button type="button" className="debugToggle" onClick={() => setShowDebug((current) => !current)}>
+                {showDebug ? 'Hide Raw World State' : 'Show Raw World State'}
+              </button>
+              {showDebug && <pre className="worldStateDump">{JSON.stringify(world, null, 2)}</pre>}
+            </>
+          }
+          onPrimary={handlePrimaryAction}
+          primaryLabel={he.continueMissionCta}
+        />
       )}
       {showAdmin && (
         // Admin is an English-only builder/debug surface (unchanged since v0.1) —

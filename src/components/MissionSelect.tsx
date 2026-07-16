@@ -1,7 +1,7 @@
 import { he } from '../i18n'
 import type { MissionConfig } from '../missions'
 import type { ContentStatus } from '../unlocks'
-import styles from './Panel.module.css'
+import styles from './MissionSelect.module.css'
 
 export interface MissionSelectOption {
   mission: MissionConfig
@@ -21,23 +21,28 @@ const CONTENT_STATUS_LABEL: Record<ContentStatus, string> = {
 }
 
 /**
- * Lets the player load any unlocked mission into the SQL console. Purely
- * presentational: App.tsx owns which mission is active and how status is
- * computed (via the existing Unlock Engine) — this only renders options
- * and reports a click.
+ * The campaign missions as a connected "quest chain" of status nodes.
+ * Purely presentational: GameApp owns which mission is active and how status
+ * is computed (via the Unlock Engine) — this only renders options and reports
+ * a click.
+ *
+ * Contract preserved verbatim for tests: each option is a <button> carrying
+ * data-testid="mission-option-{id}", data-status, aria-current, the same
+ * disabled rule, and the exact accessible name "{title} ({Status})". The node
+ * number is a CSS counter (::before), NOT DOM text, so it never enters the
+ * button's accessible name.
  */
 export function MissionSelect({ options, activeMissionId, onSelect }: MissionSelectProps) {
   return (
-    <section className={styles.panel} aria-label={he.missionSelectLabel}>
-      <h2 className={styles.title}>{he.missionsTitle}</h2>
-      <ul className={styles.missionList}>
+    <section className={styles.track} aria-label={he.missionSelectLabel}>
+      <ul className={styles.list}>
         {options.map(({ mission, status }) => {
           const isActive = mission.id === activeMissionId
           return (
-            <li key={mission.id}>
+            <li key={mission.id} className={styles.item}>
               <button
                 type="button"
-                className={isActive ? `${styles.missionButton} ${styles.missionButtonActive}` : styles.missionButton}
+                className={isActive ? `${styles.node} ${styles.nodeActive}` : styles.node}
                 data-testid={`mission-option-${mission.id}`}
                 data-status={status}
                 disabled={status === 'locked' || isActive}

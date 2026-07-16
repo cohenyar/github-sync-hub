@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { fireEvent, render, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
+import { he } from '../i18n'
 import { getNpcsByDistrict } from '../npcs'
 import { District } from './District'
 
@@ -34,15 +35,15 @@ describe('District', () => {
 
   it('renders a status label derived from the district status mechanic', () => {
     const { getByText } = render(<District district={{ id: 'alpha', stats: { loyalty: 75, stability: 75 } }} />)
-    expect(getByText('Thriving')).toBeInTheDocument()
+    expect(getByText(he.districtThriving)).toBeInTheDocument()
   })
 
   it('updates the status label as the district stats change', () => {
     const unstable = render(<District district={{ id: 'a', stats: { loyalty: 10 } }} />)
-    expect(within(unstable.container).getByText('Unstable')).toBeInTheDocument()
+    expect(within(unstable.container).getByText(he.districtUnstable)).toBeInTheDocument()
 
     const stable = render(<District district={{ id: 'b', stats: { loyalty: 50 } }} />)
-    expect(within(stable.container).getByText('Stable')).toBeInTheDocument()
+    expect(within(stable.container).getByText(he.districtStable)).toBeInTheDocument()
   })
 
   it('renders a marker for every unlocked NPC assigned to this district', () => {

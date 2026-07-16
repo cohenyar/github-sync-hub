@@ -1,0 +1,99 @@
+.banner {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-3);
+  padding: var(--ds-space-3) var(--ds-space-4);
+  border-radius: var(--ds-radius-md);
+  border: 1px solid var(--ds-border-strong);
+  background: var(--ds-surface);
+  backdrop-filter: var(--ds-glass-blur);
+  -webkit-backdrop-filter: var(--ds-glass-blur);
+  color: var(--ds-text);
+  animation: reveal var(--ds-duration-base) var(--ds-ease-out);
+}
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .banner {
+    animation: none;
+  }
+}
+
+.banner[data-tone='success'] {
+  border-color: rgba(52, 211, 153, 0.4);
+  background: linear-gradient(180deg, rgba(52, 211, 153, 0.1), rgba(5, 7, 13, 0)), var(--ds-surface);
+}
+.banner[data-tone='ai'] {
+  border-color: rgba(167, 139, 250, 0.4);
+  background: linear-gradient(180deg, rgba(167, 139, 250, 0.1), rgba(5, 7, 13, 0)), var(--ds-surface);
+}
+.banner[data-tone='warning'] {
+  border-color: rgba(251, 191, 36, 0.4);
+  background: linear-gradient(180deg, rgba(251, 191, 36, 0.1), rgba(5, 7, 13, 0)), var(--ds-surface);
+}
+.banner[data-tone='info'] {
+  border-color: rgba(124, 156, 255, 0.4);
+  background: linear-gradient(180deg, rgba(124, 156, 255, 0.1), rgba(5, 7, 13, 0)), var(--ds-surface);
+}
+
+.icon {
+  flex: none;
+  inline-size: 32px;
+  block-size: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--ds-radius-sm);
+  background: var(--ds-surface-muted);
+  font-size: var(--ds-text-lg);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-inline-size: 0;
+}
+
+.title {
+  font-size: var(--ds-text-sm);
+  font-weight: 700;
+  color: var(--ds-text-strong);
+}
+
+.detail {
+  font-size: var(--ds-text-xs);
+  color: var(--ds-text-muted);
+}
+
+.dismiss {
+  flex: none;
+  inline-size: 32px;
+  block-size: 32px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: var(--ds-radius-sm);
+  background: transparent;
+  color: var(--ds-text-muted);
+  font-size: var(--ds-text-lg);
+  line-height: 1;
+  cursor: pointer;
+  transition: background var(--ds-duration-fast) var(--ds-ease-out);
+}
+
+.dismiss:hover,
+.dismiss:focus-visible {
+  background: var(--ds-surface-muted);
+  color: var(--ds-text-strong);
+}

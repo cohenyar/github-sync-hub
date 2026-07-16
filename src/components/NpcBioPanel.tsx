@@ -1,5 +1,6 @@
 import { he } from '../i18n'
 import type { NpcConfig } from '../npcs'
+import { getDistrictDisplayName } from './districtDisplayName'
 import panelStyles from './Panel.module.css'
 import styles from './NpcBioPanel.module.css'
 
@@ -29,7 +30,7 @@ export function NpcBioPanel({ npc, onClose }: NpcBioPanelProps) {
       <h2 className={panelStyles.title}>{he.npcPanelTitle}</h2>
       <h3 className={styles.name}>{npc.name}</h3>
       <p className={styles.role}>
-        {npc.role} · {npc.districtId}
+        {npc.role} · {getDistrictDisplayName(npc.districtId)}
       </p>
       <p className={styles.description}>{npc.description}</p>
     </section>

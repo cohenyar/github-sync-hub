@@ -1,0 +1,34 @@
+.stage {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-4);
+  padding: var(--ds-space-5);
+  border-radius: var(--ds-radius-lg);
+  border: 1px solid rgba(124, 156, 255, 0.28);
+  background:
+    linear-gradient(180deg, rgba(124, 156, 255, 0.06), rgba(5, 7, 13, 0)),
+    var(--ds-surface);
+  backdrop-filter: var(--ds-glass-blur);
+  -webkit-backdrop-filter: var(--ds-glass-blur);
+  box-shadow: var(--ds-shadow-lg);
+  scroll-margin-block-start: var(--ds-space-6);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-3);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-4);
+  min-inline-size: 0;
+}
+
+@media (min-width: 900px) {
+  .stage {
+    padding: var(--ds-space-6);
+  }
+}

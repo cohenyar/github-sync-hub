@@ -41,7 +41,7 @@ describe('Save/Load restores world and progress across a simulated reload', () =
     await waitFor(() => expect(screen.getByText(/"signal": 100/)).toBeInTheDocument())
     await waitFor(() => expect(screen.getByText(`Progress: ${expectedPercentage}%`)).toBeInTheDocument())
 
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    fireEvent.click(screen.getByTestId('save-button'))
     first.unmount()
 
     // A brand new App instance starts from the same fresh initial state a
@@ -61,7 +61,7 @@ describe('Save/Load restores world and progress across a simulated reload', () =
     await readyRunButton()
 
     expect(screen.getByText('Progress: 0%')).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Load' }))
+    fireEvent.click(screen.getByTestId('load-button'))
 
     expect(screen.getByText('Progress: 0%')).toBeInTheDocument()
   })

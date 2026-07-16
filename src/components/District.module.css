@@ -1,62 +1,103 @@
+/* District node — a game-world location tile. Status is conveyed by hue +
+ * a CSS sigil, not just opacity (opacity is still set inline by District.tsx
+ * for the existing intensity reading and its test — left untouched).
+ * All colors come from --ds-* tokens; no palette literals. */
+
 .district {
+  position: relative;
   display: inline-flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  width: 96px;
-  min-height: 96px;
-  margin: 8px;
-  padding: 8px 4px;
-  border-radius: 8px;
-  background-color: var(--accent);
-  color: var(--on-accent);
+  gap: var(--ds-space-1);
+  inline-size: 132px;
+  min-block-size: 120px;
+  padding: var(--ds-space-4) var(--ds-space-3);
+  border-radius: var(--ds-radius-md);
+  border: 1px solid var(--ds-border-strong);
+  background:
+    linear-gradient(180deg, rgba(124, 156, 255, 0.06), rgba(5, 7, 13, 0)),
+    var(--ds-surface-strong);
+  color: var(--ds-text);
+  box-shadow: var(--ds-shadow-md);
   transition:
-    opacity 0.3s ease,
-    background-color 0.3s ease;
+    border-color var(--ds-duration-base) var(--ds-ease-out),
+    box-shadow var(--ds-duration-base) var(--ds-ease-out);
+}
+
+/* Sigil: a CSS-only emblem above the label. Keyed off the existing
+   data-district-id already on the root, so District.tsx markup is untouched.
+   Unknown ids fall back to the default dot. */
+.district::before {
+  content: '◈';
+  font-size: 1.1rem;
+  line-height: 1;
+  color: var(--ds-accent-strong);
+  opacity: 0.9;
+}
+
+.district[data-district-id='core']::before {
+  content: '◉';
+}
+.district[data-district-id='north']::before {
+  content: '❖';
+}
+.district[data-district-id='south']::before {
+  content: '⬡';
+}
+.district[data-district-id='east']::before {
+  content: '✦';
 }
 
 .label {
-  font-size: 0.85rem;
-  font-weight: 600;
+  font-family: var(--ds-font-display);
+  font-size: var(--ds-text-sm);
+  font-weight: 700;
+  letter-spacing: var(--ds-tracking-tight);
   text-transform: uppercase;
+  color: var(--ds-text-strong);
 }
 
 .status {
-  font-size: 0.7rem;
-  opacity: 0.85;
+  font-size: var(--ds-text-2xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--ds-text-muted);
 }
 
 .npcList {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 2px;
-  margin: 0;
+  gap: var(--ds-space-1);
+  margin: var(--ds-space-1) 0 0;
   padding: 0;
   list-style: none;
 }
 
 .npcMarker {
-  max-width: 84px;
+  max-inline-size: 112px;
 }
 
 .npcButton {
-  width: 100%;
+  inline-size: 100%;
   overflow: hidden;
-  padding: 1px 6px;
-  border: none;
-  border-radius: 4px;
-  background-color: rgba(255, 255, 255, 0.2);
-  color: inherit;
+  padding: 3px var(--ds-space-2);
+  min-block-size: 24px;
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-radius-pill);
+  background: var(--ds-surface-muted);
+  color: var(--ds-text);
   font: inherit;
-  font-size: 0.6rem;
+  font-size: var(--ds-text-2xs);
   white-space: nowrap;
   text-overflow: ellipsis;
   cursor: pointer;
+  transition: background var(--ds-duration-fast) var(--ds-ease-out);
 }
 
 .npcButton:hover,
 .npcButton:focus-visible {
-  background-color: rgba(255, 255, 255, 0.35);
+  background: var(--ds-accent-soft);
+  border-color: var(--ds-accent);
 }

@@ -1,0 +1,95 @@
+/* Game control bar. Glass topbar consistent with the platform AppShell,
+ * but self-contained (the game lives inside /world, not the routed shell).
+ * All values from --ds-* tokens. */
+
+.bar {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--ds-space-3);
+  padding-inline: var(--ds-space-5);
+  padding-block: var(--ds-space-3);
+  background: rgba(5, 7, 13, 0.72);
+  backdrop-filter: var(--ds-glass-blur);
+  -webkit-backdrop-filter: var(--ds-glass-blur);
+  border-block-end: 1px solid var(--ds-border);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ds-space-3);
+}
+
+.brandMark {
+  inline-size: 28px;
+  block-size: 28px;
+  border-radius: 8px;
+  background: var(--ds-gradient-brand);
+  box-shadow: var(--ds-glow-accent);
+}
+
+.brandName {
+  font-family: var(--ds-font-display);
+  font-weight: 700;
+  font-size: var(--ds-text-xl);
+  letter-spacing: var(--ds-tracking-tight);
+  color: var(--ds-text-strong);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ds-space-2);
+}
+
+.savedConfirmation {
+  align-self: center;
+  color: var(--ds-success);
+  font-size: var(--ds-text-sm);
+  font-weight: 600;
+}
+
+.confirmPrompt {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ds-space-2);
+  padding-inline: var(--ds-space-3);
+  padding-block: var(--ds-space-1);
+  border-radius: var(--ds-radius-pill);
+  border: 1px solid rgba(248, 113, 113, 0.4);
+  background: rgba(248, 113, 113, 0.12);
+}
+
+.confirmPromptText {
+  color: var(--ds-text);
+  font-size: var(--ds-text-sm);
+  white-space: nowrap;
+}
+
+/* Danger action = the existing secondary Button, recolored by overriding
+   only its internal --_* hooks with the existing --ds-danger token. The
+   shared Button component itself is not modified. */
+.dangerAction {
+  --_bg: rgba(248, 113, 113, 0.14);
+  --_border: rgba(248, 113, 113, 0.4);
+  --_fg: var(--ds-danger);
+}
+
+/* Mobile: brand + wrapping actions, comfortable targets, nothing clipped. */
+@media (max-width: 899.98px) {
+  .bar {
+    padding-inline: var(--ds-space-4);
+  }
+  .brandName {
+    font-size: var(--ds-text-lg);
+  }
+  .actions {
+    inline-size: 100%;
+  }
+}

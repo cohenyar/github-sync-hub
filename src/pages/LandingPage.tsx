@@ -95,10 +95,6 @@ export function LandingPage() {
               <span>{he.landingEnterCta ?? 'התחל את המסע'}</span>
               <span className={styles.ctaArrow} aria-hidden>←</span>
             </Link>
-            <Link to="/world" className={styles.ctaSecondary}>
-              <span className={styles.playIcon} aria-hidden>▶</span>
-              צפה בדמו
-            </Link>
           </div>
         </div>
 

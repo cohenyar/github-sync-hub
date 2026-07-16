@@ -6,7 +6,7 @@ test.describe('Admin panel', () => {
 
     await expect(page.getByText('Admin Area')).not.toBeVisible()
 
-    await page.getByRole('button', { name: 'Admin' }).click()
+    await page.getByTestId('admin-toggle-button').click()
     await expect(page.getByText('Admin Area')).toBeVisible()
 
     const expectedCounts: Record<string, string> = {
@@ -27,7 +27,7 @@ test.describe('Admin panel', () => {
       )
     }
 
-    await page.getByRole('button', { name: 'Hide Admin' }).click()
+    await page.getByTestId('admin-toggle-button').click()
     await expect(page.getByText('Admin Area')).not.toBeVisible()
   })
 })

@@ -1,0 +1,214 @@
+/* Cinematic journey header — the scene band. Consumes --ds-* tokens only. */
+
+.header {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--ds-space-5);
+  padding: var(--ds-space-6);
+  border-radius: var(--ds-radius-xl);
+  border: 1px solid rgba(124, 156, 255, 0.28);
+  background:
+    radial-gradient(90% 120% at 12% -10%, rgba(124, 156, 255, 0.22), transparent 55%),
+    radial-gradient(80% 120% at 100% 120%, rgba(167, 139, 250, 0.22), transparent 55%),
+    linear-gradient(180deg, rgba(20, 27, 45, 0.85), rgba(10, 15, 30, 0.7));
+  backdrop-filter: var(--ds-glass-blur);
+  -webkit-backdrop-filter: var(--ds-glass-blur);
+  box-shadow: var(--ds-shadow-lg);
+}
+
+.scene {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-4);
+  min-inline-size: 0;
+}
+
+.locationRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--ds-space-3);
+}
+
+.locationSigil {
+  font-size: var(--ds-text-lg);
+  color: var(--ds-accent-strong);
+}
+
+.location {
+  font-family: var(--ds-font-display);
+  font-size: var(--ds-text-xl);
+  font-weight: 700;
+  letter-spacing: var(--ds-tracking-tight);
+  color: var(--ds-text-strong);
+}
+
+.stage {
+  padding-inline: var(--ds-space-3);
+  padding-block: 2px;
+  border-radius: var(--ds-radius-pill);
+  background: var(--ds-surface-muted);
+  border: 1px solid var(--ds-border);
+  font-size: var(--ds-text-xs);
+  font-weight: 600;
+  color: var(--ds-text-muted);
+}
+
+.missionTitle {
+  font-family: var(--ds-font-display);
+  font-size: var(--ds-text-4xl);
+  font-weight: 800;
+  line-height: var(--ds-leading-tight);
+  letter-spacing: var(--ds-tracking-tighter);
+  color: var(--ds-text-strong);
+  text-wrap: balance;
+}
+
+.progressRow {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-4);
+  max-inline-size: 520px;
+}
+
+.progressTrack {
+  position: relative;
+  flex: 1;
+  block-size: 10px;
+  border-radius: var(--ds-radius-pill);
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.progressFill {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  inline-size: var(--pct, 0%);
+  border-radius: var(--ds-radius-pill);
+  background: var(--ds-gradient-brand);
+  box-shadow: var(--ds-glow-accent);
+  transition: inline-size var(--ds-duration-slow) var(--ds-ease-out);
+}
+
+.pct {
+  font-family: var(--ds-font-display);
+  font-size: var(--ds-text-xl);
+  font-weight: 800;
+  color: var(--ds-text-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.cta {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ds-space-3);
+  min-block-size: 52px;
+  padding-inline: var(--ds-space-8);
+  padding-block: var(--ds-space-3);
+  border: 1px solid transparent;
+  border-radius: var(--ds-radius-lg);
+  background: var(--ds-gradient-brand);
+  color: var(--ds-on-accent);
+  font-family: var(--ds-font-sans);
+  font-size: var(--ds-text-md);
+  font-weight: 700;
+  letter-spacing: var(--ds-tracking-tight);
+  cursor: pointer;
+  box-shadow: var(--ds-glow-accent);
+  transition:
+    transform var(--ds-duration-fast) var(--ds-ease-out),
+    box-shadow var(--ds-duration-base) var(--ds-ease-out);
+}
+
+.cta:hover {
+  transform: translateY(-1px);
+}
+.cta:active {
+  transform: translateY(0);
+}
+.cta:focus-visible {
+  outline: 2px solid var(--ds-accent-strong);
+  outline-offset: 3px;
+}
+
+.ctaIcon {
+  font-size: var(--ds-text-sm);
+}
+
+/* --- Companion (in-scene) --------------------------------------------- */
+.companion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-3);
+  padding: var(--ds-space-4);
+  border-radius: var(--ds-radius-lg);
+  border: 1px solid rgba(167, 139, 250, 0.28);
+  background: linear-gradient(180deg, rgba(167, 139, 250, 0.12), rgba(5, 7, 13, 0.05));
+}
+
+.speech {
+  position: relative;
+  margin: 0;
+  padding: var(--ds-space-3) var(--ds-space-4);
+  border-radius: var(--ds-radius-md);
+  background: var(--ds-surface-strong);
+  border: 1px solid var(--ds-border);
+  color: var(--ds-text);
+  font-size: var(--ds-text-sm);
+  line-height: var(--ds-leading-normal);
+}
+
+.companionIdentity {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-3);
+}
+
+.avatar {
+  flex: none;
+  inline-size: 48px;
+  block-size: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--ds-radius-md);
+  background: var(--ds-gradient-ai);
+  color: var(--ds-on-accent);
+  font-family: var(--ds-font-display);
+  font-size: var(--ds-text-md);
+  font-weight: 800;
+  box-shadow: var(--ds-glow-ai);
+}
+
+.companionText {
+  display: flex;
+  flex-direction: column;
+}
+
+.companionName {
+  font-family: var(--ds-font-display);
+  font-size: var(--ds-text-md);
+  font-weight: 700;
+  color: var(--ds-text-strong);
+}
+
+.companionRole {
+  font-size: var(--ds-text-xs);
+  color: var(--ds-text-muted);
+}
+
+/* --- Desktop: scene + companion side by side -------------------------- */
+@media (min-width: 900px) {
+  .header {
+    grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr);
+    align-items: center;
+    padding: var(--ds-space-8);
+  }
+  .companion {
+    align-self: stretch;
+    justify-content: center;
+  }
+}

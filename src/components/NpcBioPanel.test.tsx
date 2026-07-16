@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
+import { he } from '../i18n'
 import type { NpcConfig } from '../npcs'
 import { NpcBioPanel } from './NpcBioPanel'
 
@@ -18,7 +19,8 @@ describe('NpcBioPanel', () => {
 
     expect(screen.getByText('Devrin Kass')).toBeInTheDocument()
     expect(screen.getByText(/District Warden/)).toBeInTheDocument()
-    expect(screen.getByText(/north/)).toBeInTheDocument()
+    // The district is shown by its friendly display name, not the internal id.
+    expect(screen.getByText(new RegExp(he.northCourseName))).toBeInTheDocument()
     expect(screen.getByText("Keeps watch over North district's loyalty to Meridian.")).toBeInTheDocument()
   })
 

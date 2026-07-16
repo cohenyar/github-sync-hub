@@ -1,0 +1,116 @@
+.track {
+  text-align: start;
+}
+
+.list {
+  position: relative;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-2);
+  counter-reset: quest;
+}
+
+/* Decorative "spine" behind the node circles, so the missions read as a
+   connected chain rather than a plain list. Sits under the nodes; visible in
+   the gaps. Approximate alignment with the circle centre is fine. */
+.list::before {
+  content: '';
+  position: absolute;
+  inset-block: 22px;
+  inset-inline-start: 25px;
+  inline-size: 2px;
+  background: linear-gradient(var(--ds-border-strong), transparent);
+  z-index: 0;
+}
+
+.item {
+  position: relative;
+  z-index: 1;
+}
+
+.node {
+  position: relative;
+  inline-size: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-3);
+  min-block-size: 44px;
+  padding: var(--ds-space-2) var(--ds-space-3);
+  text-align: start;
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-radius-md);
+  background: var(--ds-surface-muted);
+  color: var(--ds-text);
+  font-size: var(--ds-text-sm);
+  cursor: pointer;
+  counter-increment: quest;
+  transition:
+    border-color var(--ds-duration-base) var(--ds-ease-out),
+    background var(--ds-duration-base) var(--ds-ease-out),
+    box-shadow var(--ds-duration-base) var(--ds-ease-out);
+}
+
+/* Node number — CSS counter only, never DOM text (keeps the button's
+   accessible name exactly "{title} ({Status})"). */
+.node::before {
+  content: counter(quest);
+  flex: none;
+  inline-size: 26px;
+  block-size: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--ds-surface-strong);
+  border: 1px solid var(--ds-border);
+  color: var(--ds-text-muted);
+  font-weight: 700;
+  font-size: var(--ds-text-2xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.node[data-status='completed']::before {
+  content: '✓';
+  background: rgba(52, 211, 153, 0.2);
+  border-color: rgba(52, 211, 153, 0.5);
+  color: var(--ds-success);
+}
+
+.node[data-status='completed'] {
+  border-color: rgba(52, 211, 153, 0.3);
+}
+
+.node[data-status='locked'] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.node:not(:disabled):hover {
+  border-color: var(--ds-border-strong);
+  background: var(--ds-surface-strong);
+}
+
+.node:focus-visible {
+  outline: 2px solid var(--ds-accent);
+  outline-offset: 2px;
+}
+
+/* Active mission = the one loaded in the console (aria-current). It's the
+   dominant node: accent glow. Disabled (it's already active) but still
+   visually the focal point. */
+.nodeActive,
+.node[aria-current='true'] {
+  border-color: var(--ds-accent);
+  background: var(--ds-accent-soft);
+  color: var(--ds-text-strong);
+  box-shadow: var(--ds-glow-accent);
+  opacity: 1;
+}
+
+.node[aria-current='true']::before {
+  background: var(--ds-gradient-brand);
+  border-color: transparent;
+  color: var(--ds-on-accent);
+}

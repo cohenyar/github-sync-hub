@@ -3,124 +3,34 @@
   flex-direction: column;
   min-height: 100vh;
   text-align: start;
+  background: var(--ds-bg);
 }
 
-#app-root header {
-  padding: 16px 24px;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-#app-root header h1 {
-  margin: 0;
-  font-size: 32px;
-}
-
-#app-root .headerActions {
-  display: flex;
-  gap: 8px;
-}
-
-#app-root .adminToggle {
-  padding: 6px 14px;
-  border-radius: 6px;
-  border: 1px solid var(--border);
-  background: transparent;
-  color: var(--text);
-  cursor: pointer;
-}
-
-#app-root .savedConfirmation {
-  align-self: center;
-  color: var(--success);
-  font-size: 0.85rem;
-  animation: fadeIn 0.2s ease-out;
-}
-
-#app-root .confirmPrompt {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 10px;
-  border-radius: 6px;
-  border: 1px solid var(--danger);
-  background: var(--danger-bg);
-  animation: fadeIn 0.15s ease-out;
-}
-
-#app-root .confirmPromptText {
-  color: var(--text);
-  font-size: 0.85rem;
-  white-space: nowrap;
-}
-
-#app-root .confirmDanger {
-  border-color: var(--danger);
-  color: var(--danger);
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  #app-root .savedConfirmation,
-  #app-root .confirmPrompt {
-    animation: none;
-  }
-}
-
-#app-root .layout {
-  flex: 1;
-  display: grid;
-  grid-template-columns: 1fr 320px;
-  gap: 16px;
-  padding: 16px 24px;
-
-  @media (max-width: 900px) {
-    grid-template-columns: 1fr;
-  }
-}
-
-#app-root .world {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
+/* Developer-tools debug affordances. Kept behavior-identical and
+   text-identical (tests query them by their exact button text); the
+   redesigned dashboard only de-emphasizes and relocates them (see
+   GameDashboardShell's devTools slot). */
 #app-root .debugToggle {
   align-self: flex-start;
-  padding: 4px 10px;
-  border-radius: 6px;
-  border: 1px solid var(--border);
+  padding: 6px 12px;
+  min-height: 36px;
+  border-radius: var(--ds-radius-sm);
+  border: 1px solid var(--ds-border);
   background: transparent;
-  color: var(--text-muted);
-  font-size: 0.8rem;
+  color: var(--ds-text-muted);
+  font-size: var(--ds-text-xs);
   cursor: pointer;
 }
 
 #app-root .worldStateDump {
   margin: 0;
-  background: var(--input-bg);
-  color: var(--text-muted);
+  background: var(--ds-bg-elevated);
+  color: var(--ds-text-muted);
   padding: 12px;
-  border-radius: 8px;
+  border-radius: var(--ds-radius-sm);
   overflow: auto;
   font-size: 13px;
-  font-family: var(--mono);
-}
-
-#app-root .sidebar {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+  font-family: var(--ds-font-mono);
 }
 
 #app-root .adminSection {

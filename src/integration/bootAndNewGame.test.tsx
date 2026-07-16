@@ -30,9 +30,11 @@ function openDebugView() {
 }
 
 // New Game requires an explicit confirmation step (Sprint 2 polish).
+// Selected by stable data-testid (the control bar's action labels are
+// Hebrew and free to change; the testids are the durable contract).
 function newGame() {
-  fireEvent.click(screen.getByRole('button', { name: 'New Game' }))
-  fireEvent.click(screen.getByRole('button', { name: 'Yes, Reset' }))
+  fireEvent.click(screen.getByTestId('new-game-button'))
+  fireEvent.click(screen.getByTestId('confirm-reset-yes-button'))
 }
 
 function completedFirstContactSave() {
@@ -116,7 +118,7 @@ describe('New Game reset', () => {
     await screen.findByText('Pass')
     await waitFor(() => expect(screen.getByText(`Progress: ${ONE_MISSION_PERCENTAGE}%`)).toBeInTheDocument())
 
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    fireEvent.click(screen.getByTestId('save-button'))
     newGame()
 
     await waitFor(() => expect(screen.getByText('Progress: 0%')).toBeInTheDocument())
@@ -165,7 +167,7 @@ describe('New Game reset', () => {
     fireEvent.click(runButton)
     await screen.findByText('Pass')
 
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    fireEvent.click(screen.getByTestId('save-button'))
     newGame()
     await waitFor(() => expect(screen.getByText('Progress: 0%')).toBeInTheDocument())
 
@@ -184,13 +186,13 @@ describe('New Game reset', () => {
     await screen.findByText('Pass')
     await waitFor(() => expect(screen.getByText(`Progress: ${ONE_MISSION_PERCENTAGE}%`)).toBeInTheDocument())
 
-    fireEvent.click(screen.getByRole('button', { name: 'New Game' }))
-    expect(screen.getByText('Reset all progress?')).toBeInTheDocument()
+    fireEvent.click(screen.getByTestId('new-game-button'))
+    expect(screen.getByTestId('reset-confirm-prompt')).toBeInTheDocument()
     // Progress is untouched while the confirmation is pending.
     expect(screen.getByText(`Progress: ${ONE_MISSION_PERCENTAGE}%`)).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
-    expect(screen.queryByText('Reset all progress?')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByTestId('confirm-reset-cancel-button'))
+    expect(screen.queryByTestId('reset-confirm-prompt')).not.toBeInTheDocument()
     expect(screen.getByText(`Progress: ${ONE_MISSION_PERCENTAGE}%`)).toBeInTheDocument()
   })
 })

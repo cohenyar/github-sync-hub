@@ -6,10 +6,12 @@ test.describe('World reacts to verified queries', () => {
     await page.goto('/world')
     await waitForMissionReady(page)
 
-    await expect(page.locator('[data-district-id="north"]')).toContainText('Stable')
-    await expect(page.locator('[data-district-id="south"]')).toContainText('Unstable')
-    await expect(page.locator('[data-district-id="east"]')).toContainText('Thriving')
-    await expect(page.locator('[data-district-id="core"]')).toContainText('Unstable')
+    // District status labels are Hebrew (he.districtStable/Unstable/Thriving):
+    // 'יציב' / 'לא יציב' / 'משגשג'. Selected by the stable data-district-id.
+    await expect(page.locator('[data-district-id="north"]')).toContainText('יציב')
+    await expect(page.locator('[data-district-id="south"]')).toContainText('לא יציב')
+    await expect(page.locator('[data-district-id="east"]')).toContainText('משגשג')
+    await expect(page.locator('[data-district-id="core"]')).toContainText('לא יציב')
   })
 
   test('the Core district goes from Unstable to Thriving once First Contact passes', async ({ page }) => {
@@ -17,12 +19,12 @@ test.describe('World reacts to verified queries', () => {
     await waitForMissionReady(page)
 
     const core = page.locator('[data-district-id="core"]')
-    await expect(core).toContainText('Unstable')
+    await expect(core).toContainText('לא יציב')
 
     await runSql(page, 'SELECT * FROM citizens;')
     await verdictIsPass(page)
 
-    await expect(core).toContainText('Thriving')
+    await expect(core).toContainText('משגשג')
     await expect(core).toHaveCSS('opacity', '1')
   })
 
@@ -49,6 +51,6 @@ test.describe('World reacts to verified queries', () => {
     await verdictIsFail(page)
 
     await expect(page.getByText(/"signal": 0/)).toBeVisible()
-    await expect(page.locator('[data-district-id="core"]')).toContainText('Unstable')
+    await expect(page.locator('[data-district-id="core"]')).toContainText('לא יציב')
   })
 })

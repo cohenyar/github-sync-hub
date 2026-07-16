@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import GameApp from './GameApp'
 
@@ -14,9 +14,12 @@ vi.mock('./db/database', async () => {
 describe('App', () => {
   it('renders the world map with the sample districts', () => {
     render(<GameApp />)
-    expect(screen.getByText('north')).toBeInTheDocument()
-    expect(screen.getByText('south')).toBeInTheDocument()
-    expect(screen.getByText('east')).toBeInTheDocument()
+    // District cards are identified by their internal id (stable data
+    // attribute); the visible label is now a friendly display name, so query
+    // by the id rather than the label text.
+    expect(document.querySelector('[data-district-id="north"]')).toBeInTheDocument()
+    expect(document.querySelector('[data-district-id="south"]')).toBeInTheDocument()
+    expect(document.querySelector('[data-district-id="east"]')).toBeInTheDocument()
   })
 
   it('starts the Run button disabled until the mission database is ready', () => {
@@ -26,8 +29,11 @@ describe('App', () => {
 
   it('renders the Mission panel content and the Odin placeholder', () => {
     render(<GameApp />)
-    expect(screen.getByRole('region', { name: 'Mission' })).toBeInTheDocument()
-    expect(screen.getByText('First Contact')).toBeInTheDocument()
+    const missionRegion = screen.getByRole('region', { name: 'Mission' })
+    expect(missionRegion).toBeInTheDocument()
+    // The active mission title now also appears in the Journey Summary, so
+    // scope this to the Mission panel to assert its own content specifically.
+    expect(within(missionRegion).getByText('First Contact')).toBeInTheDocument()
     expect(screen.getByRole('region', { name: 'Odin' })).toBeInTheDocument()
   })
 })

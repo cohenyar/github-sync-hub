@@ -1,34 +1,40 @@
 .panel {
-  border: 1px solid var(--border);
-  border-inline-start: 3px solid var(--accent);
-  border-radius: 8px;
-  padding: 12px;
-  background: var(--panel-bg);
-  color: var(--text);
+  border: 1px solid var(--ds-border);
+  border-inline-start: 3px solid var(--ds-ai);
+  border-radius: var(--ds-radius-lg);
+  padding: var(--ds-space-4);
+  background: linear-gradient(180deg, rgba(167, 139, 250, 0.06), rgba(5, 7, 13, 0)), var(--ds-surface);
+  backdrop-filter: var(--ds-glass-blur);
+  -webkit-backdrop-filter: var(--ds-glass-blur);
+  color: var(--ds-text);
   text-align: start;
+  box-shadow: var(--ds-shadow-md);
 }
 
 .title {
-  margin: 0 0 8px;
-  font-size: 0.9rem;
+  margin: 0 0 var(--ds-space-2);
+  font-family: var(--ds-font-display);
+  font-size: var(--ds-text-xs);
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--accent);
+  letter-spacing: 0.06em;
+  color: var(--ds-accent-strong);
 }
 
 .status {
-  margin: 0 0 8px;
-  font-size: 0.8rem;
+  margin: 0 0 var(--ds-space-2);
+  font-size: var(--ds-text-2xs);
   font-weight: 600;
-  color: var(--text-muted);
+  color: var(--ds-text-subtle);
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
 
 .message {
   margin: 0;
-  animation: reveal 0.35s ease-out;
+  color: var(--ds-text);
+  line-height: var(--ds-leading-normal);
+  animation: reveal var(--ds-duration-slow) var(--ds-ease-out);
 }
 
 @keyframes reveal {
@@ -50,19 +56,19 @@
 
 .history {
   list-style: none;
-  margin: 10px 0 0;
-  padding: 10px 0 0;
-  border-top: 1px solid var(--border);
+  margin: var(--ds-space-3) 0 0;
+  padding: var(--ds-space-3) 0 0;
+  border-top: 1px solid var(--ds-border);
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  font-size: 0.8rem;
-  color: var(--text-muted);
+  gap: var(--ds-space-2);
+  font-size: var(--ds-text-xs);
+  color: var(--ds-text-muted);
 }
 
 .history li {
-  padding-inline-start: 10px;
-  border-inline-start: 2px solid var(--border);
+  padding-inline-start: var(--ds-space-3);
+  border-inline-start: 2px solid var(--ds-border);
   line-height: 1.45;
 }
 

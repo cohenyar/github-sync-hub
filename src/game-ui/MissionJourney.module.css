@@ -1,0 +1,40 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-4);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-3);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--ds-space-4);
+}
+
+.primary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-4);
+  min-inline-size: 0;
+}
+
+.aside {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-4);
+  min-inline-size: 0;
+}
+
+/* Desktop: active mission (panel + console) is the dominant column; the
+   mission list is a narrower supporting rail beside it. */
+@media (min-width: 900px) {
+  .grid {
+    grid-template-columns: minmax(0, 1.9fr) minmax(220px, 1fr);
+    align-items: start;
+  }
+}

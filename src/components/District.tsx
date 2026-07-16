@@ -1,13 +1,15 @@
+import { he } from '../i18n'
 import { getNpcsByDistrict } from '../npcs'
 import { getDistrictStatus, type DistrictStatus } from '../worldState'
 import type { DistrictState } from '../worldState/types'
+import { getDistrictDisplayName } from './districtDisplayName'
 import styles from './District.module.css'
 import { toDistrictVisualState } from './visualState'
 
 const DISTRICT_STATUS_LABEL: Record<DistrictStatus, string> = {
-  thriving: 'Thriving',
-  stable: 'Stable',
-  unstable: 'Unstable',
+  thriving: he.districtThriving,
+  stable: he.districtStable,
+  unstable: he.districtUnstable,
 }
 
 export interface DistrictProps {
@@ -21,14 +23,17 @@ export interface DistrictProps {
 export function District({ district, unlockedNpcIds = [], onSelectNpc }: DistrictProps) {
   const visual = toDistrictVisualState(district)
   const status = getDistrictStatus(district)
+  const displayName = getDistrictDisplayName(visual.id)
   const npcs = getNpcsByDistrict(district.id).filter((npc) => unlockedNpcIds.includes(npc.id))
 
   return (
+    // data-district-id stays the internal id (state/tests/selectors); only the
+    // visible label is the friendly display name.
     <div className={styles.district} data-district-id={visual.id} style={{ opacity: 0.3 + visual.intensity * 0.7 }}>
-      <span className={styles.label}>{visual.id}</span>
+      <span className={styles.label}>{displayName}</span>
       <span className={styles.status}>{DISTRICT_STATUS_LABEL[status]}</span>
       {npcs.length > 0 && (
-        <ul className={styles.npcList} aria-label={`NPCs in ${visual.id}`}>
+        <ul className={styles.npcList} aria-label={`NPCs in ${displayName}`}>
           {npcs.map((npc) => (
             <li key={npc.id} className={styles.npcMarker}>
               <button

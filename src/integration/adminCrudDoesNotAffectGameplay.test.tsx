@@ -45,7 +45,7 @@ describe('Admin CRUD does not affect live gameplay', () => {
     const missionBeforeAdmin = getDefaultMission().id
     expect(screen.getByRole('heading', { name: 'First Contact' })).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Admin' }))
+    fireEvent.click(screen.getByTestId('admin-toggle-button'))
     fillMissionForm()
     fireEvent.click(screen.getByRole('button', { name: 'Add Mission' }))
 
@@ -55,7 +55,7 @@ describe('Admin CRUD does not affect live gameplay', () => {
     expect(getDefaultMission().id).toBe(missionBeforeAdmin)
     expect(screen.getByRole('heading', { name: 'First Contact' })).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Hide Admin' }))
+    fireEvent.click(screen.getByTestId('admin-toggle-button'))
 
     fireEvent.change(screen.getByPlaceholderText('-- write your query here'), {
       target: { value: 'SELECT * FROM citizens;' },
@@ -72,7 +72,7 @@ describe('Admin CRUD does not affect live gameplay', () => {
     const progress = createInitialPlayerProgress()
     const unlockedBefore = getUnlockedNpcIds(progress)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Admin' }))
+    fireEvent.click(screen.getByTestId('admin-toggle-button'))
     fireEvent.change(screen.getByLabelText('NPC id'), { target: { value: TEST_NPC_ID } })
     fireEvent.change(screen.getByLabelText('NPC name'), { target: { value: 'Integration Test NPC' } })
     fireEvent.change(screen.getByLabelText('NPC district'), { target: { value: 'north' } })
