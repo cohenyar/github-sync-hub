@@ -25,4 +25,9 @@ export const southStabilityMission: MissionConfig = {
   `,
   referenceSql: "SELECT * FROM district_reports WHERE district = 'south' AND severity >= 3;",
   successEffect: { kind: 'ADJUST_STAT', districtId: 'south', stat: 'stability', delta: 30 },
+  titleHe: 'יציבות הדרום',
+  goalHe: 'העלה את דוחות התקרית החמורים שמערערים את יציבות מחוז הדרום.',
+  promptHe:
+    'הדרום הוא המחוז הכי לא יציב בעיר. במרידיאן מתועדים דוחות אזרחיים, אך לא כולם דורשים טיפול מיידי.\n' +
+    'אתר כל דוח במחוז הדרום שדורג בחומרה 3 ומעלה.',
 }

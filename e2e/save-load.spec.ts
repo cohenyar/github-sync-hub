@@ -5,7 +5,8 @@ import { runSql, verdictIsPass, waitForMissionReady } from './helpers.js'
 // expand it before asserting on its contents. Resets closed on every full
 // page navigation, so it needs re-opening after each reload.
 async function openDebugView(page: import('@playwright/test').Page) {
-  await page.getByRole('button', { name: 'Show Raw World State' }).click()
+  // he.showRawWorldState
+  await page.getByRole('button', { name: 'הצג מצב עולם גולמי' }).click()
 }
 
 test.describe('Save/Load and load-on-boot persist world and progress across a real reload', () => {

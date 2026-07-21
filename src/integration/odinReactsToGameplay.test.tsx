@@ -2,6 +2,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import GameApp from '../GameApp'
+import { he } from '../i18n'
 
 vi.mock('../db/database', async () => {
   const { createTestDatabase } = await import('../verifier/testDb')
@@ -9,7 +10,7 @@ vi.mock('../db/database', async () => {
 })
 
 async function readyRunButton() {
-  const runButton = await screen.findByRole('button', { name: 'Run' })
+  const runButton = await screen.findByRole('button', { name: he.run })
   await waitFor(() => expect(runButton).toBeEnabled())
   return runButton
 }
@@ -20,31 +21,31 @@ describe('Odin reacts to real gameplay end to end', () => {
     await readyRunButton()
 
     await waitFor(() => {
-      expect(screen.getByText('A new query awaits. I am listening.')).toBeInTheDocument()
+      expect(screen.getByText('שאילתה חדשה ממתינה. אני מקשיב.')).toBeInTheDocument()
     })
-    expect(screen.getByText('Status: Deterministic / Offline')).toBeInTheDocument()
+    expect(screen.getByText(he.odinStatusLabel)).toBeInTheDocument()
   })
 
   it('comments on the restored signal when First Contact passes, then hints at District Ties unlocking', async () => {
     render(<GameApp />)
     const runButton = await readyRunButton()
 
-    fireEvent.change(screen.getByPlaceholderText('-- write your query here'), {
+    fireEvent.change(screen.getByPlaceholderText(he.sqlPlaceholder), {
       target: { value: 'SELECT * FROM citizens;' },
     })
     fireEvent.click(runButton)
 
-    await screen.findByText('Pass')
+    await screen.findByText(he.pass)
 
     await waitFor(() => {
-      expect(screen.getByText('The signal is steady now. Meridian can see its people again.')).toBeInTheDocument()
+      expect(screen.getByText('האות יציב כעת. מרידיאן שוב רואה את תושביה.')).toBeInTheDocument()
     })
 
     // District Ties unlocking follows in the narration history once the
     // unlock-reaction effect catches up to the updated progress.
     await waitFor(() => {
       expect(
-        screen.getByText('The city is beginning to respond. District Ties is ready to be traced.'),
+        screen.getByText('העיר מתחילה להשיב. אפשר כעת להתחקות אחר קשרי המחוז.'),
       ).toBeInTheDocument()
     })
   })
@@ -53,17 +54,17 @@ describe('Odin reacts to real gameplay end to end', () => {
     render(<GameApp />)
     const runButton = await readyRunButton()
 
-    fireEvent.change(screen.getByPlaceholderText('-- write your query here'), {
+    fireEvent.change(screen.getByPlaceholderText(he.sqlPlaceholder), {
       target: { value: 'SELECT * FROM citizens WHERE id = 1;' },
     })
     fireEvent.click(runButton)
 
-    await screen.findByText('Fail')
+    await screen.findByText(he.fail)
 
-    expect(screen.queryByText(/signal is steady/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/האות יציב/)).not.toBeInTheDocument()
     await waitFor(() => {
       expect(
-        screen.getByText("Close, but the records don't match yet. Look again at what the query returns."),
+        screen.getByText('קרוב, אך הרשומות עדיין לא תואמות. הבט שוב במה שהשאילתה מחזירה.'),
       ).toBeInTheDocument()
     })
   })
@@ -72,15 +73,15 @@ describe('Odin reacts to real gameplay end to end', () => {
     render(<GameApp />)
     const runButton = await readyRunButton()
 
-    fireEvent.change(screen.getByPlaceholderText('-- write your query here'), {
+    fireEvent.change(screen.getByPlaceholderText(he.sqlPlaceholder), {
       target: { value: 'NOT VALID SQL' },
     })
     fireEvent.click(runButton)
 
-    await screen.findByText(/SQL error/)
+    await screen.findByText(new RegExp(`^${he.sqlErrorPrefix}`))
 
     await waitFor(() => {
-      expect(screen.getByText("That query didn't run. Check the syntax and try again.")).toBeInTheDocument()
+      expect(screen.getByText('לא ניתן היה להריץ את השאילתה. בדוק את התחביר ונסה שוב.')).toBeInTheDocument()
     })
   })
 
@@ -89,30 +90,30 @@ describe('Odin reacts to real gameplay end to end', () => {
     const runButton = await readyRunButton()
 
     // Pass First Contact to unlock District Ties.
-    fireEvent.change(screen.getByPlaceholderText('-- write your query here'), {
+    fireEvent.change(screen.getByPlaceholderText(he.sqlPlaceholder), {
       target: { value: 'SELECT * FROM citizens;' },
     })
     fireEvent.click(runButton)
-    await screen.findByText('Pass')
+    await screen.findByText(he.pass)
 
-    fireEvent.click(await screen.findByRole('button', { name: 'District Ties (Available)' }))
+    fireEvent.click(await screen.findByRole('button', { name: `קשרי מחוז (${he.available})` }))
     await readyRunButton()
 
     // Wrong district value — a valid query, wrong result.
-    fireEvent.change(screen.getByPlaceholderText('-- write your query here'), {
+    fireEvent.change(screen.getByPlaceholderText(he.sqlPlaceholder), {
       target: { value: "SELECT * FROM citizens WHERE district = 'south';" },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Run' }))
+    fireEvent.click(screen.getByRole('button', { name: he.run }))
 
-    await screen.findByText('Fail')
+    await screen.findByText(he.fail)
 
     await waitFor(() => {
       expect(
-        screen.getByText('Check the district value in your WHERE clause — it should match North exactly.'),
+        screen.getByText('בדוק את ערך המחוז בתנאי ה-WHERE שלך — הוא צריך להתאים בדיוק לצפון.'),
       ).toBeInTheDocument()
     })
     expect(
-      screen.queryByText("Close, but the records don't match yet. Look again at what the query returns."),
+      screen.queryByText('קרוב, אך הרשומות עדיין לא תואמות. הבט שוב במה שהשאילתה מחזירה.'),
     ).not.toBeInTheDocument()
   })
 })

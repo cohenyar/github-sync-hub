@@ -1,4 +1,6 @@
 import type { CampaignSummary } from '../campaign/types'
+import { he } from '../i18n'
+import { getMissionDisplayText } from '../missions/missionDisplayText'
 import type { MissionPhase } from '../missions/missionManager'
 import type { MissionConfig } from '../missions/types'
 import type { ContentStatus } from '../unlocks'
@@ -16,17 +18,20 @@ export interface MissionPanelProps {
   onContinue?: () => void
 }
 
+// 'active' has no dedicated phase key of its own — he.phaseActive covers it.
+// 'completed' intentionally reuses he.completed (the same word already used
+// for content status) rather than a near-duplicate key.
 const PHASE_LABEL: Record<MissionPhase, string> = {
-  loading: 'Preparing…',
-  active: 'In Progress',
-  completed: 'Completed',
-  error: 'Error',
+  loading: he.phaseLoading,
+  active: he.phaseActive,
+  completed: he.completed,
+  error: he.phaseError,
 }
 
 const CONTENT_STATUS_LABEL: Record<ContentStatus, string> = {
-  locked: 'Locked',
-  available: 'Available',
-  completed: 'Completed',
+  locked: he.locked,
+  available: he.available,
+  completed: he.completed,
 }
 
 export function MissionPanel({
@@ -42,19 +47,20 @@ export function MissionPanel({
   const showContinue = Boolean(
     onContinue && phase === 'completed' && nextMission && nextMissionContentStatus !== 'locked',
   )
+  const display = getMissionDisplayText(mission)
 
   return (
-    <section className={styles.panel} aria-label="Mission" data-testid="mission-panel">
-      <h2 className={styles.title}>Mission</h2>
+    <section className={styles.panel} aria-label={he.missionPanelTitle} data-testid="mission-panel">
+      <h2 className={styles.title}>{he.missionPanelTitle}</h2>
       <h3 data-testid="active-mission-title" data-mission-id={mission.id}>
-        {mission.title}
+        {display.title}
       </h3>
 
       {campaignSummary && (
         <div
           className={styles.progress}
           role="progressbar"
-          aria-label="Campaign progress"
+          aria-label={he.campaignProgressLabel}
           aria-valuenow={campaignSummary.completedMissions}
           aria-valuemin={0}
           aria-valuemax={campaignSummary.totalMissions}
@@ -75,8 +81,8 @@ export function MissionPanel({
       {/* The goal is the one line a player actually needs to act on — it
           leads, ahead of the supporting flavor text and the meta/status
           readouts below. */}
-      <p className={styles.goal}>{mission.goal}</p>
-      <p className={styles.flavor}>{mission.prompt}</p>
+      <p className={styles.goal}>{display.goal}</p>
+      <p className={styles.flavor}>{display.prompt}</p>
 
       {(campaignSummary || contentStatus || typeof completionPercentage === 'number' || phase) && (
         <div className={styles.metaRow}>
@@ -87,22 +93,22 @@ export function MissionPanel({
               data-current={campaignSummary.currentMissionIndex ?? undefined}
               data-total={campaignSummary.totalMissions}
             >
-              Mission {campaignSummary.currentMissionIndex ?? '—'} of {campaignSummary.totalMissions}
+              {he.missionLabel} {campaignSummary.currentMissionIndex ?? '—'} {he.ofLabel} {campaignSummary.totalMissions}
             </span>
           )}
           {contentStatus && (
             <span className={styles.badge} data-testid="content-status-badge" data-status={contentStatus}>
-              Content: {CONTENT_STATUS_LABEL[contentStatus]}
+              {he.contentLabelPrefix}{CONTENT_STATUS_LABEL[contentStatus]}
             </span>
           )}
           {typeof completionPercentage === 'number' && (
             <span className={styles.badge} data-testid="progress-badge" data-percentage={completionPercentage}>
-              Progress: {completionPercentage}%
+              {he.progressLabelPrefix}{completionPercentage}%
             </span>
           )}
           {phase && (
             <span className={styles.badge} data-testid="phase-badge" data-phase={phase}>
-              Status: {PHASE_LABEL[phase]}
+              {he.statusLabelPrefix}{PHASE_LABEL[phase]}
             </span>
           )}
         </div>
@@ -115,14 +121,14 @@ export function MissionPanel({
           data-mission-id={nextMission.id}
           data-status={nextMissionContentStatus}
         >
-          Next: {nextMission.title}
+          {he.nextLabelPrefix}{getMissionDisplayText(nextMission).title}
           {nextMissionContentStatus && ` (${CONTENT_STATUS_LABEL[nextMissionContentStatus]})`}
         </p>
       )}
 
       {showContinue && (
         <button type="button" className={styles.continueButton} data-testid="continue-button" onClick={onContinue}>
-          Continue to {nextMission!.title}
+          {he.continueToPrefix}{getMissionDisplayText(nextMission!).title}
         </button>
       )}
     </section>

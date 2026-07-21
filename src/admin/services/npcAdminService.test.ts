@@ -65,6 +65,15 @@ describe('editNpc', () => {
     expect(getNpcById(TEST_ID)?.unlockConditions).toEqual([{ kind: 'always' }])
   })
 
+  it("does not clobber an existing NPC's Hebrew display fields, since the draft never carries them", () => {
+    addNpc({ ...draft(), roleHe: 'תפקיד', descriptionHe: 'תיאור' })
+
+    const result = editNpc(TEST_ID, { ...draft(), name: 'Renamed' })
+
+    expect(result.success).toBe(true)
+    expect(getNpcById(TEST_ID)).toMatchObject({ roleHe: 'תפקיד', descriptionHe: 'תיאור' })
+  })
+
   it('rejects an invalid update without mutating the registry', () => {
     createNpc(draft())
     const result = editNpc(TEST_ID, { ...draft(), districtId: 'nowhere' })

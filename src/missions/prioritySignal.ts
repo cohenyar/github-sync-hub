@@ -34,4 +34,9 @@ export const prioritySignalMission: MissionConfig = {
   referenceSql: 'SELECT * FROM signal_reports ORDER BY severity DESC;',
   verifyOptions: { ordered: true },
   successEffect: { kind: 'ADJUST_STAT', districtId: 'south', stat: 'stability', delta: 20 },
+  titleHe: 'אות בעדיפות',
+  goalHe: 'סדר את דוחות התקרית הפתוחים של מרידיאן מהדחוף ביותר לפחות דחוף.',
+  promptHe:
+    'מוקד הרשומות שומע כעת כל מחוז, אך עדיין לא יודע במה לטפל קודם.\n' +
+    'מיין את הדוחות הפתוחים כך שהחמור ביותר יעלה לראש הרשימה.',
 }

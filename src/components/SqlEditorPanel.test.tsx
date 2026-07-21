@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
+import { he } from '../i18n'
 import type { MissionStatus } from '../missions/missionManager'
 import type { MissionConfig } from '../missions/types'
 import { SqlEditorPanel } from './SqlEditorPanel'
@@ -21,48 +22,69 @@ function status(overrides: Partial<MissionStatus> = {}): MissionStatus {
 describe('SqlEditorPanel', () => {
   it('disables Run while the mission database is loading', () => {
     render(<SqlEditorPanel status={status({ phase: 'loading' })} onRun={vi.fn()} />)
-    expect(screen.getByRole('button', { name: 'Run' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: he.run })).toBeDisabled()
   })
 
   it('enables Run once the mission is active', () => {
     render(<SqlEditorPanel status={status({ phase: 'active' })} onRun={vi.fn()} />)
-    expect(screen.getByRole('button', { name: 'Run' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: he.run })).toBeEnabled()
   })
 
   it('keeps Run enabled once the mission is completed', () => {
     render(<SqlEditorPanel status={status({ phase: 'completed' })} onRun={vi.fn()} />)
-    expect(screen.getByRole('button', { name: 'Run' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: he.run })).toBeEnabled()
   })
 
   it('disables Run when the database failed to prepare', () => {
     render(<SqlEditorPanel status={status({ phase: 'error', error: 'boom' })} onRun={vi.fn()} />)
-    expect(screen.getByRole('button', { name: 'Run' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: he.run })).toBeDisabled()
   })
 
   it('calls onRun with the current textarea contents', () => {
     const onRun = vi.fn()
     render(<SqlEditorPanel status={status()} onRun={onRun} />)
 
-    fireEvent.change(screen.getByPlaceholderText('-- write your query here'), {
+    fireEvent.change(screen.getByPlaceholderText(he.sqlPlaceholder), {
       target: { value: 'SELECT * FROM citizens' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Run' }))
+    fireEvent.click(screen.getByRole('button', { name: he.run }))
 
     expect(onRun).toHaveBeenCalledWith('SELECT * FROM citizens')
   })
 
-  it('shows a database preparation error', () => {
+  it('shows a Hebrew database preparation error, never the raw technical message', () => {
     render(<SqlEditorPanel status={status({ phase: 'error', error: 'boom' })} onRun={vi.fn()} />)
-    expect(screen.getByText('Failed to prepare database: boom')).toBeInTheDocument()
+    expect(screen.getByText(he.databasePrepareErrorMessage)).toBeInTheDocument()
+    expect(screen.queryByText(/boom/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Failed to prepare database/)).not.toBeInTheDocument()
+  })
+
+  it('shows a retry button on a database error and calls onRetry when clicked', () => {
+    const onRetry = vi.fn()
+    render(<SqlEditorPanel status={status({ phase: 'error', error: 'boom' })} onRun={vi.fn()} onRetry={onRetry} />)
+
+    const retryButton = screen.getByTestId('retry-database-button')
+    expect(retryButton).toHaveTextContent(he.retryDatabaseSetup)
+
+    fireEvent.click(retryButton)
+    expect(onRetry).toHaveBeenCalledTimes(1)
+  })
+
+  it('shows no retry button when onRetry is not provided, or when there is no database error', () => {
+    const { rerender } = render(<SqlEditorPanel status={status({ phase: 'error', error: 'boom' })} onRun={vi.fn()} />)
+    expect(screen.queryByTestId('retry-database-button')).not.toBeInTheDocument()
+
+    rerender(<SqlEditorPanel status={status({ phase: 'active' })} onRun={vi.fn()} onRetry={vi.fn()} />)
+    expect(screen.queryByTestId('retry-database-button')).not.toBeInTheDocument()
   })
 
   it('shows a SQL error result without a verdict banner', () => {
     render(
       <SqlEditorPanel status={status({ lastResult: { kind: 'error', message: 'syntax error' } })} onRun={vi.fn()} />,
     )
-    expect(screen.getByText('SQL error: syntax error')).toBeInTheDocument()
-    expect(screen.queryByText('Pass')).not.toBeInTheDocument()
-    expect(screen.queryByText('Fail')).not.toBeInTheDocument()
+    expect(screen.getByText(`${he.sqlErrorPrefix}syntax error`)).toBeInTheDocument()
+    expect(screen.queryByText(he.pass)).not.toBeInTheDocument()
+    expect(screen.queryByText(he.fail)).not.toBeInTheDocument()
   })
 
   it('shows a passing verdict and the result table', () => {
@@ -76,7 +98,7 @@ describe('SqlEditorPanel', () => {
     }
     render(<SqlEditorPanel status={status({ lastResult: { kind: 'verdict', verdict } })} onRun={vi.fn()} />)
 
-    expect(screen.getByText('Pass')).toBeInTheDocument()
+    expect(screen.getByText(he.pass)).toBeInTheDocument()
     expect(screen.getByText('Iris Vell')).toBeInTheDocument()
   })
 
@@ -84,6 +106,6 @@ describe('SqlEditorPanel', () => {
     const verdict = { pass: false, missing: [{ id: 2 }], extra: [], orderWrong: false, expected: [], actual: [] }
     render(<SqlEditorPanel status={status({ lastResult: { kind: 'verdict', verdict } })} onRun={vi.fn()} />)
 
-    expect(screen.getByText('Fail')).toBeInTheDocument()
+    expect(screen.getByText(he.fail)).toBeInTheDocument()
   })
 })

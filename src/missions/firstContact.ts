@@ -29,4 +29,9 @@ export const firstContactMission: MissionConfig = {
   `,
   referenceSql: 'SELECT * FROM citizens;',
   successEffect: { kind: 'SET_STAT', districtId: 'core', stat: 'signal', value: 100 },
+  titleHe: 'מגע ראשון',
+  goalHe: 'הפעל את מוקד הרשומות באמצעות איתור התושבים הרשומים בעיר.',
+  promptHe:
+    'מוקד הרשומות עיוור. במרידיאן יש תושבים, אך העיר עדיין לא רואה אותם.\n' +
+    'שאל את מרשם התושבים והעלה את האות הראשון.',
 }

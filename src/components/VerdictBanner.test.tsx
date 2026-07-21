@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
+import { he } from '../i18n'
 import type { Verdict } from '../verifier'
 import { VerdictBanner } from './VerdictBanner'
 
@@ -11,22 +12,22 @@ function verdict(overrides: Partial<Verdict> = {}): Verdict {
 describe('VerdictBanner', () => {
   it('shows Pass for a passing verdict', () => {
     render(<VerdictBanner verdict={verdict({ pass: true })} />)
-    expect(screen.getByText('Pass')).toBeInTheDocument()
+    expect(screen.getByText(he.pass)).toBeInTheDocument()
   })
 
   it('shows Fail for a failing verdict', () => {
     render(<VerdictBanner verdict={verdict()} />)
-    expect(screen.getByText('Fail')).toBeInTheDocument()
+    expect(screen.getByText(he.fail)).toBeInTheDocument()
   })
 
   it('shows no hint for a passing verdict', () => {
     render(<VerdictBanner verdict={verdict({ pass: true })} />)
-    expect(screen.queryByText(/Expected/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/ציפינו/)).not.toBeInTheDocument()
   })
 
   it('shows no hint when a failing verdict has no missing or extra rows (e.g. orderWrong only)', () => {
     render(<VerdictBanner verdict={verdict({ orderWrong: true })} />)
-    expect(screen.queryByText(/Expected/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/ציפינו/)).not.toBeInTheDocument()
   })
 
   it('hints that the filter may be too narrow when rows are missing', () => {
@@ -36,7 +37,9 @@ describe('VerdictBanner', () => {
       actual: [{ id: 1 }],
     })
     render(<VerdictBanner verdict={v} />)
-    expect(screen.getByText('Expected 4 rows, got 1. Missing 3 rows — your filter may be too narrow.')).toBeInTheDocument()
+    expect(
+      screen.getByText('ציפינו ל-4 שורות, התקבלו 1. חסרות 3 שורות — ייתכן שהתנאי מצומצם מדי.'),
+    ).toBeInTheDocument()
   })
 
   it('hints that the filter may be too broad when there are unexpected rows', () => {
@@ -47,7 +50,7 @@ describe('VerdictBanner', () => {
     })
     render(<VerdictBanner verdict={v} />)
     expect(
-      screen.getByText('Expected 1 row, got 2. 1 unexpected row — your filter may be too broad.'),
+      screen.getByText('ציפינו ל-1 שורות, התקבלו 2. 1 שורות מיותרות — ייתכן שהתנאי רחב מדי.'),
     ).toBeInTheDocument()
   })
 
@@ -60,7 +63,7 @@ describe('VerdictBanner', () => {
     })
     render(<VerdictBanner verdict={v} />)
     expect(
-      screen.getByText('Expected 2 rows, got 2. Missing 1, 1 unexpected — check your filter conditions.'),
+      screen.getByText('ציפינו ל-2 שורות, התקבלו 2. חסרות 1, 1 מיותרות — בדוק את תנאי הסינון.'),
     ).toBeInTheDocument()
   })
 })

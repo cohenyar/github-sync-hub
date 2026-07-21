@@ -95,7 +95,7 @@ test.describe('Phase 2 primary 3D scene: the canonical world-scene loop', () => 
     // East Broker (unconditionally unlocked by first-contact) — the toast
     // settles on the latter, which is the real, final narration for this
     // moment, same as it already was in the existing OdinPanel.
-    await expect(page.getByTestId('odin-presence')).toContainText('Something new has opened within the city.')
+    await expect(page.getByTestId('odin-presence')).toContainText('משהו חדש נפתח בתוך העיר.')
 
     await page.getByTestId('return-to-world-button').click()
     await expect(page.getByTestId('world-scene-3d')).toBeVisible()
@@ -147,7 +147,7 @@ test.describe('Phase 2 primary 3D scene: the canonical world-scene loop', () => 
 
     await page.getByTestId('toggle-world-scene-button').click()
     await expect(page.getByTestId('world-scene-3d')).not.toBeVisible()
-    await expect(page.getByRole('button', { name: 'Run' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'הרץ' /* he.run */ })).toBeVisible()
   })
 
   test('Hub World, A1: a locked destination shows the locked prompt and never opens a Terminal on interaction', async ({
@@ -278,5 +278,73 @@ test.describe('Phase 2 primary 3D scene: the canonical world-scene loop', () => 
     await expect(page.getByTestId('npc-dialogue')).toBeVisible()
 
     expect(errors).toEqual([])
+  })
+
+  test('Bug A regression: pressing Enter to interact does not re-activate the control-bar button that was clicked to enter the world', async ({
+    page,
+  }) => {
+    await page.goto('/world')
+
+    // A real pointer click, exactly like a player would use — this is the
+    // click that used to leave the toggle button stale-focused.
+    await page.getByTestId('toggle-world-scene-button').click()
+    await expect(page.getByTestId('world-scene-3d')).toBeVisible()
+
+    await expect(page.getByTestId('interaction-prompt')).toHaveAttribute('data-interactable-id', 'north-warden')
+
+    // Enter, not KeyE — every other test in this file uses KeyE, which is
+    // exactly why this bug had no prior coverage: only Enter also happens to
+    // be the native activation key for a focused <button>.
+    await page.keyboard.press('Enter')
+
+    // Before the fix, this keypress would also re-click the still-focused
+    // world-scene toggle, flipping back to the classic dashboard mid-
+    // interaction. The world scene must still be showing, with the dialogue
+    // that Enter was actually meant to open.
+    await expect(page.getByTestId('world-scene-3d')).toBeVisible()
+    const dialogue = page.getByTestId('npc-dialogue')
+    await expect(dialogue).toBeVisible()
+    await expect(dialogue).toHaveAttribute('data-npc-id', 'north-warden')
+  })
+
+  test('Bug A fix does not affect keyboard operation of the control bar itself', async ({ page }) => {
+    await page.goto('/world')
+    const muteButton = page.getByTestId('mute-toggle-button')
+
+    // Arrive at the button via focus (as a keyboard user tabbing to it
+    // would), then activate it with Enter — a real keyboard activation,
+    // which must keep working exactly as before.
+    await muteButton.focus()
+    await expect(muteButton).toHaveAttribute('aria-pressed', 'true')
+    await page.keyboard.press('Enter')
+    await expect(muteButton).toHaveAttribute('aria-pressed', 'false')
+  })
+
+  test('Bug B regression: the interaction prompt and district HUD never intercept pointer input', async ({ page }) => {
+    await page.goto('/world')
+    await page.getByTestId('toggle-world-scene-button').click()
+    await expect(page.getByTestId('world-scene-3d')).toBeVisible()
+
+    await expect(page.getByTestId('interaction-prompt')).toHaveAttribute('data-interactable-id', 'north-warden')
+
+    // jsdom doesn't apply real CSS, so this is only meaningfully checkable
+    // in a real browser — confirms the actual fix, not just its intent.
+    const promptPointerEvents = await page
+      .getByTestId('interaction-prompt')
+      // e2e files type-check under an ES2023-only lib (no DOM) — this
+      // callback still runs in a real browser via Playwright at test time,
+      // where getComputedStyle genuinely exists; the `any` cast sidesteps
+      // the missing ambient declaration without widening the shared tsconfig.
+      .evaluate((el) => (globalThis as any).getComputedStyle(el).pointerEvents as string)
+    expect(promptPointerEvents).toBe('none')
+
+    const hudPointerEvents = await page
+      .getByTestId('district-status-hud')
+      // e2e files type-check under an ES2023-only lib (no DOM) — this
+      // callback still runs in a real browser via Playwright at test time,
+      // where getComputedStyle genuinely exists; the `any` cast sidesteps
+      // the missing ambient declaration without widening the shared tsconfig.
+      .evaluate((el) => (globalThis as any).getComputedStyle(el).pointerEvents as string)
+    expect(hudPointerEvents).toBe('none')
   })
 })

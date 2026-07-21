@@ -61,7 +61,7 @@ test.describe('Vertical slice: the full six-mission campaign is playable end to 
 
     // The campaign-completion-gated NPC appears, and Odin narrates the close.
     await expect(page.locator('[data-npc-id="city-voice"]')).toBeVisible()
-    await expect(page.getByText('Every thread accounted for. Meridian answers as one city now.')).toBeVisible()
+    await expect(page.getByText('כל החוטים התחברו. מרידיאן עונה כעת כעיר אחת.')).toBeVisible()
 
     // The distinct campaign-completion visual moment (Sprint 1 polish).
     await expect(page.getByTestId('campaign-complete-banner')).toBeVisible()

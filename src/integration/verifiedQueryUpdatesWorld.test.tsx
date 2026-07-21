@@ -2,6 +2,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import GameApp from '../GameApp'
+import { he } from '../i18n'
 
 // The real createDatabase() loads sql.js's wasm binary via a Vite asset URL,
 // which has no server to fetch from under jsdom. Swap in the Node-friendly
@@ -12,7 +13,7 @@ vi.mock('../db/database', async () => {
 })
 
 async function readyRunButton() {
-  const runButton = await screen.findByRole('button', { name: 'Run' })
+  const runButton = await screen.findByRole('button', { name: he.run })
   await waitFor(() => expect(runButton).toBeEnabled())
   return runButton
 }
@@ -20,7 +21,7 @@ async function readyRunButton() {
 // The raw world-state JSON is a collapsed debug view (Sprint 1 polish) —
 // expand it before asserting on its contents.
 function openDebugView() {
-  fireEvent.click(screen.getByRole('button', { name: 'Show Raw World State' }))
+  fireEvent.click(screen.getByRole('button', { name: he.showRawWorldState }))
 }
 
 describe('A verified query changes the visible world (Information is Action)', () => {
@@ -31,12 +32,12 @@ describe('A verified query changes the visible world (Information is Action)', (
 
     expect(screen.getByText(/"signal": 0/)).toBeInTheDocument()
 
-    fireEvent.change(screen.getByPlaceholderText('-- write your query here'), {
+    fireEvent.change(screen.getByPlaceholderText(he.sqlPlaceholder), {
       target: { value: 'SELECT * FROM citizens;' },
     })
     fireEvent.click(runButton)
 
-    await screen.findByText('Pass')
+    await screen.findByText(he.pass)
     expect(screen.getByText(/"signal": 100/)).toBeInTheDocument()
     expect(screen.queryByText(/"signal": 0/)).not.toBeInTheDocument()
   })
@@ -46,12 +47,12 @@ describe('A verified query changes the visible world (Information is Action)', (
     const runButton = await readyRunButton()
     openDebugView()
 
-    fireEvent.change(screen.getByPlaceholderText('-- write your query here'), {
+    fireEvent.change(screen.getByPlaceholderText(he.sqlPlaceholder), {
       target: { value: 'SELECT * FROM citizens WHERE id = 1;' },
     })
     fireEvent.click(runButton)
 
-    await screen.findByText('Fail')
+    await screen.findByText(he.fail)
     expect(screen.getByText(/"signal": 0/)).toBeInTheDocument()
   })
 })

@@ -2,6 +2,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import GameApp from '../GameApp'
+import { he } from '../i18n'
 
 vi.mock('../db/database', async () => {
   const { createTestDatabase } = await import('../verifier/testDb')
@@ -9,7 +10,7 @@ vi.mock('../db/database', async () => {
 })
 
 async function readyRunButton() {
-  const runButton = await screen.findByRole('button', { name: 'Run' })
+  const runButton = await screen.findByRole('button', { name: he.run })
   await waitFor(() => expect(runButton).toBeEnabled())
   return runButton
 }
@@ -25,10 +26,10 @@ describe('Clicking an NPC marker on the World Map', () => {
     fireEvent.click(marker)
 
     expect(await screen.findByRole('heading', { name: 'Devrin Kass' })).toBeInTheDocument()
-    expect(screen.getByText(/District Warden/)).toBeInTheDocument()
-    expect(screen.getByText("Keeps watch over North district's loyalty to Meridian.")).toBeInTheDocument()
+    expect(screen.getByText(/שומר המחוז/)).toBeInTheDocument()
+    expect(screen.getByText('שומר על נאמנות מחוז הצפון למרידיאן.')).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Close' }))
+    fireEvent.click(screen.getByRole('button', { name: he.close }))
 
     expect(screen.queryByRole('heading', { name: 'Devrin Kass' })).not.toBeInTheDocument()
   })
@@ -39,14 +40,14 @@ describe('Clicking an NPC marker on the World Map', () => {
 
     fireEvent.click(screen.getByText('Devrin Kass'))
     await screen.findByRole('heading', { name: 'Devrin Kass' })
-    fireEvent.click(screen.getByRole('button', { name: 'Close' }))
+    fireEvent.click(screen.getByRole('button', { name: he.close }))
 
     const runButton = await readyRunButton()
-    fireEvent.change(screen.getByPlaceholderText('-- write your query here'), {
+    fireEvent.change(screen.getByPlaceholderText(he.sqlPlaceholder), {
       target: { value: 'SELECT * FROM citizens;' },
     })
     fireEvent.click(runButton)
 
-    await screen.findByText('Pass')
+    await screen.findByText(he.pass)
   })
 })

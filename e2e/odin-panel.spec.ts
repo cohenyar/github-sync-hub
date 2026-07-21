@@ -13,8 +13,8 @@ test.describe('Odin narrates real gameplay events', () => {
     await waitForMissionReady(page)
 
     await expect(page.getByTestId('odin-panel')).toBeVisible()
-    await expect(page.getByText('Status: Deterministic / Offline')).toBeVisible()
-    await expect(page.getByTestId('odin-latest-message')).toHaveText('A new query awaits. I am listening.')
+    await expect(page.getByText('סטטוס: דטרמיניסטי / לא מקוון' /* he.odinStatusLabel */)).toBeVisible()
+    await expect(page.getByTestId('odin-latest-message')).toHaveText('שאילתה חדשה ממתינה. אני מקשיב.')
 
     expect(errors).toEqual([])
   })
@@ -34,7 +34,7 @@ test.describe('Odin narrates real gameplay events', () => {
     await runSql(page, 'SELECT * FROM citizens;')
     await verdictIsPass(page)
 
-    await expect(page.getByText('The signal is steady now. Meridian can see its people again.')).toBeVisible()
+    await expect(page.getByText('האות יציב כעת. מרידיאן שוב רואה את תושביה.')).toBeVisible()
 
     // District Ties unlocking is a few React render cycles downstream of the
     // Pass verdict (Progression update -> unlock-check effect -> Odin
@@ -44,11 +44,11 @@ test.describe('Odin narrates real gameplay events', () => {
     // also unlocks an NPC via a separate ContentUnlocked event, so which of
     // the two ends up "latest" isn't guaranteed, only that both appear).
     await expect(
-      page.getByTestId('odin-panel').getByText('The city is beginning to respond. District Ties is ready to be traced.'),
+      page.getByTestId('odin-panel').getByText('העיר מתחילה להשיב. אפשר כעת להתחקות אחר קשרי המחוז.'),
     ).toBeVisible({ timeout: 10_000 })
 
     const history = page.getByTestId('odin-history')
-    await expect(history).toContainText('The signal is steady now. Meridian can see its people again.')
+    await expect(history).toContainText('האות יציב כעת. מרידיאן שוב רואה את תושביה.')
 
     expect(errors).toEqual([])
   })
@@ -66,12 +66,12 @@ test.describe('Odin narrates real gameplay events', () => {
     await runSql(page, 'SELECT * FROM citizens WHERE id = 1;')
     await verdictIsFail(page)
     await expect(
-      page.getByText("Close, but the records don't match yet. Look again at what the query returns."),
+      page.getByText('קרוב, אך הרשומות עדיין לא תואמות. הבט שוב במה שהשאילתה מחזירה.'),
     ).toBeVisible()
 
     await runSql(page, 'NOT VALID SQL')
     await expect(page.getByTestId('sql-error-message')).toBeVisible()
-    await expect(page.getByText("That query didn't run. Check the syntax and try again.")).toBeVisible()
+    await expect(page.getByText('לא ניתן היה להריץ את השאילתה. בדוק את התחביר ונסה שוב.')).toBeVisible()
 
     expect(errors).toEqual([])
   })
@@ -95,7 +95,7 @@ test.describe('Odin narrates real gameplay events', () => {
     await runSql(page, "SELECT * FROM citizens WHERE district = 'south';")
     await verdictIsFail(page)
     await expect(
-      page.getByText('Check the district value in your WHERE clause — it should match North exactly.'),
+      page.getByText('בדוק את ערך המחוז בתנאי ה-WHERE שלך — הוא צריך להתאים בדיוק לצפון.'),
     ).toBeVisible()
 
     expect(errors).toEqual([])

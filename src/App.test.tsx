@@ -2,6 +2,7 @@
 import { render, screen, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import GameApp from './GameApp'
+import { he } from './i18n'
 
 // The real createDatabase() loads sql.js's wasm binary via a Vite asset URL,
 // which has no server to fetch from under jsdom. Swap in the Node-friendly
@@ -24,16 +25,16 @@ describe('App', () => {
 
   it('starts the Run button disabled until the mission database is ready', () => {
     render(<GameApp />)
-    expect(screen.getByRole('button', { name: 'Run' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: he.run })).toBeDisabled()
   })
 
   it('renders the Mission panel content and the Odin placeholder', () => {
     render(<GameApp />)
-    const missionRegion = screen.getByRole('region', { name: 'Mission' })
+    const missionRegion = screen.getByRole('region', { name: he.missionPanelTitle })
     expect(missionRegion).toBeInTheDocument()
     // The active mission title now also appears in the Journey Summary, so
     // scope this to the Mission panel to assert its own content specifically.
-    expect(within(missionRegion).getByText('First Contact')).toBeInTheDocument()
+    expect(within(missionRegion).getByText('מגע ראשון')).toBeInTheDocument()
     expect(screen.getByRole('region', { name: 'Odin' })).toBeInTheDocument()
   })
 })

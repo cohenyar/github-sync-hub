@@ -2,6 +2,7 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import GameApp from '../GameApp'
+import { he } from '../i18n'
 
 vi.mock('../db/database', async () => {
   const { createTestDatabase } = await import('../verifier/testDb')
@@ -9,7 +10,7 @@ vi.mock('../db/database', async () => {
 })
 
 async function readyRunButton() {
-  const runButton = await screen.findByRole('button', { name: 'Run' })
+  const runButton = await screen.findByRole('button', { name: he.run })
   await waitFor(() => expect(runButton).toBeEnabled())
   return runButton
 }

@@ -28,7 +28,7 @@ describe('Routing foundation', () => {
 
   it('renders the real game, unwrapped, at /world', async () => {
     renderAt('/world')
-    expect(await screen.findByRole('button', { name: 'Run' })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: he.run })).toBeInTheDocument()
   })
 
   it.each([

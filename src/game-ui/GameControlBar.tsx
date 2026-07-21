@@ -1,6 +1,23 @@
+import type { MouseEvent } from 'react'
 import { he } from '../i18n'
 import { Button } from '../platform/ui'
 import styles from './GameControlBar.module.css'
+
+/**
+ * Browsers set MouseEvent.detail to 0 for a click synthesized by a keyboard
+ * activation (Enter/Space on a focused button) and to 1+ for a genuine
+ * pointer click. Blurring only on the pointer case means a mouse click never
+ * leaves a button stale-focused (which could otherwise be re-activated by an
+ * unrelated later Enter press, e.g. while interacting with an NPC in the
+ * world scene), while a deliberate keyboard Tab+Enter/Space activation keeps
+ * its focus exactly as a keyboard user would expect.
+ */
+function blurOnPointerActivation(handler: () => void) {
+  return (event: MouseEvent<HTMLButtonElement>) => {
+    handler()
+    if (event.detail !== 0) event.currentTarget.blur()
+  }
+}
 
 export interface GameControlBarProps {
   justSaved: boolean
@@ -47,7 +64,13 @@ export function GameControlBar({
       </div>
 
       <div className={styles.actions}>
-        <Button variant="ghost" size="sm" data-testid="save-button" onClick={onSave} leadingIcon={<span aria-hidden>💾</span>}>
+        <Button
+          variant="ghost"
+          size="sm"
+          data-testid="save-button"
+          onClick={blurOnPointerActivation(onSave)}
+          leadingIcon={<span aria-hidden>💾</span>}
+        >
           {he.save}
         </Button>
         {justSaved && (
@@ -55,7 +78,13 @@ export function GameControlBar({
             {he.saved}
           </span>
         )}
-        <Button variant="ghost" size="sm" data-testid="load-button" onClick={onLoad} leadingIcon={<span aria-hidden>📂</span>}>
+        <Button
+          variant="ghost"
+          size="sm"
+          data-testid="load-button"
+          onClick={blurOnPointerActivation(onLoad)}
+          leadingIcon={<span aria-hidden>📂</span>}
+        >
           {he.load}
         </Button>
 
@@ -67,11 +96,16 @@ export function GameControlBar({
               size="sm"
               className={styles.dangerAction}
               data-testid="confirm-reset-yes-button"
-              onClick={onConfirmNewGame}
+              onClick={blurOnPointerActivation(onConfirmNewGame)}
             >
               {he.resetConfirmYes}
             </Button>
-            <Button variant="ghost" size="sm" data-testid="confirm-reset-cancel-button" onClick={onCancelNewGame}>
+            <Button
+              variant="ghost"
+              size="sm"
+              data-testid="confirm-reset-cancel-button"
+              onClick={blurOnPointerActivation(onCancelNewGame)}
+            >
               {he.cancel}
             </Button>
           </span>
@@ -81,21 +115,26 @@ export function GameControlBar({
             size="sm"
             className={styles.dangerAction}
             data-testid="new-game-button"
-            onClick={onRequestNewGame}
+            onClick={blurOnPointerActivation(onRequestNewGame)}
             leadingIcon={<span aria-hidden>↻</span>}
           >
             {he.newGame}
           </Button>
         )}
 
-        <Button variant="ghost" size="sm" data-testid="admin-toggle-button" onClick={onToggleAdmin}>
+        <Button
+          variant="ghost"
+          size="sm"
+          data-testid="admin-toggle-button"
+          onClick={blurOnPointerActivation(onToggleAdmin)}
+        >
           {showAdmin ? he.hideAdmin : he.admin}
         </Button>
         <Button
           variant="secondary"
           size="sm"
           data-testid="toggle-world-scene-button"
-          onClick={onToggleWorldScene}
+          onClick={blurOnPointerActivation(onToggleWorldScene)}
           leadingIcon={<span aria-hidden>{showWorldScene ? '🗺️' : '🌐'}</span>}
         >
           {showWorldScene ? he.dashboardToggle : he.worldSceneToggle}
@@ -105,7 +144,7 @@ export function GameControlBar({
           size="sm"
           data-testid="mute-toggle-button"
           aria-pressed={!isMuted}
-          onClick={onToggleMuted}
+          onClick={blurOnPointerActivation(onToggleMuted)}
           leadingIcon={<span aria-hidden>{isMuted ? '🔇' : '🔊'}</span>}
         >
           {isMuted ? he.soundToggleOff : he.soundToggleOn}

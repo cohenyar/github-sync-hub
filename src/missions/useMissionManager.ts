@@ -22,6 +22,8 @@ export interface UseMissionManagerOptions {
 export interface UseMissionManagerResult {
   status: MissionStatus
   run: (sql: string) => void
+  /** Re-runs mission database preparation after a setup failure — a no-op while it's already loading/ready. */
+  retry: () => void
 }
 
 /**
@@ -36,7 +38,7 @@ export function useMissionManager(
   options: UseMissionManagerOptions = {},
 ): UseMissionManagerResult {
   const { createDb, onComplete, onFailure, initiallyCompleted = false } = options
-  const { db, error } = useMissionDatabase(mission, createDb)
+  const { db, error, retry } = useMissionDatabase(mission, createDb)
   const [runtime, setRuntime] = useState<MissionRuntimeState>(() => createInitialRuntimeState(initiallyCompleted))
 
   // Read through a ref so this effect only resets on an actual mission
@@ -64,5 +66,6 @@ export function useMissionManager(
   return {
     status: buildMissionStatus(mission, Boolean(db), error, runtime),
     run,
+    retry,
   }
 }

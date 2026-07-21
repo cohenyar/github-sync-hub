@@ -40,6 +40,11 @@ export const he = {
   run: 'הרץ',
   sqlPlaceholder: '-- כתוב כאן את השאילתה שלך',
   databasePrepareErrorPrefix: 'שגיאה בהכנת מסד הנתונים: ',
+  // Player-facing replacement for the raw technical exception: never shown
+  // with the underlying error text appended — that's preserved internally
+  // (MissionStatus.error, and logged via console.error) for debugging only.
+  databasePrepareErrorMessage: 'אירעה שגיאה בהכנת מסד הנתונים למשימה. ניתן לנסות שוב.',
+  retryDatabaseSetup: 'נסה שוב',
   sqlErrorPrefix: 'שגיאת SQL: ',
 
   // Mission panel
@@ -147,6 +152,19 @@ export const he = {
   worldMapTitle: 'מפת מרידיאן',
   mapActiveLabel: 'מחוז פעיל',
   advisorTitle: 'היועץ',
+
+  // Phase 2b — new UI chrome strings. "Odin" itself stays untranslated (a
+  // proper noun); only the chrome around it is Hebrew.
+  campaignProgressLabel: 'התקדמות הקמפיין',
+  odinStatusLabel: 'סטטוס: דטרמיניסטי / לא מקוון',
+  odinIdleMessage: 'Odin מקשיב. אין עדיין מה לדווח.',
+  odinHistoryAriaLabel: 'היסטוריית ההודעות של Odin',
+  npcBioAriaSuffix: 'פרופיל',
+  noRowsReturned: 'לא הוחזרו שורות.',
+  // Distinct from eventCampaignCompleted (the notification-toast title for
+  // the same event) — both can be visible on screen at once, so they need
+  // different text to stay distinguishable.
+  campaignCompleteTitle: 'כל המשימות הושלמו!',
 } as const
 
 export type HebrewStringKey = keyof typeof he

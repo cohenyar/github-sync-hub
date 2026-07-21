@@ -16,4 +16,7 @@ export interface NpcConfig {
   role: string
   description: string
   unlockConditions?: readonly UnlockCondition[]
+  /** Optional Hebrew display text. Falls back to the English field above when absent (see npcDisplayText.ts). */
+  roleHe?: string
+  descriptionHe?: string
 }

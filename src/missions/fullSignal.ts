@@ -27,4 +27,9 @@ export const fullSignalMission: MissionConfig = {
   `,
   referenceSql: 'SELECT district, COUNT(*) AS total FROM citizens GROUP BY district;',
   successEffect: { kind: 'ADVANCE_TURN' },
+  titleHe: 'אות מלא',
+  goalHe: 'ראה את מרידיאן כולה: כמה תושבים רשומים במרשם, לפי מחוז.',
+  promptHe:
+    'כל מחוז עונה כעת למרשם. ספור כמה תושבים חיים בכל מחוז — ' +
+    'הפעם הראשונה שמוקד הרשומות רואה את העיר כולה בבת אחת.',
 }

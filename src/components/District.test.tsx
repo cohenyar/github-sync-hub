@@ -109,6 +109,18 @@ describe('District', () => {
     expect(onSelectNpc).toHaveBeenCalledWith(npcs[0].id)
   })
 
+  it("uses the NPC's Hebrew role in the marker tooltip when roleHe is present on the real registry data", () => {
+    const npc = getNpcsByDistrict('south').find((candidate) => candidate.id === 'south-engineer')
+    expect(npc?.roleHe).toBe('מהנדסת מים')
+
+    const { container } = render(
+      <District district={{ id: 'south', stats: { loyalty: 60, stability: 60 } }} unlockedNpcIds={['south-engineer']} />,
+    )
+
+    const marker = container.querySelector('[data-npc-id="south-engineer"]')
+    expect(marker).toHaveAttribute('title', 'Elin Voss — מהנדסת מים')
+  })
+
   it('does not throw when a marker is clicked and onSelectNpc is omitted', () => {
     const npcs = getNpcsByDistrict('north')
 

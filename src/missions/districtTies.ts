@@ -24,4 +24,9 @@ export const districtTiesMission: MissionConfig = {
   `,
   referenceSql: "SELECT * FROM citizens WHERE district = 'north';",
   successEffect: { kind: 'ADJUST_STAT', districtId: 'north', stat: 'loyalty', delta: 15 },
+  titleHe: 'קשרי מחוז',
+  goalHe: 'חשוף אילו תושבים גרים במחוז הצפון של מרידיאן.',
+  promptHe:
+    'מוקד הרשומות כבר רואה את התושבים, אך לא את מקום מגוריהם.\n' +
+    'סנן את המרשם כדי להעלות את קשרי מחוז הצפון.',
 }

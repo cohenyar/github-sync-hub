@@ -13,6 +13,7 @@ export interface TerminalViewProps {
   mission: MissionConfig
   status: MissionStatus
   onRun: (sql: string) => void
+  onRetry?: () => void
   campaignSummary: CampaignSummary
   nextMission?: MissionConfig
   nextMissionContentStatus?: ContentStatus
@@ -76,6 +77,7 @@ export function TerminalView({
   mission,
   status,
   onRun,
+  onRetry,
   campaignSummary,
   nextMission,
   nextMissionContentStatus,
@@ -138,7 +140,7 @@ export function TerminalView({
           contentStatus={contentStatus}
           onContinue={onContinue}
         />
-        <SqlEditorPanel status={status} onRun={onRun} />
+        <SqlEditorPanel status={status} onRun={onRun} onRetry={onRetry} />
       </div>
     </div>
   )

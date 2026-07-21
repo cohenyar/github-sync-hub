@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import GameApp from '../GameApp'
 import { gameEventBus } from '../events'
 import type { GameEvent } from '../events'
+import { he } from '../i18n'
 
 vi.mock('../db/database', async () => {
   const { createTestDatabase } = await import('../verifier/testDb')
@@ -11,18 +12,19 @@ vi.mock('../db/database', async () => {
 })
 
 async function readyRunButton() {
-  const runButton = await screen.findByRole('button', { name: 'Run' })
+  const runButton = await screen.findByRole('button', { name: he.run })
   await waitFor(() => expect(runButton).toBeEnabled())
   return runButton
 }
 
 function runQuery(sql: string) {
-  fireEvent.change(screen.getByPlaceholderText('-- write your query here'), { target: { value: sql } })
-  fireEvent.click(screen.getByRole('button', { name: 'Run' }))
+  fireEvent.change(screen.getByPlaceholderText(he.sqlPlaceholder), { target: { value: sql } })
+  fireEvent.click(screen.getByRole('button', { name: he.run }))
 }
 
-async function switchToMission(title: string, status: 'Available' | 'Completed') {
-  fireEvent.click(screen.getByRole('button', { name: `${title} (${status})` }))
+async function switchToMission(title: string, status: 'available' | 'completed') {
+  const label = status === 'available' ? he.available : he.completed
+  fireEvent.click(screen.getByRole('button', { name: `${title} (${label})` }))
   await readyRunButton()
 }
 
@@ -51,56 +53,56 @@ describe('Full campaign playthrough: all six missions in order, switching betwee
 
     // 1. First Contact (1/6 ≈ 17%)
     runQuery('SELECT * FROM citizens;')
-    await screen.findByText('Pass')
-    expect(screen.getByText('Progress: 17%')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'District Ties (Available)' })).toBeInTheDocument()
+    await screen.findByText(he.pass)
+    expect(screen.getByText(`${he.progressLabelPrefix}17%`)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: `קשרי מחוז (${he.available})` })).toBeInTheDocument()
 
     // 2. District Ties (2/6 ≈ 33%)
     // The 40%-progression-gated NPC is not visible yet — 33% is still below it.
     expect(document.querySelector('[data-npc-id="north-analyst"]')).toBeNull()
 
-    await switchToMission('District Ties', 'Available')
+    await switchToMission('קשרי מחוז', 'available')
     runQuery("SELECT * FROM citizens WHERE district = 'north';")
-    await screen.findByText('Pass')
-    expect(screen.getByText('Progress: 33%')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'South Stability (Available)' })).toBeInTheDocument()
+    await screen.findByText(he.pass)
+    expect(screen.getByText(`${he.progressLabelPrefix}33%`)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: `יציבות הדרום (${he.available})` })).toBeInTheDocument()
     expect(document.querySelector('[data-npc-id="north-analyst"]')).toBeNull()
 
     // 3. South Stability (3/6 = 50%)
-    await switchToMission('South Stability', 'Available')
+    await switchToMission('יציבות הדרום', 'available')
     runQuery("SELECT * FROM district_reports WHERE district = 'south' AND severity >= 3;")
-    await screen.findByText('Pass')
-    expect(screen.getByText('Progress: 50%')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Full Signal (Available)' })).toBeInTheDocument()
+    await screen.findByText(he.pass)
+    expect(screen.getByText(`${he.progressLabelPrefix}50%`)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: `אות מלא (${he.available})` })).toBeInTheDocument()
     // The NPC gated behind South Stability is now visible on the map.
     expect(document.querySelector('[data-npc-id="south-engineer"]')).not.toBeNull()
     // 50% crosses the 40% progression threshold — north-analyst unlocks here, not at District Ties.
     expect(document.querySelector('[data-npc-id="north-analyst"]')).not.toBeNull()
 
     // 4. Full Signal (4/6 ≈ 67%)
-    await switchToMission('Full Signal', 'Available')
+    await switchToMission('אות מלא', 'available')
     runQuery('SELECT district, COUNT(*) AS total FROM citizens GROUP BY district;')
-    await screen.findByText('Pass')
-    expect(screen.getByText('Progress: 67%')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Linked Records (Available)' })).toBeInTheDocument()
-    expect(screen.queryByText('Campaign Complete')).not.toBeInTheDocument()
+    await screen.findByText(he.pass)
+    expect(screen.getByText(`${he.progressLabelPrefix}67%`)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: `רשומות מקושרות (${he.available})` })).toBeInTheDocument()
+    expect(screen.queryByText(he.campaignCompleteTitle)).not.toBeInTheDocument()
 
     // 5. Linked Records (5/6 ≈ 83%) — no longer the finale.
-    await switchToMission('Linked Records', 'Available')
+    await switchToMission('רשומות מקושרות', 'available')
     runQuery(
       'SELECT citizens.name, district_officials.official ' +
         'FROM citizens JOIN district_officials ON citizens.district = district_officials.district;',
     )
-    await screen.findByText('Pass')
-    expect(screen.getByText('Progress: 83%')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Priority Signal (Available)' })).toBeInTheDocument()
-    expect(screen.queryByText('Campaign Complete')).not.toBeInTheDocument()
+    await screen.findByText(he.pass)
+    expect(screen.getByText(`${he.progressLabelPrefix}83%`)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: `אות בעדיפות (${he.available})` })).toBeInTheDocument()
+    expect(screen.queryByText(he.campaignCompleteTitle)).not.toBeInTheDocument()
 
     // 6. Priority Signal (6/6 = 100%) — the true finale, introducing ORDER BY.
-    await switchToMission('Priority Signal', 'Available')
+    await switchToMission('אות בעדיפות', 'available')
     runQuery('SELECT * FROM signal_reports ORDER BY severity DESC;')
-    await screen.findByText('Pass')
-    expect(screen.getByText('Progress: 100%')).toBeInTheDocument()
+    await screen.findByText(he.pass)
+    expect(screen.getByText(`${he.progressLabelPrefix}100%`)).toBeInTheDocument()
 
     // The campaign-completion-gated NPC is now visible.
     await waitFor(() => expect(document.querySelector('[data-npc-id="city-voice"]')).not.toBeNull())
@@ -121,11 +123,11 @@ describe('Full campaign playthrough: all six missions in order, switching betwee
     // Odin's dedicated finale/campaign lines both appear somewhere in the
     // narration (order doesn't matter here — just that both fired).
     expect(
-      screen.getByText('The most urgent voice rises to the top. Meridian finally knows what to answer first.'),
+      screen.getByText('הקול הדחוף ביותר עולה לראש. מרידיאן יודעת סוף־סוף במה לטפל קודם.'),
     ).toBeInTheDocument()
-    expect(screen.getByText('Every thread accounted for. Meridian answers as one city now.')).toBeInTheDocument()
+    expect(screen.getByText('כל החוטים התחברו. מרידיאן עונה כעת כעיר אחת.')).toBeInTheDocument()
 
     // The distinct campaign-completion visual moment (Sprint 1 polish).
-    expect(screen.getByText('Campaign Complete')).toBeInTheDocument()
+    expect(screen.getByText(he.campaignCompleteTitle)).toBeInTheDocument()
   })
 })

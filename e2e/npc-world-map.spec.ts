@@ -70,8 +70,8 @@ test.describe('NPC world map integration', () => {
     const bio = page.getByTestId('npc-bio-panel')
     await expect(bio).toBeVisible()
     await expect(bio).toHaveAttribute('data-npc-id', 'north-warden')
-    await expect(page.getByText(/District Warden/)).toBeVisible()
-    await expect(page.getByText("Keeps watch over North district's loyalty to Meridian.")).toBeVisible()
+    await expect(page.getByText(/שומר המחוז/)).toBeVisible()
+    await expect(page.getByText('שומר על נאמנות מחוז הצפון למרידיאן.')).toBeVisible()
 
     await page.getByTestId('npc-bio-close-button').click()
     await expect(bio).not.toBeVisible()

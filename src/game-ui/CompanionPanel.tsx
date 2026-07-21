@@ -1,5 +1,5 @@
 import { he } from '../i18n'
-import type { NpcConfig } from '../npcs'
+import { getNpcDisplayText, type NpcConfig } from '../npcs'
 import { Card, Pill } from '../platform/ui'
 import styles from './CompanionPanel.module.css'
 
@@ -34,6 +34,7 @@ function initials(name: string): string {
  */
 export function CompanionPanel({ companion, message, districtName }: CompanionPanelProps) {
   if (!companion) return null
+  const role = getNpcDisplayText(companion).role
 
   return (
     <Card tone="ai" className={styles.card} aria-label={he.companionPanelTitle} data-testid="companion-panel">
@@ -44,15 +45,15 @@ export function CompanionPanel({ companion, message, districtName }: CompanionPa
           {initials(companion.name)}
         </span>
         <div className={styles.identityText}>
-          {/* NPC names/roles are English proper nouns — kept LTR. Not a
-              heading role: the NpcBioPanel owns the NPC-name heading, and
-              two headings with the same name would be ambiguous to AT and
-              to role-based queries. */}
+          {/* npc.name is a proper noun, always kept LTR. Not a heading role:
+              the NpcBioPanel owns the NPC-name heading, and two headings
+              with the same name would be ambiguous to AT and to
+              role-based queries. */}
           <p className={styles.name} dir="ltr">
             {companion.name}
           </p>
-          <p className={styles.role} dir="ltr">
-            {companion.role}
+          <p className={styles.role} dir={companion.roleHe ? 'rtl' : 'ltr'}>
+            {role}
             {districtName ? <span className={styles.district}> · {districtName}</span> : null}
           </p>
         </div>

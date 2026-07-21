@@ -2,6 +2,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import GameApp from '../GameApp'
+import { he } from '../i18n'
 import { missionRegistry } from '../missions'
 
 vi.mock('../db/database', async () => {
@@ -12,7 +13,7 @@ vi.mock('../db/database', async () => {
 const TOTAL_MISSIONS = missionRegistry.length
 
 async function readyRunButton() {
-  const runButton = await screen.findByRole('button', { name: 'Run' })
+  const runButton = await screen.findByRole('button', { name: he.run })
   await waitFor(() => expect(runButton).toBeEnabled())
   return runButton
 }
@@ -22,37 +23,37 @@ describe('The second mission is gated behind the first, live in the app', () => 
     render(<GameApp />)
     await readyRunButton()
 
-    expect(screen.getByText(`Mission 1 of ${TOTAL_MISSIONS}`)).toBeInTheDocument()
-    expect(screen.getByText('Next: District Ties (Locked)')).toBeInTheDocument()
+    expect(screen.getByText(`${he.missionLabel} 1 ${he.ofLabel} ${TOTAL_MISSIONS}`)).toBeInTheDocument()
+    expect(screen.getByText(`${he.nextLabelPrefix}קשרי מחוז (${he.locked})`)).toBeInTheDocument()
   })
 
   it(`flips District Ties to Available and shows "Mission 2 of ${TOTAL_MISSIONS}" once First Contact passes`, async () => {
     render(<GameApp />)
     const runButton = await readyRunButton()
 
-    fireEvent.change(screen.getByPlaceholderText('-- write your query here'), {
+    fireEvent.change(screen.getByPlaceholderText(he.sqlPlaceholder), {
       target: { value: 'SELECT * FROM citizens;' },
     })
     fireEvent.click(runButton)
 
-    await screen.findByText('Pass')
+    await screen.findByText(he.pass)
 
-    expect(screen.getByText(`Mission 2 of ${TOTAL_MISSIONS}`)).toBeInTheDocument()
-    expect(screen.getByText('Next: District Ties (Available)')).toBeInTheDocument()
+    expect(screen.getByText(`${he.missionLabel} 2 ${he.ofLabel} ${TOTAL_MISSIONS}`)).toBeInTheDocument()
+    expect(screen.getByText(`${he.nextLabelPrefix}קשרי מחוז (${he.available})`)).toBeInTheDocument()
   })
 
   it(`leaves District Ties Locked and stays on "Mission 1 of ${TOTAL_MISSIONS}" if First Contact fails`, async () => {
     render(<GameApp />)
     const runButton = await readyRunButton()
 
-    fireEvent.change(screen.getByPlaceholderText('-- write your query here'), {
+    fireEvent.change(screen.getByPlaceholderText(he.sqlPlaceholder), {
       target: { value: 'SELECT * FROM citizens WHERE id = 1;' },
     })
     fireEvent.click(runButton)
 
-    await screen.findByText('Fail')
+    await screen.findByText(he.fail)
 
-    expect(screen.getByText(`Mission 1 of ${TOTAL_MISSIONS}`)).toBeInTheDocument()
-    expect(screen.getByText('Next: District Ties (Locked)')).toBeInTheDocument()
+    expect(screen.getByText(`${he.missionLabel} 1 ${he.ofLabel} ${TOTAL_MISSIONS}`)).toBeInTheDocument()
+    expect(screen.getByText(`${he.nextLabelPrefix}קשרי מחוז (${he.locked})`)).toBeInTheDocument()
   })
 })

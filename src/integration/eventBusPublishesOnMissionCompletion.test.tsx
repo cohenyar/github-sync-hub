@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import GameApp from '../GameApp'
 import { gameEventBus } from '../events'
 import type { GameEvent } from '../events'
+import { he } from '../i18n'
 
 vi.mock('../db/database', async () => {
   const { createTestDatabase } = await import('../verifier/testDb')
@@ -11,7 +12,7 @@ vi.mock('../db/database', async () => {
 })
 
 async function readyRunButton() {
-  const runButton = await screen.findByRole('button', { name: 'Run' })
+  const runButton = await screen.findByRole('button', { name: he.run })
   await waitFor(() => expect(runButton).toBeEnabled())
   return runButton
 }
@@ -58,12 +59,12 @@ describe('The event bus publishes real gameplay events end to end', () => {
     render(<GameApp />)
     const runButton = await readyRunButton()
 
-    fireEvent.change(screen.getByPlaceholderText('-- write your query here'), {
+    fireEvent.change(screen.getByPlaceholderText(he.sqlPlaceholder), {
       target: { value: 'SELECT * FROM citizens;' },
     })
     fireEvent.click(runButton)
 
-    await screen.findByText('Pass')
+    await screen.findByText(he.pass)
 
     // ContentUnlocked is published from a useEffect keyed off playerProgress
     // (Step 21), so it can land on a later tick than the synchronous
@@ -97,7 +98,7 @@ describe('The event bus publishes real gameplay events end to end', () => {
 
     // Progression still updates via the event bus instead of a direct call —
     // same observable outcome as before the event system existed.
-    expect(screen.getByText('Content: Completed')).toBeInTheDocument()
+    expect(screen.getByText(`${he.contentLabelPrefix}${he.completed}`)).toBeInTheDocument()
   })
 
   it('does not publish MissionCompleted, CampaignCompleted, or ContentUnlocked for a failing query', async () => {
@@ -105,12 +106,12 @@ describe('The event bus publishes real gameplay events end to end', () => {
     render(<GameApp />)
     const runButton = await readyRunButton()
 
-    fireEvent.change(screen.getByPlaceholderText('-- write your query here'), {
+    fireEvent.change(screen.getByPlaceholderText(he.sqlPlaceholder), {
       target: { value: 'SELECT * FROM citizens WHERE id = 1;' },
     })
     fireEvent.click(runButton)
 
-    await screen.findByText('Fail')
+    await screen.findByText(he.fail)
 
     expect(events.some((e) => e.type === 'MissionCompleted')).toBe(false)
     expect(events.some((e) => e.type === 'CampaignCompleted')).toBe(false)

@@ -25,7 +25,8 @@ test.describe('SQL console', () => {
     await expect(page.getByText('Iris Vell')).toBeVisible()
     await expect(page.getByText('Bram Osei')).not.toBeVisible()
     await expect(
-      page.getByText('Expected 4 rows, got 1. Missing 3 rows — your filter may be too narrow.'),
+      // VerdictBanner buildFailHint: missing-rows case
+      page.getByText('ציפינו ל-4 שורות, התקבלו 1. חסרות 3 שורות — ייתכן שהתנאי מצומצם מדי.'),
     ).toBeVisible()
   })
 

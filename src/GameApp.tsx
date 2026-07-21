@@ -222,7 +222,7 @@ function GameApp() {
 
   const contentStatus = getMissionContentStatus(playerProgress, activeMission.id)
 
-  const { status, run } = useMissionManager(activeMission, {
+  const { status, run, retry } = useMissionManager(activeMission, {
     initiallyCompleted: contentStatus === 'completed',
     onComplete: (mission) => {
       const effect = mission.successEffect
@@ -421,6 +421,7 @@ function GameApp() {
               mission={activeMission}
               status={status}
               onRun={run}
+              onRetry={retry}
               campaignSummary={campaignSummary}
               nextMission={nextMission}
               nextMissionContentStatus={nextMissionContentStatus}
@@ -509,7 +510,7 @@ function GameApp() {
                   onContinue={handleContinue}
                 />
               }
-              terminal={<SqlEditorPanel status={status} onRun={run} />}
+              terminal={<SqlEditorPanel status={status} onRun={run} onRetry={retry} />}
             />
           }
           questTrack={
@@ -521,7 +522,7 @@ function GameApp() {
           devTools={
             <>
               <button type="button" className="debugToggle" onClick={() => setShowDebug((current) => !current)}>
-                {showDebug ? 'Hide Raw World State' : 'Show Raw World State'}
+                {showDebug ? he.hideRawWorldState : he.showRawWorldState}
               </button>
               {showDebug && <pre className="worldStateDump">{JSON.stringify(world, null, 2)}</pre>}
             </>

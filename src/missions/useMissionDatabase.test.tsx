@@ -38,6 +38,38 @@ describe('useMissionDatabase', () => {
     expect(result.current.db).toBeNull()
   })
 
+  it('retry re-runs setup and can recover from a transient failure', async () => {
+    let attempt = 0
+    const flakyCreateDb = () => {
+      attempt += 1
+      if (attempt === 1) return Promise.reject(new Error('transient failure'))
+      return createTestDatabase()
+    }
+
+    const { result } = renderHook(() => useMissionDatabase(mission, flakyCreateDb))
+    await waitFor(() => expect(result.current.error).not.toBeNull())
+    expect(result.current.db).toBeNull()
+
+    act(() => result.current.retry())
+
+    await waitFor(() => expect(result.current.db).not.toBeNull())
+    expect(result.current.error).toBeNull()
+    expect(attempt).toBe(2)
+  })
+
+  it('retry on a deterministic failure surfaces the same error again, not a silent success', async () => {
+    const brokenMission: MissionConfig = { ...mission, setupSql: 'NOT VALID SQL' }
+    const { result } = renderHook(() => useMissionDatabase(brokenMission, createTestDatabase))
+    await waitFor(() => expect(result.current.error).not.toBeNull())
+    const firstError = result.current.error
+
+    act(() => result.current.retry())
+
+    await waitFor(() => expect(result.current.error).not.toBeNull())
+    expect(result.current.error).toBe(firstError)
+    expect(result.current.db).toBeNull()
+  })
+
   it('re-initializes when the mission changes', async () => {
     const { result, rerender } = renderHook(({ m }) => useMissionDatabase(m, createTestDatabase), {
       initialProps: { m: mission },

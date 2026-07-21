@@ -33,7 +33,7 @@ test.describe('World reacts to verified queries', () => {
     await waitForMissionReady(page)
 
     // The raw world-state JSON is a collapsed debug view (Sprint 1 polish).
-    await page.getByRole('button', { name: 'Show Raw World State' }).click()
+    await page.getByRole('button', { name: 'הצג מצב עולם גולמי' /* he.showRawWorldState */ }).click()
     await expect(page.getByText(/"signal": 0/)).toBeVisible()
 
     await runSql(page, 'SELECT * FROM citizens;')
@@ -45,7 +45,7 @@ test.describe('World reacts to verified queries', () => {
   test('a failing query leaves the world state unchanged', async ({ page }) => {
     await page.goto('/world')
     await waitForMissionReady(page)
-    await page.getByRole('button', { name: 'Show Raw World State' }).click()
+    await page.getByRole('button', { name: 'הצג מצב עולם גולמי' /* he.showRawWorldState */ }).click()
 
     await runSql(page, 'SELECT * FROM citizens WHERE id = 1;')
     await verdictIsFail(page)

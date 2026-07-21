@@ -1,5 +1,5 @@
 import { he } from '../i18n'
-import type { NpcConfig } from '../npcs'
+import { getNpcDisplayText, type NpcConfig } from '../npcs'
 import { getDistrictDisplayName } from './districtDisplayName'
 import panelStyles from './Panel.module.css'
 import styles from './NpcBioPanel.module.css'
@@ -11,10 +11,12 @@ export interface NpcBioPanelProps {
 
 /** A read-only bio card for one NPC. No dialogue, no behavior — just the registry's own fields. */
 export function NpcBioPanel({ npc, onClose }: NpcBioPanelProps) {
+  const display = getNpcDisplayText(npc)
+
   return (
     <section
       className={`${panelStyles.panel} ${styles.overlay}`}
-      aria-label={`${npc.name} bio`}
+      aria-label={`${npc.name} — ${he.npcBioAriaSuffix}`}
       data-testid="npc-bio-panel"
       data-npc-id={npc.id}
     >
@@ -23,16 +25,16 @@ export function NpcBioPanel({ npc, onClose }: NpcBioPanelProps) {
         className={styles.closeButton}
         data-testid="npc-bio-close-button"
         onClick={onClose}
-        aria-label="Close"
+        aria-label={he.close}
       >
         ×
       </button>
       <h2 className={panelStyles.title}>{he.npcPanelTitle}</h2>
       <h3 className={styles.name}>{npc.name}</h3>
       <p className={styles.role}>
-        {npc.role} · {getDistrictDisplayName(npc.districtId)}
+        {display.role} · {getDistrictDisplayName(npc.districtId)}
       </p>
-      <p className={styles.description}>{npc.description}</p>
+      <p className={styles.description}>{display.description}</p>
     </section>
   )
 }

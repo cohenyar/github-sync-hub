@@ -1,5 +1,5 @@
 import { he } from '../i18n'
-import type { MissionConfig } from '../missions'
+import { getMissionDisplayText, type MissionConfig } from '../missions'
 import type { ContentStatus } from '../unlocks'
 import styles from './MissionSelect.module.css'
 
@@ -15,9 +15,9 @@ export interface MissionSelectProps {
 }
 
 const CONTENT_STATUS_LABEL: Record<ContentStatus, string> = {
-  locked: 'Locked',
-  available: 'Available',
-  completed: 'Completed',
+  locked: he.locked,
+  available: he.available,
+  completed: he.completed,
 }
 
 /**
@@ -49,7 +49,7 @@ export function MissionSelect({ options, activeMissionId, onSelect }: MissionSel
                 aria-current={isActive}
                 onClick={() => onSelect(mission.id)}
               >
-                {mission.title} ({CONTENT_STATUS_LABEL[status]})
+                {getMissionDisplayText(mission).title} ({CONTENT_STATUS_LABEL[status]})
               </button>
             </li>
           )

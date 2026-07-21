@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import GameApp from '../GameApp'
 import { defaultCampaign } from '../campaign'
+import { he } from '../i18n'
 import { firstContactMission, missionRegistry } from '../missions'
 import { saveCurrentGame } from '../persistence'
 import { createInitialPlayerProgress, recordMissionCompletion } from '../progression'
@@ -18,7 +19,7 @@ const SAVE_KEY = 'meridian:save'
 const ONE_MISSION_PERCENTAGE = Math.round(100 / missionRegistry.length)
 
 async function readyRunButton() {
-  const runButton = await screen.findByRole('button', { name: 'Run' })
+  const runButton = await screen.findByRole('button', { name: he.run })
   await waitFor(() => expect(runButton).toBeEnabled())
   return runButton
 }
@@ -26,7 +27,7 @@ async function readyRunButton() {
 // The raw world-state JSON is a collapsed debug view (Sprint 1 polish) —
 // expand it before asserting on its contents.
 function openDebugView() {
-  fireEvent.click(screen.getByRole('button', { name: 'Show Raw World State' }))
+  fireEvent.click(screen.getByRole('button', { name: he.showRawWorldState }))
 }
 
 // New Game requires an explicit confirmation step (Sprint 2 polish).
@@ -56,9 +57,9 @@ describe('Load-on-boot', () => {
     render(<GameApp />)
     await readyRunButton()
 
-    expect(screen.getByText('Progress: 0%')).toBeInTheDocument()
-    expect(screen.getByText(/Next: District Ties \(Locked\)/)).toBeInTheDocument()
-    await waitFor(() => expect(screen.getByText('A new query awaits. I am listening.')).toBeInTheDocument())
+    expect(screen.getByText(`${he.progressLabelPrefix}0%`)).toBeInTheDocument()
+    expect(screen.getByText(new RegExp(`${he.nextLabelPrefix}קשרי מחוז \\(${he.locked}\\)`))).toBeInTheDocument()
+    await waitFor(() => expect(screen.getByText('שאילתה חדשה ממתינה. אני מקשיב.')).toBeInTheDocument())
   })
 
   it('boots straight into a previously saved game', async () => {
@@ -69,9 +70,11 @@ describe('Load-on-boot', () => {
     await readyRunButton()
     openDebugView()
 
-    expect(screen.getByText(`Progress: ${ONE_MISSION_PERCENTAGE}%`)).toBeInTheDocument()
+    expect(screen.getByText(`${he.progressLabelPrefix}${ONE_MISSION_PERCENTAGE}%`)).toBeInTheDocument()
     expect(screen.getByText(/"signal": 100/)).toBeInTheDocument()
-    expect(screen.getByText(/Next: District Ties \(Available\)/)).toBeInTheDocument()
+    expect(
+      screen.getByText(new RegExp(`${he.nextLabelPrefix}קשרי מחוז \\(${he.available}\\)`)),
+    ).toBeInTheDocument()
   })
 
   it('does not spuriously re-narrate content that was already unlocked in the save', async () => {
@@ -85,9 +88,9 @@ describe('Load-on-boot', () => {
     // a revisit, not a fresh start (Step 1, v0.2) — Odin has nothing new to
     // narrate, including no "mission started" greeting for a mission that
     // isn't actually starting.
-    expect(screen.getByText('Odin is listening. Nothing to report yet.')).toBeInTheDocument()
-    expect(screen.queryByText(/District Ties is ready to be traced/)).not.toBeInTheDocument()
-    expect(screen.queryByRole('list', { name: 'Odin narration history' })).not.toBeInTheDocument()
+    expect(screen.getByText(he.odinIdleMessage)).toBeInTheDocument()
+    expect(screen.queryByText(/להתחקות אחר קשרי המחוז/)).not.toBeInTheDocument()
+    expect(screen.queryByRole('list', { name: he.odinHistoryAriaLabel })).not.toBeInTheDocument()
   })
 
   it('falls back to a fresh game when the saved data is corrupted, without crashing', async () => {
@@ -97,8 +100,8 @@ describe('Load-on-boot', () => {
     render(<GameApp />)
     await readyRunButton()
 
-    expect(screen.getByText('Progress: 0%')).toBeInTheDocument()
-    expect(screen.getByText(/Next: District Ties \(Locked\)/)).toBeInTheDocument()
+    expect(screen.getByText(`${he.progressLabelPrefix}0%`)).toBeInTheDocument()
+    expect(screen.getByText(new RegExp(`${he.nextLabelPrefix}קשרי מחוז \\(${he.locked}\\)`))).toBeInTheDocument()
     expect(errorSpy).not.toHaveBeenCalled()
 
     errorSpy.mockRestore()
@@ -111,18 +114,18 @@ describe('New Game reset', () => {
     const runButton = await readyRunButton()
     openDebugView()
 
-    fireEvent.change(screen.getByPlaceholderText('-- write your query here'), {
+    fireEvent.change(screen.getByPlaceholderText(he.sqlPlaceholder), {
       target: { value: 'SELECT * FROM citizens;' },
     })
     fireEvent.click(runButton)
-    await screen.findByText('Pass')
-    await waitFor(() => expect(screen.getByText(`Progress: ${ONE_MISSION_PERCENTAGE}%`)).toBeInTheDocument())
+    await screen.findByText(he.pass)
+    await waitFor(() => expect(screen.getByText(`${he.progressLabelPrefix}${ONE_MISSION_PERCENTAGE}%`)).toBeInTheDocument())
 
     fireEvent.click(screen.getByTestId('save-button'))
     newGame()
 
-    await waitFor(() => expect(screen.getByText('Progress: 0%')).toBeInTheDocument())
-    expect(screen.getByText(/Next: District Ties \(Locked\)/)).toBeInTheDocument()
+    await waitFor(() => expect(screen.getByText(`${he.progressLabelPrefix}0%`)).toBeInTheDocument())
+    expect(screen.getByText(new RegExp(`${he.nextLabelPrefix}קשרי מחוז \\(${he.locked}\\)`))).toBeInTheDocument()
     expect(screen.queryByText(/"signal": 100/)).not.toBeInTheDocument()
 
     // The save was cleared too, so a later boot won't resurrect the old game.
@@ -133,25 +136,25 @@ describe('New Game reset', () => {
     render(<GameApp />)
     const runButton = await readyRunButton()
 
-    fireEvent.change(screen.getByPlaceholderText('-- write your query here'), {
+    fireEvent.change(screen.getByPlaceholderText(he.sqlPlaceholder), {
       target: { value: 'SELECT * FROM citizens;' },
     })
     fireEvent.click(runButton)
-    await screen.findByText('Pass')
+    await screen.findByText(he.pass)
     await waitFor(() =>
       expect(
-        screen.getByText('The city is beginning to respond. District Ties is ready to be traced.'),
+        screen.getByText('העיר מתחילה להשיב. אפשר כעת להתחקות אחר קשרי המחוז.'),
       ).toBeInTheDocument(),
     )
 
     newGame()
-    await waitFor(() => expect(screen.getByText('Progress: 0%')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText(`${he.progressLabelPrefix}0%`)).toBeInTheDocument())
 
     // The unlock re-check effect re-runs against the reset (empty) progress;
     // it must not treat anything as newly unlocked and add a second
     // District Ties narration on top of the one already in history.
     expect(
-      screen.getByText('The city is beginning to respond. District Ties is ready to be traced.'),
+      screen.getByText('העיר מתחילה להשיב. אפשר כעת להתחקות אחר קשרי המחוז.'),
     ).toBeInTheDocument()
   })
 
@@ -161,15 +164,15 @@ describe('New Game reset', () => {
     render(<GameApp />)
     const runButton = await readyRunButton()
 
-    fireEvent.change(screen.getByPlaceholderText('-- write your query here'), {
+    fireEvent.change(screen.getByPlaceholderText(he.sqlPlaceholder), {
       target: { value: 'SELECT * FROM citizens;' },
     })
     fireEvent.click(runButton)
-    await screen.findByText('Pass')
+    await screen.findByText(he.pass)
 
     fireEvent.click(screen.getByTestId('save-button'))
     newGame()
-    await waitFor(() => expect(screen.getByText('Progress: 0%')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText(`${he.progressLabelPrefix}0%`)).toBeInTheDocument())
 
     expect(errorSpy).not.toHaveBeenCalled()
     errorSpy.mockRestore()
@@ -179,20 +182,20 @@ describe('New Game reset', () => {
     render(<GameApp />)
     const runButton = await readyRunButton()
 
-    fireEvent.change(screen.getByPlaceholderText('-- write your query here'), {
+    fireEvent.change(screen.getByPlaceholderText(he.sqlPlaceholder), {
       target: { value: 'SELECT * FROM citizens;' },
     })
     fireEvent.click(runButton)
-    await screen.findByText('Pass')
-    await waitFor(() => expect(screen.getByText(`Progress: ${ONE_MISSION_PERCENTAGE}%`)).toBeInTheDocument())
+    await screen.findByText(he.pass)
+    await waitFor(() => expect(screen.getByText(`${he.progressLabelPrefix}${ONE_MISSION_PERCENTAGE}%`)).toBeInTheDocument())
 
     fireEvent.click(screen.getByTestId('new-game-button'))
     expect(screen.getByTestId('reset-confirm-prompt')).toBeInTheDocument()
     // Progress is untouched while the confirmation is pending.
-    expect(screen.getByText(`Progress: ${ONE_MISSION_PERCENTAGE}%`)).toBeInTheDocument()
+    expect(screen.getByText(`${he.progressLabelPrefix}${ONE_MISSION_PERCENTAGE}%`)).toBeInTheDocument()
 
     fireEvent.click(screen.getByTestId('confirm-reset-cancel-button'))
     expect(screen.queryByTestId('reset-confirm-prompt')).not.toBeInTheDocument()
-    expect(screen.getByText(`Progress: ${ONE_MISSION_PERCENTAGE}%`)).toBeInTheDocument()
+    expect(screen.getByText(`${he.progressLabelPrefix}${ONE_MISSION_PERCENTAGE}%`)).toBeInTheDocument()
   })
 })

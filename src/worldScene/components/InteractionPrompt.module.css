@@ -10,4 +10,7 @@
   color: var(--text);
   font-size: 0.85rem;
   white-space: nowrap;
+  /* Pure text readout, no clickable content — must never intercept a
+     pointer click meant for the 3D canvas beneath it (Bug B). */
+  pointer-events: none;
 }

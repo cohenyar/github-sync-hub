@@ -1,3 +1,4 @@
+import { he } from '../i18n'
 import type { Verdict } from '../verifier'
 import styles from './VerdictBanner.module.css'
 
@@ -17,15 +18,15 @@ function buildFailHint(verdict: Verdict): string | null {
 
   const expectedCount = verdict.expected.length
   const actualCount = verdict.actual.length
-  const countLine = `Expected ${expectedCount} row${expectedCount === 1 ? '' : 's'}, got ${actualCount}.`
+  const countLine = `ציפינו ל-${expectedCount} שורות, התקבלו ${actualCount}.`
 
   if (missingCount > 0 && extraCount === 0) {
-    return `${countLine} Missing ${missingCount} row${missingCount === 1 ? '' : 's'} — your filter may be too narrow.`
+    return `${countLine} חסרות ${missingCount} שורות — ייתכן שהתנאי מצומצם מדי.`
   }
   if (extraCount > 0 && missingCount === 0) {
-    return `${countLine} ${extraCount} unexpected row${extraCount === 1 ? '' : 's'} — your filter may be too broad.`
+    return `${countLine} ${extraCount} שורות מיותרות — ייתכן שהתנאי רחב מדי.`
   }
-  return `${countLine} Missing ${missingCount}, ${extraCount} unexpected — check your filter conditions.`
+  return `${countLine} חסרות ${missingCount}, ${extraCount} מיותרות — בדוק את תנאי הסינון.`
 }
 
 export function VerdictBanner({ verdict }: VerdictBannerProps) {
@@ -39,7 +40,7 @@ export function VerdictBanner({ verdict }: VerdictBannerProps) {
         data-testid="verdict-banner"
         data-verdict={verdict.pass ? 'pass' : 'fail'}
       >
-        {verdict.pass ? 'Pass' : 'Fail'}
+        {verdict.pass ? he.pass : he.fail}
       </div>
       {hint && <p className={styles.hint}>{hint}</p>}
     </>

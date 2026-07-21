@@ -26,4 +26,7 @@
   border: 1px solid var(--border);
   color: var(--text);
   font-size: 0.8rem;
+  /* Plain status readout, no clickable content — same pointer-events gap
+     and fix as InteractionPrompt (Bug B). */
+  pointer-events: none;
 }

@@ -1,5 +1,5 @@
 import { he } from '../i18n'
-import { getMissionById } from '../missions'
+import { getMissionById, getMissionDisplayText } from '../missions'
 import { getNpcById } from '../npcs'
 import type { OdinNarrationEntry } from '../odin'
 import type { GameEventBannerModel } from './GameEventBanner'
@@ -11,8 +11,10 @@ import type { GameEventBannerModel } from './GameEventBanner'
  * These are read-only lookups — no event payload, id, or gameplay data is
  * changed.
  */
-function missionName(missionId: string): string {
-  return getMissionById(missionId)?.title ?? missionId
+function missionDetail(missionId: string): { text: string; dir: 'ltr' | 'rtl' } {
+  const mission = getMissionById(missionId)
+  if (!mission) return { text: missionId, dir: 'ltr' }
+  return { text: getMissionDisplayText(mission).title, dir: mission.titleHe ? 'rtl' : 'ltr' }
 }
 function npcName(npcId: string): string {
   return getNpcById(npcId)?.name ?? npcId
@@ -31,8 +33,10 @@ export function bannerFromOdinEntry(entry: OdinNarrationEntry | null): GameEvent
   const key = `odin-${entry.id}`
 
   switch (event.type) {
-    case 'MissionCompleted':
-      return { key, tone: 'success', icon: '✓', title: he.eventMissionCompleted, detail: missionName(event.missionId), detailDir: 'ltr' }
+    case 'MissionCompleted': {
+      const { text, dir } = missionDetail(event.missionId)
+      return { key, tone: 'success', icon: '✓', title: he.eventMissionCompleted, detail: text, detailDir: dir }
+    }
     case 'CampaignCompleted':
       return { key, tone: 'success', icon: '★', title: he.eventCampaignCompleted }
     case 'ContentUnlocked': {
@@ -44,7 +48,8 @@ export function bannerFromOdinEntry(entry: OdinNarrationEntry | null): GameEvent
         // detail as the raw id (world-map labels are handled separately).
         return { key, tone: 'info', icon: '◈', title: he.eventDistrictUnlocked, detail: event.target.id, detailDir: 'ltr' }
       }
-      return { key, tone: 'info', icon: '◆', title: he.eventMissionUnlocked, detail: missionName(event.target.id), detailDir: 'ltr' }
+      const { text, dir } = missionDetail(event.target.id)
+      return { key, tone: 'info', icon: '◆', title: he.eventMissionUnlocked, detail: text, detailDir: dir }
     }
     case 'QueryFailed':
       return { key, tone: 'warning', icon: '!', title: he.eventQueryFailed }

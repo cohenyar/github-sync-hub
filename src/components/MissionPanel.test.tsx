@@ -2,6 +2,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import type { CampaignSummary } from '../campaign/types'
+import { he } from '../i18n'
 import type { MissionConfig } from '../missions/types'
 import { MissionPanel } from './MissionPanel'
 
@@ -37,14 +38,14 @@ describe('MissionPanel', () => {
 
   it('renders no status line when no phase is given', () => {
     render(<MissionPanel mission={mission} />)
-    expect(screen.queryByText(/^Status:/)).not.toBeInTheDocument()
+    expect(screen.queryByText(new RegExp(`^${he.statusLabelPrefix}`))).not.toBeInTheDocument()
   })
 
   it.each([
-    ['loading', 'Status: Preparing…'],
-    ['active', 'Status: In Progress'],
-    ['completed', 'Status: Completed'],
-    ['error', 'Status: Error'],
+    ['loading', `${he.statusLabelPrefix}${he.phaseLoading}`],
+    ['active', `${he.statusLabelPrefix}${he.phaseActive}`],
+    ['completed', `${he.statusLabelPrefix}${he.completed}`],
+    ['error', `${he.statusLabelPrefix}${he.phaseError}`],
   ] as const)('renders "%s" phase as "%s"', (phase, expected) => {
     render(<MissionPanel mission={mission} phase={phase} />)
     expect(screen.getByText(expected)).toBeInTheDocument()
@@ -52,12 +53,14 @@ describe('MissionPanel', () => {
 
   it('renders no "Mission X of Y" line when no campaign summary is given', () => {
     render(<MissionPanel mission={mission} />)
-    expect(screen.queryByText(/^Mission \d+ of \d+$/)).not.toBeInTheDocument()
+    expect(
+      screen.queryByText(new RegExp(`^${he.missionLabel} \\d+ ${he.ofLabel} \\d+$`)),
+    ).not.toBeInTheDocument()
   })
 
   it('renders "Mission X of Y" from the campaign summary', () => {
     render(<MissionPanel mission={mission} campaignSummary={summary({ totalMissions: 3, currentMissionIndex: 2 })} />)
-    expect(screen.getByText('Mission 2 of 3')).toBeInTheDocument()
+    expect(screen.getByText(`${he.missionLabel} 2 ${he.ofLabel} 3`)).toBeInTheDocument()
   })
 
   it('renders no progress stepper when no campaign summary is given', () => {
@@ -72,7 +75,7 @@ describe('MissionPanel', () => {
         campaignSummary={summary({ totalMissions: 4, completedMissions: 2, currentMissionIndex: 3 })}
       />,
     )
-    const bar = screen.getByRole('progressbar', { name: 'Campaign progress' })
+    const bar = screen.getByRole('progressbar', { name: he.campaignProgressLabel })
     expect(bar).toHaveAttribute('aria-valuenow', '2')
     expect(bar).toHaveAttribute('aria-valuemax', '4')
     expect(bar.children).toHaveLength(4)
@@ -80,33 +83,33 @@ describe('MissionPanel', () => {
 
   it('renders no "Next" line when there is no next mission', () => {
     render(<MissionPanel mission={mission} campaignSummary={summary()} />)
-    expect(screen.queryByText(/^Next:/)).not.toBeInTheDocument()
+    expect(screen.queryByText(new RegExp(`^${he.nextLabelPrefix}`))).not.toBeInTheDocument()
   })
 
   it('renders the next mission title when one is given', () => {
     render(<MissionPanel mission={mission} campaignSummary={summary({ totalMissions: 2 })} nextMission={nextMission} />)
-    expect(screen.getByText('Next: Second Mission')).toBeInTheDocument()
+    expect(screen.getByText(`${he.nextLabelPrefix}Second Mission`)).toBeInTheDocument()
   })
 
   it('renders no progress line when no completion percentage is given', () => {
     render(<MissionPanel mission={mission} />)
-    expect(screen.queryByText(/^Progress:/)).not.toBeInTheDocument()
+    expect(screen.queryByText(new RegExp(`^${he.progressLabelPrefix}`))).not.toBeInTheDocument()
   })
 
   it('renders the completion percentage, including zero', () => {
     render(<MissionPanel mission={mission} completionPercentage={0} />)
-    expect(screen.getByText('Progress: 0%')).toBeInTheDocument()
+    expect(screen.getByText(`${he.progressLabelPrefix}0%`)).toBeInTheDocument()
   })
 
   it('renders no content status line when none is given', () => {
     render(<MissionPanel mission={mission} />)
-    expect(screen.queryByText(/^Content:/)).not.toBeInTheDocument()
+    expect(screen.queryByText(new RegExp(`^${he.contentLabelPrefix}`))).not.toBeInTheDocument()
   })
 
   it.each([
-    ['locked', 'Content: Locked'],
-    ['available', 'Content: Available'],
-    ['completed', 'Content: Completed'],
+    ['locked', `${he.contentLabelPrefix}${he.locked}`],
+    ['available', `${he.contentLabelPrefix}${he.available}`],
+    ['completed', `${he.contentLabelPrefix}${he.completed}`],
   ] as const)('renders content status "%s" as "%s"', (contentStatus, expected) => {
     render(<MissionPanel mission={mission} contentStatus={contentStatus} />)
     expect(screen.getByText(expected)).toBeInTheDocument()
@@ -114,22 +117,22 @@ describe('MissionPanel', () => {
 
   it('renders the next mission title without a status when none is given', () => {
     render(<MissionPanel mission={mission} nextMission={nextMission} />)
-    expect(screen.getByText('Next: Second Mission')).toBeInTheDocument()
+    expect(screen.getByText(`${he.nextLabelPrefix}Second Mission`)).toBeInTheDocument()
   })
 
   it('renders the next mission alongside its lock status', () => {
     render(<MissionPanel mission={mission} nextMission={nextMission} nextMissionContentStatus="locked" />)
-    expect(screen.getByText('Next: Second Mission (Locked)')).toBeInTheDocument()
+    expect(screen.getByText(`${he.nextLabelPrefix}Second Mission (${he.locked})`)).toBeInTheDocument()
   })
 
   it('updates the next mission status from Locked to Available', () => {
     const { rerender } = render(
       <MissionPanel mission={mission} nextMission={nextMission} nextMissionContentStatus="locked" />,
     )
-    expect(screen.getByText('Next: Second Mission (Locked)')).toBeInTheDocument()
+    expect(screen.getByText(`${he.nextLabelPrefix}Second Mission (${he.locked})`)).toBeInTheDocument()
 
     rerender(<MissionPanel mission={mission} nextMission={nextMission} nextMissionContentStatus="available" />)
-    expect(screen.getByText('Next: Second Mission (Available)')).toBeInTheDocument()
+    expect(screen.getByText(`${he.nextLabelPrefix}Second Mission (${he.available})`)).toBeInTheDocument()
   })
 
   describe('Continue to Next Mission', () => {
@@ -137,7 +140,7 @@ describe('MissionPanel', () => {
       render(
         <MissionPanel mission={mission} phase="completed" nextMission={nextMission} nextMissionContentStatus="available" />,
       )
-      expect(screen.queryByRole('button', { name: /Continue to/ })).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: new RegExp(`^${he.continueToPrefix}`) })).not.toBeInTheDocument()
     })
 
     it('does not render when the mission phase is not "completed"', () => {
@@ -150,12 +153,12 @@ describe('MissionPanel', () => {
           onContinue={vi.fn()}
         />,
       )
-      expect(screen.queryByRole('button', { name: /Continue to/ })).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: new RegExp(`^${he.continueToPrefix}`) })).not.toBeInTheDocument()
     })
 
     it('does not render when there is no next mission', () => {
       render(<MissionPanel mission={mission} phase="completed" onContinue={vi.fn()} />)
-      expect(screen.queryByRole('button', { name: /Continue to/ })).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: new RegExp(`^${he.continueToPrefix}`) })).not.toBeInTheDocument()
     })
 
     it('does not render when the next mission is locked', () => {
@@ -168,7 +171,7 @@ describe('MissionPanel', () => {
           onContinue={vi.fn()}
         />,
       )
-      expect(screen.queryByRole('button', { name: /Continue to/ })).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: new RegExp(`^${he.continueToPrefix}`) })).not.toBeInTheDocument()
     })
 
     it('renders and calls onContinue when the mission is completed and the next one is available', () => {
@@ -183,7 +186,7 @@ describe('MissionPanel', () => {
         />,
       )
 
-      const button = screen.getByRole('button', { name: 'Continue to Second Mission' })
+      const button = screen.getByRole('button', { name: `${he.continueToPrefix}Second Mission` })
       fireEvent.click(button)
       expect(onContinue).toHaveBeenCalledTimes(1)
     })

@@ -1,8 +1,8 @@
 import type { CSSProperties } from 'react'
 import type { CampaignSummary } from '../campaign/types'
 import { he } from '../i18n'
-import type { MissionConfig } from '../missions'
-import type { NpcConfig } from '../npcs'
+import { getMissionDisplayText, type MissionConfig } from '../missions'
+import { getNpcDisplayText, type NpcConfig } from '../npcs'
 import styles from './JourneyHeader.module.css'
 
 export interface JourneyHeaderProps {
@@ -44,6 +44,8 @@ export function JourneyHeader({
   companionMessage,
   onPrimary,
 }: JourneyHeaderProps) {
+  const missionTitle = getMissionDisplayText(activeMission).title
+
   return (
     <section className={styles.header} aria-label={he.journeySummaryTitle}>
       <div className={styles.scene}>
@@ -60,8 +62,8 @@ export function JourneyHeader({
         </div>
 
         {/* Not a heading role (MissionPanel owns the active-mission heading). */}
-        <div className={styles.missionTitle} dir="ltr">
-          {activeMission.title}
+        <div className={styles.missionTitle} dir={activeMission.titleHe ? 'rtl' : 'ltr'}>
+          {missionTitle}
         </div>
 
         <div className={styles.progressRow}>
@@ -96,8 +98,8 @@ export function JourneyHeader({
               <span className={styles.companionName} dir="ltr">
                 {companion.name}
               </span>
-              <span className={styles.companionRole} dir="ltr">
-                {companion.role}
+              <span className={styles.companionRole} dir={companion.roleHe ? 'rtl' : 'ltr'}>
+                {getNpcDisplayText(companion).role}
               </span>
             </span>
           </div>

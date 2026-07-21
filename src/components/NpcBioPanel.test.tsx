@@ -24,11 +24,24 @@ describe('NpcBioPanel', () => {
     expect(screen.getByText("Keeps watch over North district's loyalty to Meridian.")).toBeInTheDocument()
   })
 
+  it('prefers roleHe and descriptionHe over the English fields when present', () => {
+    const npcWithHebrew: NpcConfig = {
+      ...testNpc,
+      roleHe: 'שומר המחוז',
+      descriptionHe: 'שומר על נאמנות מחוז הצפון למרידיאן.',
+    }
+    render(<NpcBioPanel npc={npcWithHebrew} onClose={vi.fn()} />)
+
+    expect(screen.getByText(/שומר המחוז/)).toBeInTheDocument()
+    expect(screen.getByText('שומר על נאמנות מחוז הצפון למרידיאן.')).toBeInTheDocument()
+    expect(screen.queryByText(/District Warden/)).not.toBeInTheDocument()
+  })
+
   it('calls onClose when the close button is clicked', () => {
     const onClose = vi.fn()
     render(<NpcBioPanel npc={testNpc} onClose={onClose} />)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Close' }))
+    fireEvent.click(screen.getByRole('button', { name: he.close }))
 
     expect(onClose).toHaveBeenCalledTimes(1)
   })

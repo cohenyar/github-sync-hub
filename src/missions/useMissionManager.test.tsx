@@ -164,4 +164,20 @@ describe('useMissionManager', () => {
     await waitFor(() => expect(result.current.status.phase).toBe('error'))
     expect(result.current.status.error).not.toBeNull()
   })
+
+  it('exposes a retry that re-triggers database preparation and can recover from a transient failure', async () => {
+    let attempt = 0
+    const flakyCreateDb = () => {
+      attempt += 1
+      if (attempt === 1) return Promise.reject(new Error('transient failure'))
+      return createTestDatabase()
+    }
+
+    const { result } = renderHook(() => useMissionManager(mission, { createDb: flakyCreateDb }))
+    await waitFor(() => expect(result.current.status.phase).toBe('error'))
+
+    act(() => result.current.retry())
+
+    await waitFor(() => expect(result.current.status.phase).toBe('active'))
+  })
 })

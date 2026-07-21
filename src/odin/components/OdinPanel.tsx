@@ -1,3 +1,4 @@
+import { he } from '../../i18n'
 import styles from './OdinPanel.module.css'
 import type { OdinNarrationEntry } from '../types'
 
@@ -21,12 +22,12 @@ export function OdinPanel({ latestMessage, history }: OdinPanelProps) {
   return (
     <section className={styles.panel} aria-label="Odin" data-testid="odin-panel">
       <h2 className={styles.title}>Odin</h2>
-      <p className={styles.status}>Status: Deterministic / Offline</p>
+      <p className={styles.status}>{he.odinStatusLabel}</p>
       <p key={latestKey} className={styles.message} data-testid="odin-latest-message">
-        {latestMessage ?? 'Odin is listening. Nothing to report yet.'}
+        {latestMessage ?? he.odinIdleMessage}
       </p>
       {previousEntries.length > 0 && (
-        <ul className={styles.history} aria-label="Odin narration history" data-testid="odin-history">
+        <ul className={styles.history} aria-label={he.odinHistoryAriaLabel} data-testid="odin-history">
           {previousEntries.map((entry) => (
             <li key={entry.id}>{entry.message}</li>
           ))}

@@ -2,6 +2,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import GameApp from '../GameApp'
+import { he } from '../i18n'
 import { missionRegistry } from '../missions'
 
 vi.mock('../db/database', async () => {
@@ -10,7 +11,7 @@ vi.mock('../db/database', async () => {
 })
 
 async function readyRunButton() {
-  const runButton = await screen.findByRole('button', { name: 'Run' })
+  const runButton = await screen.findByRole('button', { name: he.run })
   await waitFor(() => expect(runButton).toBeEnabled())
   return runButton
 }
@@ -18,7 +19,7 @@ async function readyRunButton() {
 // The raw world-state JSON is a collapsed debug view (Sprint 1 polish) —
 // expand it before asserting on its contents.
 function openDebugView() {
-  fireEvent.click(screen.getByRole('button', { name: 'Show Raw World State' }))
+  fireEvent.click(screen.getByRole('button', { name: he.showRawWorldState }))
 }
 
 beforeEach(() => {
@@ -31,15 +32,15 @@ describe('Save/Load restores world and progress across a simulated reload', () =
     const runButton = await readyRunButton()
     openDebugView()
 
-    fireEvent.change(screen.getByPlaceholderText('-- write your query here'), {
+    fireEvent.change(screen.getByPlaceholderText(he.sqlPlaceholder), {
       target: { value: 'SELECT * FROM citizens;' },
     })
     fireEvent.click(runButton)
-    await screen.findByText('Pass')
+    await screen.findByText(he.pass)
 
     const expectedPercentage = Math.round(100 / missionRegistry.length)
     await waitFor(() => expect(screen.getByText(/"signal": 100/)).toBeInTheDocument())
-    await waitFor(() => expect(screen.getByText(`Progress: ${expectedPercentage}%`)).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText(`${he.progressLabelPrefix}${expectedPercentage}%`)).toBeInTheDocument())
 
     fireEvent.click(screen.getByTestId('save-button'))
     first.unmount()
@@ -51,18 +52,20 @@ describe('Save/Load restores world and progress across a simulated reload', () =
     await readyRunButton()
     openDebugView()
 
-    expect(screen.getByText(`Progress: ${expectedPercentage}%`)).toBeInTheDocument()
+    expect(screen.getByText(`${he.progressLabelPrefix}${expectedPercentage}%`)).toBeInTheDocument()
     expect(screen.getByText(/"signal": 100/)).toBeInTheDocument()
-    expect(screen.getByText(/Next: District Ties \(Available\)/)).toBeInTheDocument()
+    expect(
+      screen.getByText(new RegExp(`${he.nextLabelPrefix}קשרי מחוז \\(${he.available}\\)`)),
+    ).toBeInTheDocument()
   })
 
   it('does nothing when Load is clicked with no save present', async () => {
     render(<GameApp />)
     await readyRunButton()
 
-    expect(screen.getByText('Progress: 0%')).toBeInTheDocument()
+    expect(screen.getByText(`${he.progressLabelPrefix}0%`)).toBeInTheDocument()
     fireEvent.click(screen.getByTestId('load-button'))
 
-    expect(screen.getByText('Progress: 0%')).toBeInTheDocument()
+    expect(screen.getByText(`${he.progressLabelPrefix}0%`)).toBeInTheDocument()
   })
 })

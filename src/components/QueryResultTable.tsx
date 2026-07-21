@@ -1,3 +1,4 @@
+import { he } from '../i18n'
 import type { Row } from '../verifier'
 import styles from './QueryResultTable.module.css'
 
@@ -7,7 +8,7 @@ export interface QueryResultTableProps {
 
 export function QueryResultTable({ rows }: QueryResultTableProps) {
   if (rows.length === 0) {
-    return <p className={styles.empty}>No rows returned.</p>
+    return <p className={styles.empty}>{he.noRowsReturned}</p>
   }
 
   const columns = Object.keys(rows[0])

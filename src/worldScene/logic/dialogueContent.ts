@@ -43,9 +43,9 @@ const MISSION_DIALOGUE: Readonly<Record<string, Readonly<Record<MissionDialogueP
 
 const DISTRICT_DIALOGUE: Readonly<Record<string, Readonly<Record<DistrictStatus, NpcDialogueContent>>>> = {
   'archivist-mera': {
-    unstable: { greeting: 'ברוכה הבא למוקד הרשומות. אני מרה, שומרת הארכיון. האות עדיין לא יציב.' },
-    stable: { greeting: 'ברוכה הבא שוב. אני מרה. האות במוקד יציב יותר משהיה.' },
-    thriving: { greeting: 'ברוכה הבא, שוב. אני מרה. המוקד לא נראה כה בהיר מזמן.' },
+    unstable: { greeting: 'ברוכה הבאה למוקד הרשומות. אני מרה, שומרת הארכיון. האות עדיין לא יציב.' },
+    stable: { greeting: 'ברוכה הבאה שוב. אני מרה. האות במוקד יציב יותר משהיה.' },
+    thriving: { greeting: 'ברוכה הבאה, שוב. אני מרה. המוקד לא נראה כה בהיר מזמן.' },
   },
   'east-broker': {
     unstable: { greeting: 'שלום, אני תומאס רייט. עכשיו כשהמוקד רואה את העיר, המסחר במזרח סוף סוף יכול לזוז — אבל עוד יש עבודה.' },

@@ -1,12 +1,13 @@
 // @vitest-environment jsdom
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
+import { he } from '../i18n'
 import { QueryResultTable } from './QueryResultTable'
 
 describe('QueryResultTable', () => {
   it('renders a message when there are no rows', () => {
     render(<QueryResultTable rows={[]} />)
-    expect(screen.getByText('No rows returned.')).toBeInTheDocument()
+    expect(screen.getByText(he.noRowsReturned)).toBeInTheDocument()
   })
 
   it('renders a header for each column and a row for each record', () => {

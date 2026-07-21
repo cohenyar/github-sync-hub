@@ -48,5 +48,6 @@ export function matchReaction(reactions: readonly OdinReaction[], event: GameEve
 }
 
 export function resolveMessage(reaction: OdinReaction, event: GameEvent): string {
-  return typeof reaction.message === 'function' ? reaction.message(event) : reaction.message
+  const source = reaction.messageHe ?? reaction.message
+  return typeof source === 'function' ? source(event) : source
 }

@@ -1,3 +1,4 @@
+import { he } from '../i18n'
 import styles from './CampaignCompleteBanner.module.css'
 
 export interface CampaignCompleteBannerProps {
@@ -7,10 +8,15 @@ export interface CampaignCompleteBannerProps {
 /** A one-time visual beat for finishing the whole campaign, distinct from an ordinary mission completing. */
 export function CampaignCompleteBanner({ totalMissions }: CampaignCompleteBannerProps) {
   return (
-    <section className={styles.banner} role="status" aria-label="Campaign Complete" data-testid="campaign-complete-banner">
-      <h2 className={styles.title}>Campaign Complete</h2>
+    <section
+      className={styles.banner}
+      role="status"
+      aria-label={he.campaignCompleteTitle}
+      data-testid="campaign-complete-banner"
+    >
+      <h2 className={styles.title}>{he.campaignCompleteTitle}</h2>
       <p className={styles.body}>
-        All {totalMissions} missions are done. Every district answers the Records Core, and Meridian is whole.
+        כל {totalMissions} המשימות הושלמו. כל מחוז עונה למוקד הרשומות, ומרידיאן שלמה.
       </p>
     </section>
   )

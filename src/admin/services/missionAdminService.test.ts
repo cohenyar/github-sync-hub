@@ -65,6 +65,15 @@ describe('editMission', () => {
     expect(getMissionById(TEST_ID)?.successEffect).toEqual({ kind: 'ADVANCE_TURN' })
   })
 
+  it("does not clobber an existing mission's Hebrew display fields, since the draft never carries them", () => {
+    addMission({ ...draft(), titleHe: 'כותרת', goalHe: 'מטרה', promptHe: 'הנחיה' })
+
+    const result = editMission(TEST_ID, { ...draft(), title: 'Renamed' })
+
+    expect(result.success).toBe(true)
+    expect(getMissionById(TEST_ID)).toMatchObject({ titleHe: 'כותרת', goalHe: 'מטרה', promptHe: 'הנחיה' })
+  })
+
   it('rejects an invalid update without mutating the registry', () => {
     createMission(draft())
     const result = editMission(TEST_ID, { ...draft(), referenceSql: '' })

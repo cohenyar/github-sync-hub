@@ -2,6 +2,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import GameApp from '../GameApp'
+import { he } from '../i18n'
 import { getDefaultMission, removeMission } from '../missions'
 import { createInitialPlayerProgress } from '../progression'
 import { getUnlockedNpcIds } from '../unlocks'
@@ -23,7 +24,7 @@ afterEach(() => {
 })
 
 async function readyRunButton() {
-  const runButton = await screen.findByRole('button', { name: 'Run' })
+  const runButton = await screen.findByRole('button', { name: he.run })
   await waitFor(() => expect(runButton).toBeEnabled())
   return runButton
 }
@@ -43,7 +44,7 @@ describe('Admin CRUD does not affect live gameplay', () => {
     await readyRunButton()
 
     const missionBeforeAdmin = getDefaultMission().id
-    expect(screen.getByRole('heading', { name: 'First Contact' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'מגע ראשון' })).toBeInTheDocument()
 
     fireEvent.click(screen.getByTestId('admin-toggle-button'))
     fillMissionForm()
@@ -53,16 +54,16 @@ describe('Admin CRUD does not affect live gameplay', () => {
     expect(screen.getByText('Admin Mission')).toBeInTheDocument()
     // ...but the live SQL console/Mission panel are unaffected.
     expect(getDefaultMission().id).toBe(missionBeforeAdmin)
-    expect(screen.getByRole('heading', { name: 'First Contact' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'מגע ראשון' })).toBeInTheDocument()
 
     fireEvent.click(screen.getByTestId('admin-toggle-button'))
 
-    fireEvent.change(screen.getByPlaceholderText('-- write your query here'), {
+    fireEvent.change(screen.getByPlaceholderText(he.sqlPlaceholder), {
       target: { value: 'SELECT * FROM citizens;' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Run' }))
-    await screen.findByText('Pass')
-    expect(screen.getByText('Next: District Ties (Available)')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: he.run }))
+    await screen.findByText(he.pass)
+    expect(screen.getByText(`${he.nextLabelPrefix}קשרי מחוז (${he.available})`)).toBeInTheDocument()
   })
 
   it('adding an NPC through Admin does not change the unlock status of existing NPCs', async () => {

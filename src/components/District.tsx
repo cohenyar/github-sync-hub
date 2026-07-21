@@ -1,5 +1,5 @@
 import { he } from '../i18n'
-import { getNpcsByDistrict } from '../npcs'
+import { getNpcDisplayText, getNpcsByDistrict } from '../npcs'
 import { getDistrictStatus, type DistrictStatus } from '../worldState'
 import type { DistrictState } from '../worldState/types'
 import { getDistrictDisplayName } from './districtDisplayName'
@@ -40,7 +40,7 @@ export function District({ district, unlockedNpcIds = [], onSelectNpc }: Distric
                 type="button"
                 className={styles.npcButton}
                 data-npc-id={npc.id}
-                title={`${npc.name} — ${npc.role}`}
+                title={`${npc.name} — ${getNpcDisplayText(npc).role}`}
                 onClick={() => onSelectNpc?.(npc.id)}
               >
                 {npc.name}

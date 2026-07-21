@@ -2,6 +2,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import GameApp from '../GameApp'
+import { he } from '../i18n'
 
 vi.mock('../db/database', async () => {
   const { createTestDatabase } = await import('../verifier/testDb')
@@ -31,7 +32,7 @@ describe('World Scene (Phase 2): mode-switch wiring', () => {
 
     expect(await screen.findByTestId('world-scene-3d')).toBeInTheDocument()
     expect(screen.getByTestId('district-status-hud')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Run' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: he.run })).not.toBeInTheDocument()
   })
 
   it('returns to the unaffected classic dashboard when toggled back off', async () => {
@@ -43,6 +44,6 @@ describe('World Scene (Phase 2): mode-switch wiring', () => {
     fireEvent.click(screen.getByTestId('toggle-world-scene-button'))
 
     expect(screen.queryByTestId('world-scene-3d')).not.toBeInTheDocument()
-    expect(await screen.findByRole('button', { name: 'Run' })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: he.run })).toBeInTheDocument()
   })
 })

@@ -7,6 +7,8 @@ const npcs: NpcConfig[] = [
     districtId: 'core',
     role: 'Archivist',
     description: 'Tends the Records Core, waiting for its signal to steady.',
+    roleHe: 'ארכיבאית',
+    descriptionHe: 'מטפלת במוקד הרשומות וממתינה שהאות שלו יתייצב.',
   },
   {
     id: 'north-warden',
@@ -14,6 +16,8 @@ const npcs: NpcConfig[] = [
     districtId: 'north',
     role: 'District Warden',
     description: "Keeps watch over North district's loyalty to Meridian.",
+    roleHe: 'שומר המחוז',
+    descriptionHe: 'שומר על נאמנות מחוז הצפון למרידיאן.',
   },
   {
     id: 'south-organizer',
@@ -21,6 +25,8 @@ const npcs: NpcConfig[] = [
     districtId: 'south',
     role: 'Community Organizer',
     description: 'Works to steady an unstable South district from the ground up.',
+    roleHe: 'מארגנת קהילתית',
+    descriptionHe: 'פועלת לייצב את מחוז הדרום הלא יציב, מהיסוד.',
   },
   {
     id: 'east-broker',
@@ -29,6 +35,8 @@ const npcs: NpcConfig[] = [
     role: 'Trade Broker',
     description: "East district's thriving trade routes pass through his ledger.",
     unlockConditions: [{ kind: 'missionCompleted', missionId: 'first-contact' }],
+    roleHe: 'מתווך סחר',
+    descriptionHe: 'נתיבי הסחר המשגשגים של מחוז המזרח עוברים דרך פנקסו.',
   },
   {
     id: 'north-analyst',
@@ -37,6 +45,8 @@ const npcs: NpcConfig[] = [
     role: 'Signal Analyst',
     description: "Cross-references every district's reports once enough of them start telling the same story.",
     unlockConditions: [{ kind: 'progressionPercentage', minPercentage: 40 }],
+    roleHe: 'אנליסט אותות',
+    descriptionHe: 'משווה בין דוחות כל המחוזות, ברגע שמספיק מהם מתחילים לספר את אותו הסיפור.',
   },
   {
     id: 'south-engineer',
@@ -45,6 +55,8 @@ const npcs: NpcConfig[] = [
     role: 'Water Engineer',
     description: "Repairs what South's incident reports made visible.",
     unlockConditions: [{ kind: 'missionCompleted', missionId: 'south-stability' }],
+    roleHe: 'מהנדסת מים',
+    descriptionHe: 'מתקנת את מה שדוחות התקריות של הדרום חשפו.',
   },
   {
     id: 'city-voice',
@@ -53,6 +65,8 @@ const npcs: NpcConfig[] = [
     role: 'City Voice',
     description: 'Speaks for Meridian now that every district answers in one voice.',
     unlockConditions: [{ kind: 'campaignCompleted', campaignId: 'meridian-campaign' }],
+    roleHe: 'קול העיר',
+    descriptionHe: 'הקול שדרכו מרידיאן מדברת, כעת כשכל המחוזות עונים כאחד.',
   },
 ]
 

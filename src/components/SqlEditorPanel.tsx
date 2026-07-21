@@ -8,6 +8,8 @@ import styles from './Panel.module.css'
 export interface SqlEditorPanelProps {
   status: MissionStatus
   onRun: (sql: string) => void
+  /** Re-attempts mission database preparation after a setup failure. Omitted entirely if no retry path exists. */
+  onRetry?: () => void
 }
 
 /**
@@ -16,7 +18,7 @@ export interface SqlEditorPanelProps {
  * (useMissionManager). This component only owns the textarea's text and
  * renders whatever status it's given.
  */
-export function SqlEditorPanel({ status, onRun }: SqlEditorPanelProps) {
+export function SqlEditorPanel({ status, onRun, onRetry }: SqlEditorPanelProps) {
   const [sql, setSql] = useState('')
   const canRun = status.phase === 'active' || status.phase === 'completed'
 
@@ -31,7 +33,7 @@ export function SqlEditorPanel({ status, onRun }: SqlEditorPanelProps) {
         dir="ltr"
         value={sql}
         onChange={(event) => setSql(event.target.value)}
-        placeholder="-- write your query here"
+        placeholder={he.sqlPlaceholder}
         rows={8}
       />
       <button
@@ -41,18 +43,29 @@ export function SqlEditorPanel({ status, onRun }: SqlEditorPanelProps) {
         onClick={() => onRun(sql)}
         disabled={!canRun}
       >
-        Run
+        {he.run}
       </button>
 
       {status.phase === 'error' && (
-        <p className={styles.error} data-testid="db-prepare-error">
-          Failed to prepare database: {status.error}
-        </p>
+        <>
+          {/* status.error (the raw technical exception) is intentionally
+              never rendered here — the player only ever sees a clear
+              Hebrew message. The technical detail is preserved on
+              MissionStatus and logged via console.error for debugging. */}
+          <p className={styles.error} data-testid="db-prepare-error">
+            {he.databasePrepareErrorMessage}
+          </p>
+          {onRetry && (
+            <button type="button" className={styles.runButton} data-testid="retry-database-button" onClick={onRetry}>
+              {he.retryDatabaseSetup}
+            </button>
+          )}
+        </>
       )}
 
       {status.lastResult?.kind === 'error' && (
         <p className={styles.error} data-testid="sql-error-message">
-          SQL error: {status.lastResult.message}
+          {he.sqlErrorPrefix}{status.lastResult.message}
         </p>
       )}
 
