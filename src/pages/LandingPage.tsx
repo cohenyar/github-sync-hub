@@ -19,23 +19,23 @@ const NAV_LINKS = [
 ]
 
 const PILLS = [
-  { icon: '✨', label: 'AI Tutor' },
-  { icon: '🎮', label: 'Gamified Learning' },
-  { icon: '🏆', label: 'Achievements' },
+  { icon: '🧮', label: 'מתמטיקה' },
+  { icon: '🔤', label: 'אנגלית' },
+  { icon: '🏙️', label: 'עולם תלת־ממדי' },
 ] as const
 
 const FEATURES = [
-  { icon: '📘', title: 'קורסים', text: 'מגוון קורסים אינטראקטיביים עם AI ולמידה חכמה', tone: 'blue' },
-  { icon: '🛡️', title: 'מערכת שלבים', text: 'עלות שלבים, צבור XP ותפתח יכולות חדשות', tone: 'green' },
-  { icon: '🔥', title: 'רצף יומי', text: 'שמור על רצף, קבל בונוסים והרגל למידה חזק', tone: 'fire' },
-  { icon: '🤖', title: 'מנטור AI', text: 'מורה AI אישי שמלווה אותך בכל שלב במסע', tone: 'ai' },
+  { icon: '🧮', title: 'מתמטיקה ואנגלית', text: 'שיעורים אינטראקטיביים בחשבון ובאוצר מילים, בעברית מהתחלה ועד הסוף.', tone: 'blue' },
+  { icon: '🏙️', title: 'עולם תלת־ממדי', text: 'לומדים בתוך עיר חיה — עם בניינים, שבילים ודמויות לפגוש בדרך.', tone: 'green' },
+  { icon: '🗣️', title: 'שיחה עם מורים', text: 'כל מקצוע מיוצג על ידי דמות מורה שמסבירה ומכוונת לשיעור.', tone: 'fire' },
+  { icon: '💾', title: 'התקדמות נשמרת', text: 'סיימתם שיעור? אפשר לשמור, לחזור בכל עת ולתרגל שוב.', tone: 'ai' },
 ] as const
 
 const STATS = [
-  { icon: '📖', value: '120+', label: 'שיעורים אינטראקטיביים', tone: 'blue' },
-  { icon: '🎯', value: '45', label: 'אתגרי AI', tone: 'pink' },
-  { icon: '🌐', value: '10', label: 'עולמות למידה', tone: 'cyan' },
-  { icon: '👑', value: '500+', label: 'הישגים ופרסים', tone: 'gold' },
+  { icon: '➗', value: 'מתמטיקה', label: 'תרגול חשבון ופתרון בעיות', tone: 'blue' },
+  { icon: '🔤', value: 'אנגלית', label: 'אוצר מילים מעברית לאנגלית', tone: 'pink' },
+  { icon: '🏙️', value: 'עולם תלת־ממדי', label: 'למידה בסביבה חיה ואינטראקטיבית', tone: 'cyan' },
+  { icon: '💾', value: 'התקדמות נשמרת', label: 'סיימו שיעור וחזרו לתרגל בכל עת', tone: 'gold' },
 ] as const
 
 export function LandingPage() {
@@ -71,9 +71,7 @@ export function LandingPage() {
           <h1 className={styles.title}>
             <span className={styles.titleAccent}>Meridian</span>
           </h1>
-          <p className={styles.subtitle}>
-            הדרך החדשה ללמוד במצעות <span className={styles.inlineAi}>AI</span>, משימות, אתגרים ועולמות אינטראקטיביים.
-          </p>
+          <p className={styles.subtitle}>לומדים מתמטיקה ואנגלית בעברית, בתוך עולם תלת־ממדי אינטראקטיבי.</p>
           <p className={styles.tagline}>{he.landingTagline}</p>
 
           <div className={styles.pillRow} aria-label="יתרונות מרכזיים">

@@ -184,6 +184,46 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
     unlockReactionHandler()
   }, [playerProgress, unlockReactionHandler])
 
+  // Meridian 1.0 closeout: auto-saves whenever the player leaves /world, so
+  // a lesson (or mission) completion they already saw acknowledged isn't
+  // silently lost just because they didn't press the manual Save button
+  // first. Reuses the exact same saveCurrentGame the Save button calls
+  // (same format, no new persisted shape); the manual button and its
+  // "Saved." confirmation are completely untouched — this never calls
+  // setJustSaved/setEventBanner, so it has no visible UI side effect.
+  //
+  // There is no in-app link from /world back to /dashboard (the Dashboard
+  // is only reached by the browser's own Back button or the address bar),
+  // so leaving /world is always a real browser navigation, not a
+  // same-document route change — React never gets a chance to run a plain
+  // effect's unmount cleanup before that happens (confirmed: an
+  // unmount-only cleanup alone does not fire for page.goto() in the e2e
+  // suite). 'pagehide' is the standard, reliable event for exactly this —
+  // it fires both for a real navigation/tab-close *and* is still correct
+  // if GameApp is ever unmounted the ordinary React way (e.g. a future
+  // in-app link, or React StrictMode/HMR in dev), since the effect's own
+  // cleanup below covers that case too. Both paths call the same saveNow,
+  // reading world/playerProgress through refs (not the closure's own
+  // values) so the save always reflects whatever was actually last on
+  // screen. Registered with an empty dependency array — one listener per
+  // mount, removed on cleanup, never re-subscribed on a re-render, so
+  // there is no duplicate-save loop. world/playerProgress are only ever
+  // set via useState initializers that already run synchronously before
+  // first paint (no async boot step), so these refs are never in an
+  // uninitialized/default state that could overwrite a real save.
+  const worldRef = useRef(world)
+  worldRef.current = world
+  useEffect(() => {
+    function saveNow() {
+      saveCurrentGame(worldRef.current, playerProgressRef.current)
+    }
+    window.addEventListener('pagehide', saveNow)
+    return () => {
+      window.removeEventListener('pagehide', saveNow)
+      saveNow()
+    }
+  }, [])
+
   // Rebuilds the unlock-reaction baseline from a just-restored progress
   // (assigned synchronously so the handler's eager getProgress() capture
   // sees it immediately) so already-unlocked content isn't re-announced by

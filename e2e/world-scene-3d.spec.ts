@@ -831,3 +831,67 @@ test.describe('Batch 3A.5: visual polish + lesson completion UX', () => {
     expect(errors).toEqual([])
   })
 })
+
+test.describe('Meridian 1.0 closeout: auto-save on leaving /world', () => {
+  async function walkToMathTeacher(page: import('@playwright/test').Page) {
+    await page.getByTestId('toggle-world-scene-button').click()
+    await expect(page.getByTestId('world-scene-3d')).toBeVisible()
+    await expect(page.getByTestId('interaction-prompt')).toHaveAttribute('data-interactable-id', 'north-warden')
+    await page.waitForTimeout(500)
+    await page.keyboard.down('KeyS')
+    await page.waitForTimeout(600)
+    await page.keyboard.up('KeyS')
+    await page.keyboard.down('KeyA')
+    await page.waitForTimeout(900)
+    await page.keyboard.up('KeyA')
+    await expect(page.getByTestId('interaction-prompt')).toHaveAttribute('data-interactable-id', 'math-teacher')
+  }
+
+  test('a. complete a lesson, b. leave /world for /dashboard without pressing Save, c. return to /world, d. completion remains persisted', async ({
+    page,
+  }) => {
+    // a. Complete a lesson.
+    await page.goto('/world')
+    await walkToMathTeacher(page)
+    await page.keyboard.press('KeyE')
+    await page.getByTestId('npc-dialogue-start-lesson-button').click()
+    await page.getByTestId('math-answer-input').fill('11')
+    await page.getByTestId('math-submit-button').click()
+    await expect(page.getByTestId('lesson-success-message')).toBeVisible()
+    await page.getByTestId('lesson-return-to-world-button').click()
+
+    // Confirmed completed within the same session, before leaving.
+    await page.keyboard.press('KeyE')
+    await expect(page.getByTestId('npc-dialogue-mission-context')).toContainText('כל הכבוד')
+    await page.getByTestId('npc-dialogue-close-button').click()
+
+    // b. Leave /world for /dashboard — deliberately no Save click anywhere above.
+    await page.getByTestId('toggle-world-scene-button').click()
+    await page.goto('/dashboard')
+
+    // c. Return to /world.
+    await page.goto('/world')
+    await page.getByTestId('toggle-world-scene-button').click()
+    await expect(page.getByTestId('world-scene-3d')).toBeVisible()
+    await expect(page.getByTestId('interaction-prompt')).toHaveAttribute('data-interactable-id', 'north-warden')
+    await page.waitForTimeout(500)
+    await page.keyboard.down('KeyS')
+    await page.waitForTimeout(600)
+    await page.keyboard.up('KeyS')
+    await page.keyboard.down('KeyA')
+    await page.waitForTimeout(900)
+    await page.keyboard.up('KeyA')
+    await page.keyboard.press('KeyE')
+
+    // d. Completion remains persisted.
+    await expect(page.getByTestId('npc-dialogue-mission-context')).toContainText('כל הכבוד')
+    await expect(page.getByTestId('npc-dialogue-start-lesson-button')).toContainText('תרגל שוב')
+  })
+
+  test('does not interfere with the manual Save button or its confirmation', async ({ page }) => {
+    await page.goto('/world')
+    await page.getByTestId('toggle-world-scene-button').click()
+    await page.getByTestId('save-button').click()
+    await expect(page.getByTestId('saved-confirmation')).toBeVisible()
+  })
+})
