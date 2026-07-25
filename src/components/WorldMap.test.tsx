@@ -77,3 +77,94 @@ describe('WorldMap', () => {
     expect(onSelectNpc).toHaveBeenCalledWith(npcs[0].id)
   })
 })
+
+describe('WorldMap — Meridian UI stability pass: stable learning-path layout', () => {
+  it('renders the four real districts in the canonical learning-journey order (core, north, south, east), regardless of world-state insertion order', () => {
+    // initialDistricts.ts's own insertion order is north/south/east/core —
+    // deliberately different here, to prove the map re-orders rather than
+    // trusting object key order.
+    const world = createWorldState([
+      { id: 'north', stats: { loyalty: 60, stability: 60 } },
+      { id: 'south', stats: { loyalty: 40, stability: 20 } },
+      { id: 'east', stats: { loyalty: 75, stability: 75 } },
+      { id: 'core', stats: { signal: 0 } },
+    ])
+
+    const { container } = render(<WorldMap world={world} />)
+    const ids = Array.from(container.querySelectorAll('[data-district-id]')).map((el) =>
+      el.getAttribute('data-district-id'),
+    )
+
+    expect(ids).toEqual(['core', 'north', 'south', 'east'])
+  })
+
+  it('keeps districts with unrecognized ids in their original relative order, after every known id', () => {
+    const world = createWorldState([
+      { id: 'zzz-test', stats: {} },
+      { id: 'east', stats: { loyalty: 75, stability: 75 } },
+      { id: 'aaa-test', stats: {} },
+      { id: 'core', stats: { signal: 0 } },
+    ])
+
+    const { container } = render(<WorldMap world={world} />)
+    const ids = Array.from(container.querySelectorAll('[data-district-id]')).map((el) =>
+      el.getAttribute('data-district-id'),
+    )
+
+    expect(ids).toEqual(['core', 'east', 'zzz-test', 'aaa-test'])
+  })
+
+  it('renders a visible connector between every pair of consecutive districts, and none at the very start', () => {
+    const world = createWorldState([
+      { id: 'north', stats: { loyalty: 60, stability: 60 } },
+      { id: 'south', stats: { loyalty: 40, stability: 20 } },
+      { id: 'east', stats: { loyalty: 75, stability: 75 } },
+      { id: 'core', stats: { signal: 0 } },
+    ])
+
+    const { container } = render(<WorldMap world={world} />)
+    // 4 districts -> exactly 3 connectors (one between each consecutive pair).
+    expect(container.querySelectorAll('[aria-hidden="true"]')).toHaveLength(3)
+  })
+
+  it('gives the active district and every status a distinguishable data attribute, never overlapping', () => {
+    const world = createWorldState([
+      { id: 'north', stats: { loyalty: 60, stability: 60 } }, // stable
+      { id: 'south', stats: { loyalty: 10, stability: 10 } }, // unstable
+      { id: 'east', stats: { loyalty: 90, stability: 90 } }, // thriving
+    ])
+
+    const { container } = render(<WorldMap world={world} activeDistrictId="north" />)
+
+    const north = container.querySelector('[data-district-id="north"]')!.closest('[data-status]')
+    const south = container.querySelector('[data-district-id="south"]')!.closest('[data-status]')
+    const east = container.querySelector('[data-district-id="east"]')!.closest('[data-status]')
+
+    expect(north).toHaveAttribute('data-status', 'stable')
+    expect(north).toHaveAttribute('data-active', 'true')
+    expect(south).toHaveAttribute('data-status', 'unstable')
+    expect(south).not.toHaveAttribute('data-active')
+    expect(east).toHaveAttribute('data-status', 'thriving')
+    expect(east).not.toHaveAttribute('data-active')
+
+    // Every one of the three states above must be genuinely distinct.
+    const statuses = [north, south, east].map((el) => el?.getAttribute('data-status'))
+    expect(new Set(statuses).size).toBe(3)
+  })
+
+  it('does not position nodes with inline transforms/rotation — the primary layout is plain flex flow, not absolute trigonometry', () => {
+    const world = createWorldState([
+      { id: 'north', stats: { loyalty: 60, stability: 60 } },
+      { id: 'south', stats: { loyalty: 40, stability: 20 } },
+    ])
+
+    const { container } = render(<WorldMap world={world} />)
+
+    for (const node of container.querySelectorAll('[data-status]')) {
+      const inlineStyle = (node as HTMLElement).getAttribute('style') ?? ''
+      expect(inlineStyle).not.toContain('--slot-index')
+      expect(inlineStyle).not.toContain('rotate(')
+      expect(inlineStyle).not.toContain('position')
+    }
+  })
+})

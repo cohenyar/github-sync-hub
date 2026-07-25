@@ -22,7 +22,6 @@ function blurOnPointerActivation(handler: () => void) {
 export interface GameControlBarProps {
   justSaved: boolean
   confirmingNewGame: boolean
-  showAdmin: boolean
   showWorldScene: boolean
   isMuted: boolean
   onSave: () => void
@@ -30,7 +29,6 @@ export interface GameControlBarProps {
   onRequestNewGame: () => void
   onConfirmNewGame: () => void
   onCancelNewGame: () => void
-  onToggleAdmin: () => void
   onToggleWorldScene: () => void
   onToggleMuted: () => void
 }
@@ -44,7 +42,6 @@ export interface GameControlBarProps {
 export function GameControlBar({
   justSaved,
   confirmingNewGame,
-  showAdmin,
   showWorldScene,
   isMuted,
   onSave,
@@ -52,7 +49,6 @@ export function GameControlBar({
   onRequestNewGame,
   onConfirmNewGame,
   onCancelNewGame,
-  onToggleAdmin,
   onToggleWorldScene,
   onToggleMuted,
 }: GameControlBarProps) {
@@ -122,16 +118,6 @@ export function GameControlBar({
           </Button>
         )}
 
-        {import.meta.env.DEV && (
-          <Button
-            variant="ghost"
-            size="sm"
-            data-testid="admin-toggle-button"
-            onClick={blurOnPointerActivation(onToggleAdmin)}
-          >
-            {showAdmin ? he.hideAdmin : he.admin}
-          </Button>
-        )}
         <Button
           variant="secondary"
           size="sm"

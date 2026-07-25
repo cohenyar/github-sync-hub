@@ -1,13 +1,33 @@
 .scene {
+  /* Meridian UI stability pass: was a hardcoded max-width:720px/height:480px
+     box — small and non-responsive on any real desktop viewport, and the
+     actual root cause of the game area rendering tiny (confirmed: on a
+     1440px-wide screen this filled barely a quarter of it, with no way to
+     grow). Full available width; height is a safe, bounded calculation
+     (clamp, not a raw vh value) rather than a fixed pixel box, staying
+     within the requested ~600-720px range at any reasonable viewport
+     height without ever exceeding it. React Three Fiber's own Canvas
+     already measures this container (via its react-use-measure dependency)
+     and updates the renderer size / camera aspect whenever it resizes — no
+     extra resize code is needed once this box can actually resize. */
   position: relative;
   width: 100%;
-  max-width: 720px;
-  height: 480px;
-  margin: 0 auto;
+  min-width: 0;
+  height: clamp(600px, 80vh, 720px);
+  box-sizing: border-box;
   border: 1px solid var(--border);
   border-radius: 12px;
   overflow: hidden;
   background: #0a0f1a;
+}
+
+/* Narrow/short viewports (phones): the desktop 600-720px minimum would
+   force the whole page to scroll past the controls above it. A smaller,
+   still-responsive range keeps the scene usable without that. */
+@media (max-width: 639.98px) {
+  .scene {
+    height: clamp(360px, 70vh, 600px);
+  }
 }
 
 .scene canvas {

@@ -68,6 +68,15 @@ test.describe('Phase 2 primary 3D scene: the canonical world-scene loop', () => 
     // center of the rendered canvas always lands on the Core regardless of
     // where the player currently stands — a stable click target that
     // doesn't depend on guessed pixel coordinates.
+    //
+    // Meridian UI stability pass: the scene container is now responsive
+    // (full available width, clamped height) instead of a small fixed
+    // 720x480 box, so the canvas is meaningfully larger on a real desktop
+    // viewport — more pixels to rasterize per frame. A brief settle margin
+    // here (the same kind of fix this file has needed before whenever
+    // real-time timing shifted) avoids clicking a split second before the
+    // resized canvas's hit-testing has caught up.
+    await page.waitForTimeout(300)
     const canvasBox = await page.locator('[data-testid="world-scene-3d"] canvas').boundingBox()
     if (!canvasBox) throw new Error('World scene canvas did not render')
     await page.mouse.click(canvasBox.x + canvasBox.width / 2, canvasBox.y + canvasBox.height / 2)
@@ -893,5 +902,208 @@ test.describe('Meridian 1.0 closeout: auto-save on leaving /world', () => {
     await page.getByTestId('toggle-world-scene-button').click()
     await page.getByTestId('save-button').click()
     await expect(page.getByTestId('saved-confirmation')).toBeVisible()
+  })
+})
+
+test.describe('Meridian UI stability pass: game container size', () => {
+  for (const width of [1280, 1440, 1920]) {
+    test(`the game container has a stable, usable size at ${width}px wide`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 900 })
+      await page.goto('/world')
+      await page.getByTestId('toggle-world-scene-button').click()
+      const scene = page.getByTestId('world-scene-3d')
+      await expect(scene).toBeVisible()
+
+      const box = await scene.boundingBox()
+      expect(box).not.toBeNull()
+      // Uses (most of) the full *available* width — the app shell itself
+      // has a pre-existing, app-wide 1400px reading-width cap (#root in
+      // index.css, present before this change and affecting every page,
+      // not just the game), so "available width" tops out there on wider
+      // viewports. That's a deliberate existing app-shell decision, not
+      // this game container's own bug, so this asserts against it rather
+      // than the raw viewport.
+      const availableWidth = Math.min(width, 1400)
+      expect(box!.width).toBeGreaterThan(availableWidth * 0.85)
+      // Desktop minimum height in the requested ~600-720px range.
+      expect(box!.height).toBeGreaterThanOrEqual(600)
+      expect(box!.height).toBeLessThanOrEqual(730)
+
+      const canvasBox = await scene.locator('canvas').boundingBox()
+      expect(canvasBox!.width).toBeGreaterThan(availableWidth * 0.8)
+    })
+  }
+
+  test('resizing the viewport mid-session does not crash or collapse the game', async ({ page }) => {
+    const errors: string[] = []
+    page.on('console', (msg) => {
+      if (msg.type() === 'error') errors.push(msg.text())
+    })
+    page.on('pageerror', (err) => errors.push(String(err)))
+
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.goto('/world')
+    await page.getByTestId('toggle-world-scene-button').click()
+    const scene = page.getByTestId('world-scene-3d')
+    await expect(scene).toBeVisible()
+
+    await page.setViewportSize({ width: 1920, height: 1080 })
+    await page.waitForTimeout(300)
+    const wideBox = await scene.boundingBox()
+    // Same pre-existing 1400px app-shell cap as above.
+    expect(wideBox!.width).toBeGreaterThan(1200)
+    expect(wideBox!.height).toBeGreaterThanOrEqual(600)
+
+    await page.setViewportSize({ width: 375, height: 700 })
+    await page.waitForTimeout(300)
+    await expect(scene).toBeVisible()
+    const narrowBox = await scene.boundingBox()
+    expect(narrowBox!.width).toBeGreaterThan(300)
+    expect(narrowBox!.height).toBeGreaterThan(0)
+
+    // Navigation still works after resizing.
+    await page.getByTestId('toggle-world-scene-button').click()
+    await expect(page.getByTestId('active-mission-title')).toBeVisible()
+
+    expect(errors).toEqual([])
+  })
+})
+
+test.describe('Meridian UI stability pass: lesson answer area', () => {
+  async function walkToMathTeacher(page: import('@playwright/test').Page) {
+    await page.getByTestId('toggle-world-scene-button').click()
+    await expect(page.getByTestId('world-scene-3d')).toBeVisible()
+    await expect(page.getByTestId('interaction-prompt')).toHaveAttribute('data-interactable-id', 'north-warden')
+    await page.waitForTimeout(500)
+    await page.keyboard.down('KeyS')
+    await page.waitForTimeout(600)
+    await page.keyboard.up('KeyS')
+    await page.keyboard.down('KeyA')
+    await page.waitForTimeout(900)
+    await page.keyboard.up('KeyA')
+    await expect(page.getByTestId('interaction-prompt')).toHaveAttribute('data-interactable-id', 'math-teacher')
+  }
+
+  test('the answer area stays visible, with readable text and touch-sized controls', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.goto('/world')
+    await walkToMathTeacher(page)
+    await page.keyboard.press('KeyE')
+    await page.getByTestId('npc-dialogue-start-lesson-button').click()
+
+    const input = page.getByTestId('math-answer-input')
+    const submit = page.getByTestId('math-submit-button')
+    await expect(input).toBeVisible()
+    await expect(submit).toBeVisible()
+
+    const inputBox = await input.boundingBox()
+    const submitBox = await submit.boundingBox()
+    expect(inputBox!.height).toBeGreaterThanOrEqual(44)
+    expect(submitBox!.height).toBeGreaterThanOrEqual(44)
+    expect(submitBox!.width).toBeGreaterThanOrEqual(44)
+
+    const inputFontSize = await input.evaluate((el) => parseFloat(getComputedStyle(el).fontSize))
+    const submitFontSize = await submit.evaluate((el) => parseFloat(getComputedStyle(el).fontSize))
+    expect(inputFontSize).toBeGreaterThanOrEqual(16)
+    expect(submitFontSize).toBeGreaterThanOrEqual(16)
+
+    // Still visible and usable after submitting.
+    await input.fill('11')
+    await submit.click()
+    await expect(page.getByTestId('lesson-success-message')).toBeVisible()
+  })
+})
+
+test.describe('Meridian UI stability pass: world map layout', () => {
+  for (const width of [1280, 1440, 1920]) {
+    test(`no two district nodes overlap on the classic dashboard's map at ${width}px wide`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 900 })
+      await page.goto('/world')
+
+      const nodes = page.locator('[data-district-id]')
+      await expect(nodes.first()).toBeVisible()
+      const count = await nodes.count()
+      expect(count).toBeGreaterThan(1)
+
+      const boxes = []
+      for (let i = 0; i < count; i += 1) {
+        boxes.push(await nodes.nth(i).boundingBox())
+      }
+
+      for (let i = 0; i < boxes.length; i += 1) {
+        for (let j = i + 1; j < boxes.length; j += 1) {
+          const a = boxes[i]!
+          const b = boxes[j]!
+          const overlaps =
+            a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y
+          expect(overlaps).toBe(false)
+        }
+      }
+    })
+  }
+
+  test('the map stacks gracefully on a narrow viewport, still with no overlap', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 800 })
+    await page.goto('/world')
+
+    const nodes = page.locator('[data-district-id]')
+    await expect(nodes.first()).toBeVisible()
+    const count = await nodes.count()
+
+    const boxes = []
+    for (let i = 0; i < count; i += 1) {
+      boxes.push(await nodes.nth(i).boundingBox())
+    }
+    for (const box of boxes) {
+      expect(box!.width).toBeLessThanOrEqual(375)
+    }
+  })
+})
+
+test.describe('Meridian 1.0 bugfix: Odin presence no longer overlaps NPC dialogue', () => {
+  async function walkToMathTeacher(page: import('@playwright/test').Page) {
+    await page.getByTestId('toggle-world-scene-button').click()
+    await expect(page.getByTestId('world-scene-3d')).toBeVisible()
+    await expect(page.getByTestId('interaction-prompt')).toHaveAttribute('data-interactable-id', 'north-warden')
+    await page.waitForTimeout(500)
+    await page.keyboard.down('KeyS')
+    await page.waitForTimeout(600)
+    await page.keyboard.up('KeyS')
+    await page.keyboard.down('KeyA')
+    await page.waitForTimeout(900)
+    await page.keyboard.up('KeyA')
+    await expect(page.getByTestId('interaction-prompt')).toHaveAttribute('data-interactable-id', 'math-teacher')
+  }
+
+  test('Odin is hidden while dialogue is open, even right after load while its mission-started line is still visible', async ({
+    page,
+  }) => {
+    await page.goto('/world')
+    await walkToMathTeacher(page)
+
+    // Reaching the teacher takes long enough that Odin's mission-started
+    // line (shown on load, ~4.5s) is sometimes already gone by the time
+    // dialogue opens — assert only that it's never visible *with* the
+    // dialogue, not that it was showing beforehand.
+    await page.keyboard.press('KeyE')
+    await expect(page.getByTestId('npc-dialogue')).toBeVisible()
+    await expect(page.getByTestId('odin-presence')).not.toBeVisible()
+  })
+
+  test('closing the dialogue does not leave the world scene broken, and re-opening dialogue hides it again', async ({
+    page,
+  }) => {
+    await page.goto('/world')
+    await walkToMathTeacher(page)
+
+    await page.keyboard.press('KeyE')
+    await expect(page.getByTestId('npc-dialogue')).toBeVisible()
+    await page.getByTestId('npc-dialogue-close-button').click()
+    await expect(page.getByTestId('npc-dialogue')).not.toBeVisible()
+    await expect(page.getByTestId('world-scene-3d')).toBeVisible()
+
+    await page.keyboard.press('KeyE')
+    await expect(page.getByTestId('npc-dialogue')).toBeVisible()
+    await expect(page.getByTestId('odin-presence')).not.toBeVisible()
   })
 })

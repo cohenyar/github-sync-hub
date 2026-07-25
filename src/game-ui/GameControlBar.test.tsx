@@ -1,13 +1,12 @@
 // @vitest-environment jsdom
 import { fireEvent, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { GameControlBar } from './GameControlBar'
 
 function renderBar(overrides: Partial<Parameters<typeof GameControlBar>[0]> = {}) {
   const props = {
     justSaved: false,
     confirmingNewGame: false,
-    showAdmin: false,
     showWorldScene: false,
     isMuted: false,
     onSave: vi.fn(),
@@ -15,7 +14,6 @@ function renderBar(overrides: Partial<Parameters<typeof GameControlBar>[0]> = {}
     onRequestNewGame: vi.fn(),
     onConfirmNewGame: vi.fn(),
     onCancelNewGame: vi.fn(),
-    onToggleAdmin: vi.fn(),
     onToggleWorldScene: vi.fn(),
     onToggleMuted: vi.fn(),
     ...overrides,
@@ -65,18 +63,8 @@ describe('GameControlBar — Bug A fix (stray focus double-fire on Enter)', () =
   })
 })
 
-describe('GameControlBar — Admin visibility (Phase 3A.1)', () => {
-  afterEach(() => {
-    vi.unstubAllEnvs()
-  })
-
-  it('shows the admin toggle in a dev build (the test environment)', () => {
-    renderBar()
-    expect(screen.getByTestId('admin-toggle-button')).toBeInTheDocument()
-  })
-
-  it('hides the admin toggle when import.meta.env.DEV is false, as it will be in a production build', () => {
-    vi.stubEnv('DEV', false)
+describe('GameControlBar — Admin toggle removed (Auth Phase 1)', () => {
+  it('no longer renders an in-game admin toggle; Admin is now a protected /admin route', () => {
     renderBar()
     expect(screen.queryByTestId('admin-toggle-button')).not.toBeInTheDocument()
   })

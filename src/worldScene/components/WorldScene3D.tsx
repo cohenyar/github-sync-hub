@@ -29,6 +29,7 @@ import { PlayerAvatar } from './scene3d/PlayerAvatar'
 import { SceneCamera } from './scene3d/SceneCamera'
 import { TeacherNpcAccents } from './scene3d/TeacherNpcAccents'
 import { TownProps } from './scene3d/TownProps'
+import { WebglErrorBoundary } from './scene3d/WebglErrorBoundary'
 import { InteractionPrompt, type DestinationPromptInfo } from './InteractionPrompt'
 import styles from './WorldScene3D.module.css'
 
@@ -185,7 +186,8 @@ export function WorldScene3D({
 
   return (
     <div className={styles.scene} data-testid="world-scene-3d">
-      <Canvas>
+      <WebglErrorBoundary>
+      <Canvas dpr={[1, 2]}>
         <SceneCamera />
         {/*
          * A small lighting mood, not just illumination: a cool blue-toned
@@ -287,6 +289,7 @@ export function WorldScene3D({
           colliders={LEARNING_BUILDING_COLLIDERS}
         />
       </Canvas>
+      </WebglErrorBoundary>
 
       <div className={styles.hud} data-testid="district-status-hud">
         {currentDistrictLabel} — {currentDistrictStatusLabel}

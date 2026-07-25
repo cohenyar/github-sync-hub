@@ -1,117 +1,79 @@
-/* World Map — a contained game-world navigation surface, not a row of cards.
- * Desktop: districts sit on a radial "constellation" around a decorative
- * hub, positioned entirely from --slot-index / --slot-total so any number
- * of districts distributes evenly with no per-id hardcoding.
- * Mobile (<900px, the one shared breakpoint): the radial canvas collapses
- * to a horizontal scroll-snap row for reach and performance. */
+/* World Map — a stable learning-path layout, not a row of overlapping cards
+ * and not trigonometric absolute positioning. Desktop: a horizontal flex
+ * row, in canonical learning-journey order, with a simple connector line
+ * between each pair of consecutive districts. Narrow screens: the same
+ * markup stacks into a vertical column, with the connector rotating to a
+ * vertical line — one shared breakpoint, no per-viewport special-casing
+ * needed since flexbox already reflows correctly at any width. Flexbox's
+ * `row` direction is text-direction-aware, so this reads correctly in RTL
+ * with no extra mirroring logic. */
 
 .mapViewport {
   position: relative;
   inline-size: 100%;
+  min-inline-size: 0;
+  box-sizing: border-box;
   border-radius: var(--ds-radius-lg);
   border: 1px solid var(--ds-border);
+  padding: var(--ds-space-6) var(--ds-space-5);
   background:
     radial-gradient(120% 90% at 50% 8%, rgba(124, 156, 255, 0.1), transparent 60%),
     radial-gradient(120% 90% at 50% 100%, rgba(167, 139, 250, 0.1), transparent 60%),
     var(--ds-surface-strong);
-  overflow: hidden;
 }
 
-/* --- Desktop radial canvas -------------------------------------------- */
-@media (min-width: 900px) {
-  .mapViewport {
-    /* Fixed, centered stage. A capped width keeps the radial map from
-       spreading into a sparse full-bleed band on wide screens. */
-    block-size: 420px;
-    max-inline-size: 760px;
-    margin-inline: auto;
-  }
-
-  .map {
-    position: absolute;
-    inset: 0;
-  }
-
-  .node {
-    /* Even distribution: index/total → angle, with -90deg so the first
-       slot sits at the top. The inner counter-rotation keeps each card
-       upright while the outer rotate+translate places it on the circle.
-       --radius is a LENGTH (not a %) — a translate() percentage would
-       resolve against the node's own box and collapse every node to the
-       centre. */
-    --angle: calc(var(--slot-index) * (360deg / var(--slot-total)) - 90deg);
-    --radius: 150px;
-    position: absolute;
-    inset-block-start: 50%;
-    inset-inline-start: 50%;
-    transform: translate(-50%, -50%) rotate(var(--angle)) translate(var(--radius)) rotate(calc(-1 * var(--angle)));
-  }
-
-  .constellation {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  .hub {
-    position: absolute;
-    inset-block-start: 50%;
-    inset-inline-start: 50%;
-    inline-size: 14px;
-    block-size: 14px;
-    transform: translate(-50%, -50%);
-    border-radius: 50%;
-    background: var(--ds-accent);
-    box-shadow: var(--ds-glow-accent);
-  }
-
-  .spoke {
-    --angle: calc(var(--slot-index) * (360deg / var(--slot-total)) - 90deg);
-    position: absolute;
-    inset-block-start: 50%;
-    inset-inline-start: 50%;
-    inline-size: 150px;
-    block-size: 1px;
-    transform-origin: 0 0;
-    transform: rotate(var(--angle));
-    background: linear-gradient(to right, rgba(124, 156, 255, 0.35), rgba(124, 156, 255, 0));
-  }
+.map {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--ds-space-2) 0;
+  max-inline-size: 900px;
+  min-inline-size: 0;
+  margin-inline: auto;
 }
 
-/* --- Mobile / narrow: horizontal scroll-snap row ---------------------- */
-@media (max-width: 899.98px) {
-  .constellation {
-    display: none;
-  }
-
-  .map {
-    display: flex;
-    gap: var(--ds-space-3);
-    padding: var(--ds-space-4);
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .node {
-    flex: 0 0 auto;
-    scroll-snap-align: start;
-  }
-}
-
-/* --- Node states (both layouts) --------------------------------------- */
-/* Status tints the node's own District tile via its child border/glow.
- * Selective glow (dial 5/10): only the ACTIVE node gets a full accent glow;
- * status is a quieter border tint so cards stay readable and the active
- * one clearly dominates. */
 .node {
-  border-radius: var(--ds-radius-md);
-  transition:
-    box-shadow var(--ds-duration-base) var(--ds-ease-out),
-    transform var(--ds-duration-base) var(--ds-ease-out);
+  flex: 0 0 auto;
 }
 
+.connector {
+  flex: 1 1 28px;
+  min-inline-size: 20px;
+  max-inline-size: 72px;
+  block-size: 2px;
+  margin-inline: var(--ds-space-2);
+  background: linear-gradient(to right, transparent, rgba(124, 156, 255, 0.45), transparent);
+  border-radius: var(--ds-radius-pill);
+}
+
+/* --- Narrow screens: stack vertically ---------------------------------- */
+@media (max-width: 639.98px) {
+  .map {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .connector {
+    inline-size: 2px;
+    block-size: 24px;
+    min-inline-size: 0;
+    max-inline-size: none;
+    min-block-size: 20px;
+    margin-inline: auto;
+    margin-block: var(--ds-space-1);
+    background: linear-gradient(to bottom, transparent, rgba(124, 156, 255, 0.45), transparent);
+  }
+}
+
+/* --- Node states -------------------------------------------------------
+ * Status tints the node's own District tile via its child border/glow.
+ * Only the ACTIVE node gets a full accent glow; status is a quieter border
+ * tint so cards stay readable and the active one clearly dominates. There
+ * is no separate "locked"/"completed" boolean in the district data model —
+ * this reuses the district's real thriving/stable/unstable status
+ * (thriving reads as the closest existing analog to "on track", unstable
+ * as "needs attention"), so nothing here is invented. */
 .node[data-status='thriving'] > * {
   border-color: rgba(52, 211, 153, 0.5);
 }
@@ -122,12 +84,7 @@
   border-color: rgba(251, 191, 36, 0.55);
 }
 
-.node[data-active='true'] {
-  z-index: 2;
-}
-
 .node[data-active='true'] > * {
   border-color: var(--ds-accent-strong);
   box-shadow: var(--ds-glow-accent);
 }
-

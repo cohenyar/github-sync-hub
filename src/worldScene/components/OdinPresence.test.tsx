@@ -61,4 +61,45 @@ describe('OdinPresence', () => {
     })
     expect(screen.queryByTestId('odin-presence')).not.toBeInTheDocument()
   })
+
+  // Meridian 1.0 bugfix: Odin's fixed-position banner and NpcDialogue can
+  // otherwise land in the same screen region and render overlapping,
+  // unreadable text (see e2e/world-scene-3d.spec.ts).
+  describe('hidden prop (dialogue-open suppression)', () => {
+    it('renders nothing while hidden, even with an active narration', () => {
+      render(<OdinPresence latestEntry={entry('1', 'First line.')} hidden />)
+      expect(screen.queryByTestId('odin-presence')).not.toBeInTheDocument()
+    })
+
+    it('does not restart the display timer while hidden, then reappears once unhidden if still within its window', () => {
+      const { rerender } = render(<OdinPresence latestEntry={entry('1', 'First line.')} />)
+      act(() => {
+        vi.advanceTimersByTime(2000)
+      })
+      rerender(<OdinPresence latestEntry={entry('1', 'First line.')} hidden />)
+      expect(screen.queryByTestId('odin-presence')).not.toBeInTheDocument()
+
+      act(() => {
+        vi.advanceTimersByTime(2000)
+      })
+      rerender(<OdinPresence latestEntry={entry('1', 'First line.')} hidden={false} />)
+      // 4s elapsed total, out of a 4.5s window — still within it, and the
+      // timer was never reset by toggling hidden.
+      expect(screen.getByTestId('odin-presence')).toHaveTextContent('First line.')
+
+      act(() => {
+        vi.advanceTimersByTime(800)
+      })
+      expect(screen.queryByTestId('odin-presence')).not.toBeInTheDocument()
+    })
+
+    it('still picks up a brand-new entry that arrives while hidden, once unhidden', () => {
+      const { rerender } = render(<OdinPresence latestEntry={entry('1', 'First line.')} hidden />)
+      rerender(<OdinPresence latestEntry={entry('2', 'Second line.')} hidden />)
+      expect(screen.queryByTestId('odin-presence')).not.toBeInTheDocument()
+
+      rerender(<OdinPresence latestEntry={entry('2', 'Second line.')} hidden={false} />)
+      expect(screen.getByTestId('odin-presence')).toHaveTextContent('Second line.')
+    })
+  })
 })

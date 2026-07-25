@@ -2,13 +2,19 @@
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
+import { AuthProvider } from '../auth'
 import { he } from '../i18n'
 import { Dashboard } from './Dashboard'
 
+// Dashboard renders through PageShell, which reads useAuth() for the Admin
+// link/AuthButton — this mirrors App.tsx's real tree, where AuthProvider
+// always wraps every route.
 function renderDashboard() {
   return render(
     <MemoryRouter>
-      <Dashboard />
+      <AuthProvider>
+        <Dashboard />
+      </AuthProvider>
     </MemoryRouter>,
   )
 }

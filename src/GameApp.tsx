@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
 import './App.css'
-import { AdminPanel } from './admin'
 import { defaultCampaign, getCampaignSummary, isCampaignComplete, type CampaignProgress } from './campaign'
 import { CampaignCompleteBanner, MissionPanel, MissionSelect, SqlEditorPanel } from './components'
 import { createProgressionMissionCompletedHandler, createUnlockReactionHandler, gameEventBus } from './events'
@@ -84,7 +83,6 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
   // fallback.
   const [activeLessonId, setActiveLessonId] = useState<string | null>(null)
   const [world, setWorld] = useState<WorldState>(() => bootSave?.world ?? initialWorldState)
-  const [showAdmin, setShowAdmin] = useState(false)
   // Raw world-state JSON is a debug view, not something a player needs to
   // see by default — collapsed until explicitly opened.
   const [showDebug, setShowDebug] = useState(false)
@@ -496,7 +494,6 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
       <GameControlBar
         justSaved={justSaved}
         confirmingNewGame={confirmingNewGame}
-        showAdmin={showAdmin}
         showWorldScene={showWorldScene}
         isMuted={isMuted}
         onSave={handleSave}
@@ -504,7 +501,6 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
         onRequestNewGame={() => setConfirmingNewGame(true)}
         onConfirmNewGame={handleConfirmNewGame}
         onCancelNewGame={() => setConfirmingNewGame(false)}
-        onToggleAdmin={() => setShowAdmin((current) => !current)}
         onToggleWorldScene={() => setShowWorldScene((current) => !current)}
         onToggleMuted={toggleMuted}
       />
@@ -573,7 +569,7 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
               so an already-shown line doesn't replay just because the scene
               underneath remounted, and the transition overlay so it can
               detect the switch itself as an edge (see CoreTransitionOverlay). */}
-          <OdinPresence latestEntry={latestOdinEntry} />
+          <OdinPresence latestEntry={latestOdinEntry} hidden={sceneState.mode.kind === 'dialogue'} />
           <CoreTransitionOverlay active={sceneState.mode.kind === 'terminal'} glowColor={getDistrictStatusColor(coreStatus)} />
         </>
       ) : (
@@ -641,14 +637,6 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
           onPrimary={handlePrimaryAction}
           primaryLabel={he.continueMissionCta}
         />
-      )}
-      {showAdmin && (
-        // Admin is an English-only builder/debug surface (unchanged since v0.1) —
-        // pinned to LTR explicitly so it renders correctly regardless of the
-        // document's own RTL default.
-        <section className="adminSection" dir="ltr" lang="en">
-          <AdminPanel />
-        </section>
       )}
     </div>
   )

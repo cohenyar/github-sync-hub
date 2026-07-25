@@ -4,6 +4,12 @@ import styles from './OdinPresence.module.css'
 
 export interface OdinPresenceProps {
   latestEntry: OdinNarrationEntry | null
+  /** Meridian 1.0 bugfix: suppresses the banner's visual output (without
+   * unmounting it) while an NPC dialogue is open, since both are anchored
+   * near the bottom of the scene and can otherwise render overlapping,
+   * unreadable text. Timers/state keep running so nothing replays once
+   * dialogue closes. */
+  hidden?: boolean
 }
 
 const DISPLAY_DURATION_MS = 4500
@@ -18,7 +24,7 @@ const FADE_OUT_DURATION_MS = 300
  * world<->Terminal mode switch, so a line already shown doesn't reappear
  * just because the scene underneath it remounted.
  */
-export function OdinPresence({ latestEntry }: OdinPresenceProps) {
+export function OdinPresence({ latestEntry, hidden = false }: OdinPresenceProps) {
   const [displayedEntry, setDisplayedEntry] = useState<OdinNarrationEntry | null>(null)
   const [visible, setVisible] = useState(false)
   const shownIdRef = useRef<string | null>(null)
@@ -48,7 +54,7 @@ export function OdinPresence({ latestEntry }: OdinPresenceProps) {
     }
   }, [])
 
-  if (!displayedEntry) return null
+  if (!displayedEntry || hidden) return null
 
   return (
     <div

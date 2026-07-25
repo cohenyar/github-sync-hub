@@ -1,6 +1,6 @@
-import type { CSSProperties } from 'react'
+import { Fragment } from 'react'
 import { getDistrictStatus } from '../worldState'
-import type { WorldState } from '../worldState/types'
+import type { DistrictState, WorldState } from '../worldState/types'
 import { District } from './District'
 import styles from './WorldMap.module.css'
 
@@ -17,40 +17,45 @@ export interface WorldMapProps {
   activeDistrictId?: string
 }
 
+/**
+ * The canonical learning-journey order — matches the order the Hub World
+ * feature already uses for the same four districts (see
+ * worldScene/logic/destinationContent.ts's DESTINATIONS array): Core hosts
+ * the on-ramp mission, then North/South/East follow as course worlds. Not a
+ * new ordering invented for this layout — reusing the one order the app
+ * already treats as authoritative elsewhere.
+ */
+const DISTRICT_ORDER: readonly string[] = ['core', 'north', 'south', 'east']
+
+/** Known ids sort into the canonical order; any other id (e.g. a test fixture) keeps its original relative position, after every known id. */
+function sortByLearningJourney(districts: readonly DistrictState[]): readonly DistrictState[] {
+  return [...districts].sort((a, b) => {
+    const indexA = DISTRICT_ORDER.indexOf(a.id)
+    const indexB = DISTRICT_ORDER.indexOf(b.id)
+    if (indexA === -1 && indexB === -1) return 0
+    if (indexA === -1) return 1
+    if (indexB === -1) return -1
+    return indexA - indexB
+  })
+}
+
 export function WorldMap({ world, unlockedNpcIds = [], onSelectNpc, activeDistrictId }: WorldMapProps) {
-  const districts = Object.values(world.districts)
+  const districts = sortByLearningJourney(Object.values(world.districts))
 
   return (
     <div className={styles.mapViewport} data-turn={world.turn}>
-      {/* Decorative center anchor + radial spokes. Non-interactive; the map
-          reads as a connected place rather than a row of cards. The spokes
-          are generated per-district so this scales to any district count. */}
-      <div className={styles.constellation} aria-hidden="true">
-        <span className={styles.hub} />
-        {districts.map((district, index) => (
-          <span
-            key={`spoke-${district.id}`}
-            className={styles.spoke}
-            style={{ '--slot-index': index, '--slot-total': districts.length } as CSSProperties}
-          />
-        ))}
-      </div>
-
       <div className={styles.map}>
         {districts.map((district, index) => (
-          <div
-            key={district.id}
-            className={styles.node}
-            data-active={district.id === activeDistrictId ? 'true' : undefined}
-            data-status={getDistrictStatus(district)}
-            style={{ '--slot-index': index, '--slot-total': districts.length } as CSSProperties}
-          >
-            <District
-              district={district}
-              unlockedNpcIds={unlockedNpcIds}
-              onSelectNpc={onSelectNpc}
-            />
-          </div>
+          <Fragment key={district.id}>
+            {index > 0 && <span className={styles.connector} aria-hidden="true" />}
+            <div
+              className={styles.node}
+              data-active={district.id === activeDistrictId ? 'true' : undefined}
+              data-status={getDistrictStatus(district)}
+            >
+              <District district={district} unlockedNpcIds={unlockedNpcIds} onSelectNpc={onSelectNpc} />
+            </div>
+          </Fragment>
         ))}
       </div>
     </div>

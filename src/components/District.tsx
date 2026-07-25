@@ -29,7 +29,12 @@ export function District({ district, unlockedNpcIds = [], onSelectNpc }: Distric
   return (
     // data-district-id stays the internal id (state/tests/selectors); only the
     // visible label is the friendly display name.
-    <div className={styles.district} data-district-id={visual.id} style={{ opacity: 0.3 + visual.intensity * 0.7 }}>
+    // Floor raised from the original 0.3 to 0.6 (Meridian UI stability pass):
+    // a low-intensity district was dimming its own text/border enough to
+    // fail basic readability. Higher intensity still reads as visibly
+    // brighter than lower — the only relationship District.test.tsx checks
+    // — just never dim enough to become hard to read.
+    <div className={styles.district} data-district-id={visual.id} style={{ opacity: 0.6 + visual.intensity * 0.4 }}>
       <span className={styles.label}>{displayName}</span>
       <span className={styles.status}>{DISTRICT_STATUS_LABEL[status]}</span>
       {npcs.length > 0 && (

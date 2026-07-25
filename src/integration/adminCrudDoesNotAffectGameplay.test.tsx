@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { AdminPanel } from '../admin'
 import GameApp from '../GameApp'
 import { he } from '../i18n'
 import { getDefaultMission, removeMission } from '../missions'
@@ -38,15 +39,26 @@ function fillMissionForm() {
   fireEvent.change(screen.getByLabelText('Mission reference SQL'), { target: { value: 'SELECT * FROM t;' } })
 }
 
+// Auth Phase 1: Admin moved from an in-game toggle to its own protected
+// /admin route (see src/auth/ProtectedAdminRoute.tsx), so it's no longer
+// reachable from inside a rendered <GameApp/> tree. Admin's mutations write
+// straight to the shared mission/NPC registries (no props, no store), so
+// rendering <GameApp/> and <AdminPanel/> side by side in the same test
+// reproduces exactly what the old toggle did — both trees observe the same
+// underlying registry — without needing a route or an admin session.
 describe('Admin CRUD does not affect live gameplay', () => {
   it('adding a mission through Admin leaves the active mission and SQL console untouched', async () => {
-    render(<GameApp />)
+    render(
+      <>
+        <GameApp />
+        <AdminPanel />
+      </>,
+    )
     await readyRunButton()
 
     const missionBeforeAdmin = getDefaultMission().id
     expect(screen.getByRole('heading', { name: 'מגע ראשון' })).toBeInTheDocument()
 
-    fireEvent.click(screen.getByTestId('admin-toggle-button'))
     fillMissionForm()
     fireEvent.click(screen.getByRole('button', { name: 'Add Mission' }))
 
@@ -55,8 +67,6 @@ describe('Admin CRUD does not affect live gameplay', () => {
     // ...but the live SQL console/Mission panel are unaffected.
     expect(getDefaultMission().id).toBe(missionBeforeAdmin)
     expect(screen.getByRole('heading', { name: 'מגע ראשון' })).toBeInTheDocument()
-
-    fireEvent.click(screen.getByTestId('admin-toggle-button'))
 
     fireEvent.change(screen.getByPlaceholderText(he.sqlPlaceholder), {
       target: { value: 'SELECT * FROM citizens;' },
@@ -67,13 +77,17 @@ describe('Admin CRUD does not affect live gameplay', () => {
   })
 
   it('adding an NPC through Admin does not change the unlock status of existing NPCs', async () => {
-    render(<GameApp />)
+    render(
+      <>
+        <GameApp />
+        <AdminPanel />
+      </>,
+    )
     await readyRunButton()
 
     const progress = createInitialPlayerProgress()
     const unlockedBefore = getUnlockedNpcIds(progress)
 
-    fireEvent.click(screen.getByTestId('admin-toggle-button'))
     fireEvent.change(screen.getByLabelText('NPC id'), { target: { value: TEST_NPC_ID } })
     fireEvent.change(screen.getByLabelText('NPC name'), { target: { value: 'Integration Test NPC' } })
     fireEvent.change(screen.getByLabelText('NPC district'), { target: { value: 'north' } })

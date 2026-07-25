@@ -2,15 +2,44 @@
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
+import { AuthContext } from '../auth'
+import type { AuthContextValue } from '../auth'
 import { he } from '../i18n'
 import { PageShell } from './PageShell'
 
-function renderShell() {
+const STUDENT_AUTH: AuthContextValue = {
+  status: 'signed-out',
+  user: null,
+  role: null,
+  isAdmin: false,
+  authError: null,
+  configured: false,
+  signInWithGoogle: async () => {},
+  signOut: async () => {},
+}
+
+const ADMIN_AUTH: AuthContextValue = {
+  ...STUDENT_AUTH,
+  status: 'signed-in',
+  user: { id: 'admin-1', email: 'admin@example.com', avatarUrl: null },
+  role: 'admin',
+  isAdmin: true,
+  configured: true,
+}
+
+// PageShell reads useAuth() directly (for the Admin link + AuthButton), so
+// every render needs an AuthContext in the tree — a real <AuthProvider>
+// resolves to the same signed-out/guest value as STUDENT_AUTH when no
+// VITE_SUPABASE_* env vars are set (as in every test run), so tests that
+// don't care about auth can just render the shell plainly.
+function renderShell(authValue: AuthContextValue = STUDENT_AUTH) {
   return render(
     <MemoryRouter>
-      <PageShell>
-        <p>content</p>
-      </PageShell>
+      <AuthContext.Provider value={authValue}>
+        <PageShell>
+          <p>content</p>
+        </PageShell>
+      </AuthContext.Provider>
     </MemoryRouter>,
   )
 }
@@ -31,5 +60,15 @@ describe('PageShell', () => {
     for (const label of [he.navCoursesLabel, he.navTutorLabel, he.navProgressLabel, he.navProfileLabel]) {
       expect(nav.textContent).not.toContain(label)
     }
+  })
+
+  it('never shows the Admin link to a guest or a signed-in non-admin', () => {
+    renderShell(STUDENT_AUTH)
+    expect(screen.queryByRole('link', { name: he.navAdminLabel })).not.toBeInTheDocument()
+  })
+
+  it('shows the Admin link once the session resolves to the admin role', () => {
+    renderShell(ADMIN_AUTH)
+    expect(screen.getByRole('link', { name: he.navAdminLabel })).toHaveAttribute('href', '/admin')
   })
 })

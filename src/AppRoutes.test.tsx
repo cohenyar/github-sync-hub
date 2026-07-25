@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 import { AppRoutes } from './App'
+import { AuthProvider } from './auth'
 import { he } from './i18n'
 
 // GameApp (mounted at /world) needs the same test-friendly database loader
@@ -12,10 +13,15 @@ vi.mock('./db/database', async () => {
   return { createDatabase: createTestDatabase }
 })
 
+// AuthProvider mirrors App.tsx's real tree. With no VITE_SUPABASE_* env vars
+// set in tests, it resolves synchronously to signed-out/guest — every route
+// below renders exactly as it did before auth existed, except /admin.
 function renderAt(path: string) {
   return render(
     <MemoryRouter initialEntries={[path]}>
-      <AppRoutes />
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
     </MemoryRouter>,
   )
 }
@@ -62,5 +68,23 @@ describe('Routing foundation', () => {
     renderAt('/this-route-does-not-exist')
     expect(screen.getByText(he.notFoundTitle)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: he.notFoundBackLink })).toHaveAttribute('href', '/')
+  })
+
+  it('redirects a guest visitor away from /admin, back to the landing page', () => {
+    renderAt('/admin')
+    expect(screen.getByText(he.landingTagline)).toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Admin Area' })).not.toBeInTheDocument()
+  })
+
+  it('renders the dev-only design-system QA page in a dev build (the test environment)', () => {
+    renderAt('/dev/design-system')
+    expect(screen.queryByText(he.notFoundTitle)).not.toBeInTheDocument()
+  })
+
+  it('Meridian 1.0 UI audit: /dev/design-system does not exist at all in a production build, falling through to NotFound', () => {
+    vi.stubEnv('DEV', false)
+    renderAt('/dev/design-system')
+    expect(screen.getByText(he.notFoundTitle)).toBeInTheDocument()
+    vi.unstubAllEnvs()
   })
 })

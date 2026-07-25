@@ -195,6 +195,18 @@ export const he = {
   // success reaction.
   lessonSuccessMessage: 'כל הכבוד! השיעור הושלם.',
   lessonSuccessNextStepsMessage: 'אפשר לחזור לעולם, לבחור מקצוע נוסף או לתרגל שוב.',
+
+  // Meridian UI stability pass — a readable fallback if the browser can't
+  // create a WebGL context, instead of a blank screen.
+  worldSceneErrorMessage: 'לא ניתן לטעון את העולם התלת־ממדי בדפדפן זה. אפשר להמשיך להשתמש בשאר האפליקציה.',
+
+  // Auth Phase 1 — Google sign-in, sign-out, and the protected /admin route.
+  signInWithGoogle: 'התחברות עם Google',
+  signOut: 'התנתקות',
+  authLoadingMessage: 'בודק מצב התחברות…',
+  authUnavailableMessage: 'לא ניתן להתחבר לשירות ההתחברות כרגע. אפשר להמשיך במצב אורח.',
+  authProfileErrorMessage: 'לא ניתן היה לאמת הרשאות משתמש. מחוברים ללא הרשאות ניהול.',
+  navAdminLabel: 'ניהול',
 } as const
 
 export type HebrewStringKey = keyof typeof he

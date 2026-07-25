@@ -1,6 +1,7 @@
 import { BrowserRouter, Route, Routes, useSearchParams } from 'react-router-dom'
+import { AuthProvider, ProtectedAdminRoute } from './auth'
 import GameApp from './GameApp'
-import { CourseDetail, Courses, Dashboard, LandingPage, NotFound, Profile, Progress, Tutor } from './pages'
+import { AdminPage, CourseDetail, Courses, Dashboard, LandingPage, NotFound, Profile, Progress, Tutor } from './pages'
 import { DesignSystemPage } from './pages/DesignSystemPage'
 
 /**
@@ -34,8 +35,20 @@ export function AppRoutes() {
       <Route path="/tutor" element={<Tutor />} />
       <Route path="/progress" element={<Progress />} />
       <Route path="/profile" element={<Profile />} />
-      {/* Hidden Phase 0 QA route — not linked from any user-facing nav. */}
-      <Route path="/dev/design-system" element={<DesignSystemPage />} />
+      <Route
+        path="/admin"
+        element={
+          <ProtectedAdminRoute>
+            <AdminPage />
+          </ProtectedAdminRoute>
+        }
+      />
+      {/* Dev-only QA route — not linked from any user-facing nav, and (as of
+          the Meridian 1.0 UI audit) not present at all in a production
+          build, since it still pitches retired AI-mentor messaging and its
+          own nav pattern was never adopted. Falls through to NotFound in
+          production, exactly like a URL that never existed. */}
+      {import.meta.env.DEV && <Route path="/dev/design-system" element={<DesignSystemPage />} />}
       <Route path="*" element={<NotFound />} />
     </Routes>
   )
@@ -43,12 +56,17 @@ export function AppRoutes() {
 
 /**
  * Routing foundation only. App.tsx is the top-level composition boundary —
- * it hosts the router and nothing else.
+ * it hosts the router and the auth session provider, and nothing else.
+ * AuthProvider sits inside BrowserRouter (ProtectedAdminRoute needs
+ * react-router-dom's <Navigate>) but outside AppRoutes, so every route
+ * shares the one auth session.
  */
 function App() {
   return (
     <BrowserRouter>
-      <AppRoutes />
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
     </BrowserRouter>
   )
 }
