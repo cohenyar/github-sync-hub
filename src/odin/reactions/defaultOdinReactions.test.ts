@@ -159,6 +159,33 @@ describe('defaultOdinReactions', () => {
     expect(reaction?.id).toBe('query-failed-sql-error')
   })
 
+  it('reacts to each of the two Batch 3A.4B lessons completing specifically, as a distinct event from MissionCompleted', () => {
+    expect(find('lesson-math-completed').trigger).toEqual({ event: 'LessonCompleted', lessonId: 'lesson:math-001' })
+    expect(find('lesson-english-completed').trigger).toEqual({
+      event: 'LessonCompleted',
+      lessonId: 'lesson:english-001',
+    })
+    // A lesson id never fires the MissionCompleted-keyed reactions above.
+    expect(
+      matchReaction(defaultOdinReactions, { type: 'MissionCompleted', missionId: 'lesson:math-001' })?.id,
+    ).toBe('mission-completed-generic')
+  })
+
+  it('has a generic LessonFailed fallback, distinct from QueryFailed', () => {
+    expect(find('lesson-failed-generic').trigger).toEqual({ event: 'LessonFailed' })
+  })
+
+  it('picks the lesson-specific completion reaction over nothing else matching', () => {
+    const mathReaction = matchReaction(defaultOdinReactions, { type: 'LessonCompleted', lessonId: 'lesson:math-001' })
+    expect(mathReaction?.id).toBe('lesson-math-completed')
+
+    const englishReaction = matchReaction(defaultOdinReactions, {
+      type: 'LessonCompleted',
+      lessonId: 'lesson:english-001',
+    })
+    expect(englishReaction?.id).toBe('lesson-english-completed')
+  })
+
   it('every reaction has a non-empty id and message', () => {
     for (const reaction of defaultOdinReactions) {
       expect(reaction.id.length).toBeGreaterThan(0)

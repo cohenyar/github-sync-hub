@@ -10,12 +10,12 @@ import styles from './LandingPage.module.css'
  * preserved. The `landingTagline` string and the `landing-enter-world-link`
  * testid remain so the existing route tests keep passing.
  */
+// Phase 3A.1: trimmed to the routes that render real content — see
+// PageShell.tsx's matching trim for the same reasoning.
 const NAV_LINKS = [
   { to: '/', label: 'ראשי', end: true },
   { to: '/dashboard', label: 'לוח בקרה' },
   { to: '/world', label: 'העולם התלת־ממדי' },
-  { to: '/tutor', label: 'מדריך AI' },
-  { to: '/courses', label: 'קורסים' },
 ]
 
 const PILLS = [

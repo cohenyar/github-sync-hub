@@ -84,3 +84,132 @@ describe('NpcDialogue', () => {
     expect(() => render(<NpcDialogue npc={devrin} context={context()} onClose={vi.fn()} />)).not.toThrow()
   })
 })
+
+describe('NpcDialogue — Escape to close (Batch 3A.3)', () => {
+  it('calls onClose when Escape is pressed', () => {
+    const onClose = vi.fn()
+    render(<NpcDialogue npc={devrin} context={context()} onClose={onClose} />)
+
+    fireEvent.keyDown(window, { key: 'Escape' })
+
+    expect(onClose).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not call onClose for an unrelated key', () => {
+    const onClose = vi.fn()
+    render(<NpcDialogue npc={devrin} context={context()} onClose={onClose} />)
+
+    fireEvent.keyDown(window, { key: 'a' })
+
+    expect(onClose).not.toHaveBeenCalled()
+  })
+
+  it('removes its Escape listener on unmount', () => {
+    const onClose = vi.fn()
+    const { unmount } = render(<NpcDialogue npc={devrin} context={context()} onClose={onClose} />)
+    unmount()
+
+    fireEvent.keyDown(window, { key: 'Escape' })
+
+    expect(onClose).not.toHaveBeenCalled()
+  })
+})
+
+describe('NpcDialogue — Start Lesson handoff (Batch 3A.3)', () => {
+  const mathTeacher: NpcConfig = {
+    id: 'math-teacher',
+    name: 'Nadav Stern',
+    districtId: 'core',
+    role: 'Mathematics Teacher',
+    description: '',
+  }
+
+  it('shows a Start Lesson button for an NPC with a linked lesson, and resolves the correct namespaced id', () => {
+    const onStartLesson = vi.fn()
+    render(<NpcDialogue npc={mathTeacher} context={context()} onClose={vi.fn()} onStartLesson={onStartLesson} />)
+
+    fireEvent.click(screen.getByTestId('npc-dialogue-start-lesson-button'))
+
+    expect(onStartLesson).toHaveBeenCalledTimes(1)
+    expect(onStartLesson).toHaveBeenCalledWith('lesson:math-001')
+  })
+
+  it('never calls onClose as a side effect of Start Lesson — that decision belongs to the caller', () => {
+    const onClose = vi.fn()
+    render(<NpcDialogue npc={mathTeacher} context={context()} onClose={onClose} onStartLesson={vi.fn()} />)
+
+    fireEvent.click(screen.getByTestId('npc-dialogue-start-lesson-button'))
+
+    expect(onClose).not.toHaveBeenCalled()
+  })
+
+  it('renders no Start Lesson button for an NPC with no linked lesson', () => {
+    render(<NpcDialogue npc={devrin} context={context()} onClose={vi.fn()} onStartLesson={vi.fn()} />)
+    expect(screen.queryByTestId('npc-dialogue-start-lesson-button')).not.toBeInTheDocument()
+  })
+
+  it('renders no Start Lesson button when onStartLesson is not provided, even for a linked NPC', () => {
+    render(<NpcDialogue npc={mathTeacher} context={context()} onClose={vi.fn()} />)
+    expect(screen.queryByTestId('npc-dialogue-start-lesson-button')).not.toBeInTheDocument()
+  })
+})
+
+describe('NpcDialogue — replay action label (Batch 3A.5)', () => {
+  const mathTeacher: NpcConfig = {
+    id: 'math-teacher',
+    name: 'נדב שטרן',
+    districtId: 'core',
+    role: 'Mathematics Teacher',
+    description: '',
+  }
+
+  it('shows the normal start action when the linked lesson has not been completed', () => {
+    render(
+      <NpcDialogue npc={mathTeacher} context={context({ completedLessonIds: [] })} onClose={vi.fn()} onStartLesson={vi.fn()} />,
+    )
+    expect(screen.getByTestId('npc-dialogue-start-lesson-button')).toHaveTextContent('התחל שיעור')
+  })
+
+  it('shows the normal start action when completedLessonIds is entirely absent from the context', () => {
+    render(<NpcDialogue npc={mathTeacher} context={context()} onClose={vi.fn()} onStartLesson={vi.fn()} />)
+    expect(screen.getByTestId('npc-dialogue-start-lesson-button')).toHaveTextContent('התחל שיעור')
+  })
+
+  it('shows "תרגל שוב" once the linked lesson is already completed', () => {
+    render(
+      <NpcDialogue
+        npc={mathTeacher}
+        context={context({ completedLessonIds: ['lesson:math-001'] })}
+        onClose={vi.fn()}
+        onStartLesson={vi.fn()}
+      />,
+    )
+    expect(screen.getByTestId('npc-dialogue-start-lesson-button')).toHaveTextContent('תרגל שוב')
+  })
+
+  it('still resolves and calls onStartLesson with the same namespaced id when replaying', () => {
+    const onStartLesson = vi.fn()
+    render(
+      <NpcDialogue
+        npc={mathTeacher}
+        context={context({ completedLessonIds: ['lesson:math-001'] })}
+        onClose={vi.fn()}
+        onStartLesson={onStartLesson}
+      />,
+    )
+    fireEvent.click(screen.getByTestId('npc-dialogue-start-lesson-button'))
+    expect(onStartLesson).toHaveBeenCalledWith('lesson:math-001')
+  })
+
+  it('keeps the normal start action for a completed lesson id that belongs to a different NPC', () => {
+    render(
+      <NpcDialogue
+        npc={mathTeacher}
+        context={context({ completedLessonIds: ['lesson:english-001'] })}
+        onClose={vi.fn()}
+        onStartLesson={vi.fn()}
+      />,
+    )
+    expect(screen.getByTestId('npc-dialogue-start-lesson-button')).toHaveTextContent('התחל שיעור')
+  })
+})

@@ -28,6 +28,21 @@ const reactions: OdinReaction[] = [
     trigger: { event: 'QueryFailed', reason: 'mismatch', missionId: 'first-contact' },
     message: 'mismatch on first contact specifically',
   },
+  {
+    id: 'lesson-completed-generic',
+    trigger: { event: 'LessonCompleted' },
+    message: 'a lesson was completed',
+  },
+  {
+    id: 'lesson-math-completed',
+    trigger: { event: 'LessonCompleted', lessonId: 'lesson:math-001' },
+    message: 'math lesson completed',
+  },
+  {
+    id: 'lesson-failed-generic',
+    trigger: { event: 'LessonFailed' },
+    message: 'a lesson attempt failed',
+  },
 ]
 
 describe('matchReaction — prefers specific triggers over generic ones', () => {
@@ -64,6 +79,21 @@ describe('matchReaction — prefers specific triggers over generic ones', () => 
   it('has no QueryFailed match when neither reason nor mission id line up', () => {
     const event: GameEvent = { type: 'QueryFailed', missionId: 'district-ties', reason: 'mismatch' }
     expect(matchReaction(reactions, event)).toBeUndefined()
+  })
+
+  it('picks the lesson-specific LessonCompleted reaction over the generic one', () => {
+    const event: GameEvent = { type: 'LessonCompleted', lessonId: 'lesson:math-001' }
+    expect(matchReaction(reactions, event)?.id).toBe('lesson-math-completed')
+  })
+
+  it('falls back to the generic LessonCompleted reaction for a different lesson id', () => {
+    const event: GameEvent = { type: 'LessonCompleted', lessonId: 'lesson:english-001' }
+    expect(matchReaction(reactions, event)?.id).toBe('lesson-completed-generic')
+  })
+
+  it('matches LessonFailed as its own event, never falling back to QueryFailed reactions', () => {
+    const event: GameEvent = { type: 'LessonFailed', lessonId: 'lesson:math-001' }
+    expect(matchReaction(reactions, event)?.id).toBe('lesson-failed-generic')
   })
 })
 

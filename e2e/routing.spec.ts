@@ -13,7 +13,7 @@ test.describe('Routing foundation', () => {
     // production static-host rewrite config is a separate later decision.
     await page.goto('/dashboard')
     await page.reload()
-    await expect(page.getByRole('heading')).toBeVisible()
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
   })
 
   test('an unknown path renders the fallback page with a link back to the landing page', async ({ page }) => {

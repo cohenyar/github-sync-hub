@@ -1,3 +1,4 @@
+import { getLessonIdForNpc } from '../../learning'
 import type { NpcConfig } from '../../npcs'
 import type { ContentStatus } from '../../unlocks'
 import type { DistrictStatus } from '../../worldState'
@@ -13,12 +14,16 @@ export interface NpcDialogueContext {
   activeMissionId: string
   hasAttemptedActiveMission: boolean
   districtStatusByDistrictId: Readonly<Record<string, DistrictStatus>>
+  /** Batch 3A.4B — namespaced lesson ids the player has completed. Optional so every existing caller/fixture omitting it still type-checks; treated as empty when absent. */
+  completedLessonIds?: readonly string[]
 }
 
 export type MissionDialoguePhase = 'locked' | 'available' | 'inProgress' | 'completed'
+export type LessonDialoguePhase = 'available' | 'completed'
 
 export type NpcDialogueState =
   | { kind: 'mission'; phase: MissionDialoguePhase }
+  | { kind: 'lesson'; phase: LessonDialoguePhase }
   | { kind: 'district'; status: DistrictStatus }
   | { kind: 'static' }
 
@@ -34,9 +39,9 @@ const NPC_LINKED_MISSION_ID: Readonly<Record<string, string>> = {
 }
 
 /**
- * NPCs whose dialogue is a single static line rather than mission- or
- * district-status-driven — today just Kestrel Vane, who only ever appears
- * after the campaign is already complete.
+ * NPCs whose dialogue is a single static line rather than mission-, lesson-,
+ * or district-status-driven — just Kestrel Vane (only ever appears after
+ * the campaign is complete).
  */
 const STATIC_DIALOGUE_NPC_IDS: ReadonlySet<string> = new Set(['city-voice'])
 
@@ -57,6 +62,15 @@ export function getNpcDialogueState(npc: NpcConfig, context: NpcDialogueContext)
 
     const inProgress = context.activeMissionId === linkedMissionId && context.hasAttemptedActiveMission
     return { kind: 'mission', phase: inProgress ? 'inProgress' : 'available' }
+  }
+
+  // Batch 3A.4B — math-teacher/english-teacher resolve here (getLessonIdForNpc
+  // only returns a value for those two ids); every other NPC falls through
+  // to the district/static checks below exactly as before.
+  const linkedLessonId = getLessonIdForNpc(npc.id)
+  if (linkedLessonId) {
+    const completed = (context.completedLessonIds ?? []).includes(linkedLessonId)
+    return { kind: 'lesson', phase: completed ? 'completed' : 'available' }
   }
 
   if (STATIC_DIALOGUE_NPC_IDS.has(npc.id)) return { kind: 'static' }

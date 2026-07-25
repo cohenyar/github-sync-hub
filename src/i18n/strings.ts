@@ -165,6 +165,36 @@ export const he = {
   // the same event) — both can be visible on screen at once, so they need
   // different text to stay distinguishable.
   campaignCompleteTitle: 'כל המשימות הושלמו!',
+
+  // Phase 3A.1 — subject-selection dashboard.
+  dashboardHeading: 'בחר מסלול למידה',
+  subjectMathLabel: 'מתמטיקה',
+  subjectMathTagline: 'תרגול חשבון בסיסי וסדר פעולות.',
+  subjectEnglishLabel: 'אנגלית מהעברית',
+  subjectEnglishTagline: 'תרגול אוצר מילים מעברית לאנגלית.',
+  startLearningCta: 'התחל למידה',
+  comingLaterBadge: 'בקרוב',
+
+  // Phase 3A.3 — NPC interaction repair + lesson-start handoff.
+  talkButtonLabel: 'שיחה',
+  startLessonAction: 'התחל שיעור',
+  // Phase 3A.5 — shown instead of startLessonAction once the linked lesson is already completed.
+  replayLessonAction: 'תרגל שוב',
+
+  // Phase 3A.4A — subject-neutral lesson exercise foundation.
+  submitAnswerCta: 'שלח תשובה',
+  exerciseCorrectFeedback: 'נכון! כל הכבוד.',
+  exerciseIncorrectFeedback: 'לא מדויק. נסה/י שוב.',
+  hintCta: 'הצג רמז',
+  mathAnswerLabel: 'התשובה שלך',
+  englishAnswerLabel: 'התרגום שלך',
+
+  // Phase 3A.4B — connecting the lesson foundation to the live player flow.
+  // Phase 3A.5: reworded to a shorter confirmation plus a separate
+  // what's-next line, so it doesn't duplicate Odin's own (more specific)
+  // success reaction.
+  lessonSuccessMessage: 'כל הכבוד! השיעור הושלם.',
+  lessonSuccessNextStepsMessage: 'אפשר לחזור לעולם, לבחור מקצוע נוסף או לתרגל שוב.',
 } as const
 
 export type HebrewStringKey = keyof typeof he

@@ -31,8 +31,12 @@ describe('Routing foundation', () => {
     expect(await screen.findByRole('button', { name: he.run })).toBeInTheDocument()
   })
 
+  it('renders the real game at /world?path=math too (Batch 3A.2 query param), with no crash', async () => {
+    renderAt('/world?path=math')
+    expect(await screen.findByRole('button', { name: he.run })).toBeInTheDocument()
+  })
+
   it.each([
-    ['/dashboard', he.navDashboardLabel],
     ['/courses', he.navCoursesLabel],
     ['/tutor', he.navTutorLabel],
     ['/progress', he.navProgressLabel],
@@ -40,6 +44,13 @@ describe('Routing foundation', () => {
   ])('renders the %s placeholder', (path, title) => {
     renderAt(path)
     expect(screen.getByRole('heading', { name: title })).toBeInTheDocument()
+  })
+
+  it('renders the subject-selection dashboard at /dashboard', () => {
+    renderAt('/dashboard')
+    expect(screen.getByRole('heading', { name: he.dashboardHeading })).toBeInTheDocument()
+    expect(screen.getByTestId('subject-card-math')).toBeInTheDocument()
+    expect(screen.getByTestId('subject-card-english')).toBeInTheDocument()
   })
 
   it('reads the :courseId param on /courses/:courseId', () => {

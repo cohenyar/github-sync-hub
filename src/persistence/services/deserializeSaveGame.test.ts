@@ -42,3 +42,31 @@ describe('deserializeSaveGame', () => {
     expect(deserializeSaveGame(JSON.stringify(null))).toBeNull()
   })
 })
+
+describe('deserializeSaveGame — completedLessonIds (Batch 3A.4B)', () => {
+  it('round-trips a save that includes completedLessonIds', () => {
+    const world = createWorldState([{ id: 'north', stats: { loyalty: 55 } }])
+    const withLessons: PlayerProgress = { ...playerProgress, completedLessonIds: ['lesson:math-001'] }
+    const json = serializeSaveGame({ world, playerProgress: withLessons })
+
+    expect(deserializeSaveGame(json)).toEqual({ version: CURRENT_SAVE_VERSION, world, playerProgress: withLessons })
+  })
+
+  it('loads a save with no completedLessonIds field at all (an older save) without rejecting it', () => {
+    const world = createWorldState([])
+    // playerProgress (above) has no completedLessonIds field — the exact shape a save written before Batch 3A.4B would have.
+    const json = serializeSaveGame({ world, playerProgress })
+
+    const loaded = deserializeSaveGame(json)
+    expect(loaded).not.toBeNull()
+    expect(loaded?.playerProgress.completedLessonIds).toBeUndefined()
+  })
+
+  it('rejects a save where completedLessonIds is present but not an array', () => {
+    const world = createWorldState([])
+    const malformed = { ...playerProgress, completedLessonIds: 'not-an-array' }
+    const json = JSON.stringify({ version: CURRENT_SAVE_VERSION, world, playerProgress: malformed })
+
+    expect(deserializeSaveGame(json)).toBeNull()
+  })
+})

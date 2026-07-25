@@ -1,5 +1,5 @@
 import type { DistrictStatus } from '../../worldState'
-import type { MissionDialoguePhase, NpcDialogueState } from './npcDialogueState'
+import type { LessonDialoguePhase, MissionDialoguePhase, NpcDialogueState } from './npcDialogueState'
 
 /**
  * Authored Hebrew dialogue — static lines only, no branching, no generated
@@ -63,12 +63,45 @@ const STATIC_DIALOGUE: Readonly<Record<string, NpcDialogueContent>> = {
   'city-voice': { greeting: 'אני קסטרל ויין. מרידיאן מדברת עכשיו בקול אחד, ואני כאן כדי לשאת אותו.' },
 }
 
+/**
+ * Batch 3A.4B — math-teacher/english-teacher, now driven by
+ * npcDialogueState.ts's { kind: 'lesson' } phase instead of a single static
+ * line, so talking to a teacher again after finishing their lesson visibly
+ * acknowledges it rather than repeating the introduction verbatim. Start
+ * Lesson stays offered in both phases (NpcDialogue.tsx renders it whenever
+ * a linked lesson id exists) — completing a lesson again is an explicit,
+ * supported, idempotent replay, not a locked-off state.
+ */
+const LESSON_DIALOGUE: Readonly<Record<string, Readonly<Record<LessonDialoguePhase, NpcDialogueContent>>>> = {
+  'math-teacher': {
+    available: {
+      greeting: 'שלום, אני נדב שטרן. אני מלמד מתמטיקה כאן באקדמיה.',
+      missionContext: 'יש לי שיעור קצר בחשבון בסיסי שמוכן בשבילך.',
+    },
+    completed: {
+      greeting: 'שלום, אני נדב שטרן.',
+      missionContext: 'כל הכבוד על סיום השיעור! אפשר לתרגל אותו שוב בכל עת.',
+    },
+  },
+  'english-teacher': {
+    available: {
+      greeting: 'שלום, אני טליה ריבס. אני מלמדת אנגלית כאן במרכז השפה.',
+      missionContext: 'יש לי שיעור קצר באוצר מילים באנגלית שמוכן בשבילך.',
+    },
+    completed: {
+      greeting: 'שלום, אני טליה ריבס.',
+      missionContext: 'כל הכבוד על סיום השיעור! אפשר לתרגל אותו שוב בכל עת.',
+    },
+  },
+}
+
 const FALLBACK_DIALOGUE: NpcDialogueContent = {
   greeting: 'שלום.',
 }
 
 export function getNpcDialogue(npcId: string, state: NpcDialogueState): NpcDialogueContent {
   if (state.kind === 'mission') return MISSION_DIALOGUE[npcId]?.[state.phase] ?? FALLBACK_DIALOGUE
+  if (state.kind === 'lesson') return LESSON_DIALOGUE[npcId]?.[state.phase] ?? FALLBACK_DIALOGUE
   if (state.kind === 'district') return DISTRICT_DIALOGUE[npcId]?.[state.status] ?? FALLBACK_DIALOGUE
   return STATIC_DIALOGUE[npcId] ?? FALLBACK_DIALOGUE
 }

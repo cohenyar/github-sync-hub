@@ -159,4 +159,26 @@ export const defaultOdinReactions: OdinReaction[] = [
     message: 'Same rows, wrong sequence — check your ORDER BY.',
     messageHe: 'אותן שורות, סדר לא נכון — בדוק את ה-ORDER BY שלך.',
   },
+  // Batch 3A.4B — the two sample lessons' completion/failure feedback.
+  // Separate event types (LessonCompleted/LessonFailed) from the SQL side's
+  // MissionCompleted/QueryFailed, so these can never fire for — or be
+  // confused with — a real mission.
+  {
+    id: 'lesson-math-completed',
+    trigger: { event: 'LessonCompleted', lessonId: 'lesson:math-001' },
+    message: 'Well done — the numbers line up.',
+    messageHe: 'כל הכבוד — התשובה נכונה, וסדר הפעולות פתר את התרגיל.',
+  },
+  {
+    id: 'lesson-english-completed',
+    trigger: { event: 'LessonCompleted', lessonId: 'lesson:english-001' },
+    message: 'Well done — every word translated correctly.',
+    messageHe: 'כל הכבוד — כל המילים תורגמו נכון.',
+  },
+  {
+    id: 'lesson-failed-generic',
+    trigger: { event: 'LessonFailed' },
+    message: 'Not quite — try again.',
+    messageHe: 'לא בדיוק — נסה/י שוב.',
+  },
 ]

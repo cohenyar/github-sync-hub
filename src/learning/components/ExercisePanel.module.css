@@ -1,0 +1,75 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--panel-bg);
+  color: var(--text);
+}
+
+.instructions {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.itemLabel {
+  min-width: 64px;
+}
+
+.input {
+  flex: 1;
+  min-height: 40px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--panel-bg);
+  color: var(--text);
+}
+
+.submitButton,
+.hintButton {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--accent);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.hintButton {
+  background: transparent;
+}
+
+.feedbackPass {
+  margin: 0;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.feedbackFail {
+  margin: 0;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.hintText {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}

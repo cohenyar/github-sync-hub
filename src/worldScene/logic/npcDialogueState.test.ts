@@ -126,4 +126,48 @@ describe('getNpcDialogueState — static NPCs', () => {
     )
     expect(state).toEqual({ kind: 'static' })
   })
+
+})
+
+describe('getNpcDialogueState — lesson-linked NPCs (Batch 3A.4B)', () => {
+  const mathTeacher: NpcConfig = {
+    id: 'math-teacher',
+    name: 'נדב שטרן',
+    districtId: 'core',
+    role: 'Mathematics Teacher',
+    description: '',
+  }
+  const englishTeacher: NpcConfig = {
+    id: 'english-teacher',
+    name: 'טליה ריבס',
+    districtId: 'core',
+    role: 'English Teacher',
+    description: '',
+  }
+
+  it('is "available" for both teachers when their lesson has not been completed, regardless of mission/district data', () => {
+    const ctx = context({
+      districtStatusByDistrictId: { core: 'unstable' },
+      missionContentStatusByMissionId: { 'first-contact': 'available' },
+    })
+
+    expect(getNpcDialogueState(mathTeacher, ctx)).toEqual({ kind: 'lesson', phase: 'available' })
+    expect(getNpcDialogueState(englishTeacher, ctx)).toEqual({ kind: 'lesson', phase: 'available' })
+  })
+
+  it('is "available" when completedLessonIds is entirely absent from the context', () => {
+    expect(getNpcDialogueState(mathTeacher, context())).toEqual({ kind: 'lesson', phase: 'available' })
+  })
+
+  it('is "completed" for the math teacher once lesson:math-001 is in completedLessonIds, independent of the english teacher', () => {
+    const ctx = context({ completedLessonIds: ['lesson:math-001'] })
+
+    expect(getNpcDialogueState(mathTeacher, ctx)).toEqual({ kind: 'lesson', phase: 'completed' })
+    expect(getNpcDialogueState(englishTeacher, ctx)).toEqual({ kind: 'lesson', phase: 'available' })
+  })
+
+  it('is "completed" for the english teacher once lesson:english-001 is in completedLessonIds', () => {
+    const ctx = context({ completedLessonIds: ['lesson:english-001'] })
+    expect(getNpcDialogueState(englishTeacher, ctx)).toEqual({ kind: 'lesson', phase: 'completed' })
+  })
 })

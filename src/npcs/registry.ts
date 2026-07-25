@@ -68,6 +68,29 @@ const npcs: NpcConfig[] = [
     roleHe: 'קול העיר',
     descriptionHe: 'הקול שדרכו מרידיאן מדברת, כעת כשכל המחוזות עונים כאחד.',
   },
+  // Batch 3A.3 — the two learning-path teachers, stationed outside their
+  // own building (see scenePositions3D.ts). districtId is 'core' since
+  // both buildings sit in the new Central Plaza, not a separate district —
+  // this is what makes them visible via the exact same
+  // getVisibleNpcs/proximity mechanism every other NPC already uses.
+  {
+    id: 'math-teacher',
+    name: 'נדב שטרן',
+    districtId: 'core',
+    role: 'Mathematics Teacher',
+    description: 'Teaches the foundations of numbers and problem-solving at the Mathematics Academy.',
+    roleHe: 'מורה למתמטיקה',
+    descriptionHe: 'מלמד את יסודות המספרים ופתרון הבעיות באקדמיית המתמטיקה.',
+  },
+  {
+    id: 'english-teacher',
+    name: 'טליה ריבס',
+    districtId: 'core',
+    role: 'English Teacher',
+    description: 'Teaches English vocabulary and language skills at the English Language Center.',
+    roleHe: 'מורה לאנגלית',
+    descriptionHe: 'מלמדת אוצר מילים וכישורי שפה במרכז השפה האנגלית.',
+  },
 ]
 
 /**

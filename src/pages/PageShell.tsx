@@ -3,14 +3,14 @@ import { NavLink } from 'react-router-dom'
 import { he } from '../i18n'
 import styles from './pages.module.css'
 
+// Phase 3A.1: trimmed to the routes that render real content. /courses,
+// /tutor, /progress, /profile keep their routes and code (App.tsx) — they're
+// just not linked from player-facing navigation until each has a real
+// design.
 const NAV_LINKS = [
   { to: '/', label: he.navLandingLabel },
   { to: '/dashboard', label: he.navDashboardLabel },
   { to: '/world', label: he.navWorldLabel },
-  { to: '/courses', label: he.navCoursesLabel },
-  { to: '/tutor', label: he.navTutorLabel },
-  { to: '/progress', label: he.navProgressLabel },
-  { to: '/profile', label: he.navProfileLabel },
 ]
 
 /**

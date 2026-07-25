@@ -21,6 +21,11 @@ const NPC_APPEARANCE: Record<string, NpcAppearance> = {
   'east-broker': { bodyColor: '#d9a441', accentColor: '#5c4a2e', glowColor: '#ffd700' },
   'archivist-mera': { bodyColor: '#5a3d78', accentColor: '#4a2f63', glowColor: '#bfe8ff' },
   'city-voice': { bodyColor: '#e6e6f0', accentColor: '#c9c9d9', glowColor: '#ffe9b0' },
+  // Batch 3A.3 — the two teachers, tied to their own building's palette
+  // (see MathAcademy.tsx / EnglishCenter.tsx) so the NPC visually belongs
+  // to the building they're stationed outside.
+  'math-teacher': { bodyColor: '#4d5f82', accentColor: '#2f3c56', glowColor: '#8fd8ff' },
+  'english-teacher': { bodyColor: '#9c7a5a', accentColor: '#7a4f42', glowColor: '#e0c9a6' },
 }
 
 /** A visibly distinct grey for any NPC not in the table yet, rather than dropping their appearance entirely. */

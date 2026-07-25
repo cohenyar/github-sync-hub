@@ -1,26 +1,38 @@
 import { Canvas } from '@react-three/fiber'
 import { useEffect, useRef, useState } from 'react'
+import { getLessonIdForBuilding, getLessonIdForNpc } from '../../learning'
 import { getDistrictStatus, type WorldState } from '../../worldState'
 import { getDistrictStatusLabel, getVisibleNpcs } from '../logic/sceneSelectors'
-import { getAvatarRespawnPosition, getDistrictPosition3D, getNpcPosition3D } from '../logic/scenePositions3D'
+import {
+  getAvatarRespawnPosition,
+  getDistrictPosition3D,
+  getNpcPosition3D,
+  LEARNING_BUILDING_COLLIDERS,
+} from '../logic/scenePositions3D'
 import type { DistrictPoint, Interactable } from '../logic/proximity'
 import type { SceneState } from '../logic/sceneState'
 import { CoreArchiveBuilding } from './scene3d/buildings/CoreArchiveBuilding'
 import { EastTradingPost } from './scene3d/buildings/EastTradingPost'
+import { EnglishCenter } from './scene3d/buildings/EnglishCenter'
+import { MathAcademy } from './scene3d/buildings/MathAcademy'
 import { NorthWardensPost } from './scene3d/buildings/NorthWardensPost'
 import { SouthCommunityHall } from './scene3d/buildings/SouthCommunityHall'
 import { BackdropGround } from './scene3d/BackdropGround'
 import { BackgroundSkyline } from './scene3d/BackgroundSkyline'
 import { DistrictMarker } from './scene3d/DistrictMarker'
 import { GroundPlane } from './scene3d/GroundPlane'
+import { LearningPlazaProps } from './scene3d/LearningPlazaProps'
 import { SkyDome } from './scene3d/SkyDome'
 import { NpcMarker3D } from './scene3d/NpcMarker3D'
 import { PathNetwork } from './scene3d/PathNetwork'
 import { PlayerAvatar } from './scene3d/PlayerAvatar'
 import { SceneCamera } from './scene3d/SceneCamera'
+import { TeacherNpcAccents } from './scene3d/TeacherNpcAccents'
 import { TownProps } from './scene3d/TownProps'
 import { InteractionPrompt, type DestinationPromptInfo } from './InteractionPrompt'
 import styles from './WorldScene3D.module.css'
+
+const TEACHER_NPC_IDS = new Set(['math-teacher', 'english-teacher'])
 
 export interface WorldScene3DProps {
   world: WorldState
@@ -30,6 +42,12 @@ export interface WorldScene3DProps {
   onMoveToDistrict: (districtId: string) => void
   onEnterDestination: (destinationId: string) => void
   onSelectNpc: (npcId: string) => void
+  /** Batch 3A.2 — the Dashboard's chosen subject's building id (e.g. 'math-academy'), if any. Brightens that building only; nothing else changes. */
+  highlightedBuildingId?: string
+  /** Batch 3A.3 — the Dashboard's chosen subject's linked NPC id (e.g. 'math-teacher'), if any. Marks that NPC only; the other stays fully available. */
+  highlightedNpcId?: string
+  /** Batch 3A.5 — namespaced lesson ids the player has completed. Drives the small completion badge on each teacher and their building; defaults to none completed when omitted. */
+  completedLessonIds?: readonly string[]
 }
 
 const CORE_DISTRICT_ID = 'core'
@@ -49,9 +67,21 @@ export function WorldScene3D({
   onMoveToDistrict,
   onEnterDestination,
   onSelectNpc,
+  highlightedBuildingId,
+  highlightedNpcId,
+  completedLessonIds = [],
 }: WorldScene3DProps) {
   const [nearestInteractable, setNearestInteractable] = useState<Interactable | null>(null)
   const [inRangeIds, setInRangeIds] = useState<ReadonlySet<string>>(new Set())
+
+  // Batch 3A.5 — resolved once per render from the same namespaced lesson
+  // ids GameApp already tracks; never touches missionRegistry/completedMissionIds.
+  const mathAcademyLessonId = getLessonIdForBuilding('math-academy')
+  const englishCenterLessonId = getLessonIdForBuilding('english-center')
+  const isMathAcademyCompleted = Boolean(mathAcademyLessonId && completedLessonIds.includes(mathAcademyLessonId))
+  const isEnglishCenterCompleted = Boolean(
+    englishCenterLessonId && completedLessonIds.includes(englishCenterLessonId),
+  )
 
   const districts = Object.values(world.districts)
   const districtPoints: DistrictPoint[] = districts.map((district) => ({
@@ -77,6 +107,12 @@ export function WorldScene3D({
     })),
   ]
 
+  // Batch 3A.3: lets InteractionPrompt name whichever NPC is nearest,
+  // instead of only revealing who it is once dialogue is already open.
+  const npcNameById: Readonly<Record<string, string>> = Object.fromEntries(
+    visibleNpcs.map((npc) => [npc.id, npc.name]),
+  )
+
   const isMovementEnabled = sceneState.mode.kind !== 'dialogue'
 
   // The whole scene (including the avatar's position ref) unmounts while
@@ -100,7 +136,13 @@ export function WorldScene3D({
   // onEnterDestination itself (it no-ops for a locked destination) — this
   // component never needs to know a destination's lock status to dispatch
   // the same way for every district.
+  //
+  // Batch 3A.3: guarded by isMovementEnabled (false exactly while a dialogue
+  // is already open) so E/Enter/Talk/click can never re-trigger or re-open
+  // a conversation that's already showing — the fix for the interaction
+  // reliability bug the original diagnosis flagged.
   function handleInteract() {
+    if (!isMovementEnabled) return
     if (nearestInteractable) triggerInteractable(nearestInteractable)
   }
 
@@ -111,6 +153,7 @@ export function WorldScene3D({
   // Clicking something out of range is a legitimate no-op, not a silent
   // failure of an otherwise-valid interaction.
   function handleMeshClick(id: string) {
+    if (!isMovementEnabled) return
     if (!inRangeIds.has(id)) return
     const target = interactables.find((interactable) => interactable.id === id)
     if (target) triggerInteractable(target)
@@ -178,6 +221,15 @@ export function WorldScene3D({
         <EastTradingPost />
         <TownProps />
 
+        {/* Batch 3A.2 — the new Central Plaza's two learning buildings. Not
+            gated by unlock/NPC state, same as every other building above. */}
+        <MathAcademy isHighlighted={highlightedBuildingId === 'math-academy'} isCompleted={isMathAcademyCompleted} />
+        <EnglishCenter
+          isHighlighted={highlightedBuildingId === 'english-center'}
+          isCompleted={isEnglishCenterCompleted}
+        />
+        <LearningPlazaProps />
+
         {districts.map((district) => {
           const isCore = district.id === CORE_DISTRICT_ID
           return (
@@ -202,6 +254,27 @@ export function WorldScene3D({
           />
         ))}
 
+        {/* Batch 3A.3 — the extra identification/feedback layer for the two
+            teacher NPCs only (name label, in-range ring, selected-path
+            accent). Purely additive alongside their NpcMarker3D above;
+            every other NPC is untouched. */}
+        {visibleNpcs
+          .filter((npc) => TEACHER_NPC_IDS.has(npc.id))
+          .map((npc) => {
+            const linkedLessonId = getLessonIdForNpc(npc.id)
+            return (
+              <TeacherNpcAccents
+                key={npc.id}
+                npcId={npc.id}
+                districtId={npc.districtId}
+                name={npc.name}
+                isHighlighted={nearestInteractable?.id === npc.id}
+                isSelectedPath={highlightedNpcId === npc.id}
+                isCompleted={Boolean(linkedLessonId && completedLessonIds.includes(linkedLessonId))}
+              />
+            )
+          })}
+
         <PlayerAvatar
           initialPosition={avatarSpawnPosition}
           districts={districtPoints}
@@ -211,13 +284,24 @@ export function WorldScene3D({
           onDistrictChange={onMoveToDistrict}
           onNearestInteractableChange={setNearestInteractable}
           onInRangeIdsChange={(ids) => setInRangeIds(new Set(ids))}
+          colliders={LEARNING_BUILDING_COLLIDERS}
         />
       </Canvas>
 
       <div className={styles.hud} data-testid="district-status-hud">
         {currentDistrictLabel} — {currentDistrictStatusLabel}
       </div>
-      <InteractionPrompt interactable={nearestInteractable} destinationInfoById={destinationInfoById} />
+      {/* Batch 3A.3: hidden entirely while a dialogue is already open —
+          fixes the overlap the original diagnosis flagged, rather than
+          just visually layering a second prompt under the open dialogue. */}
+      {isMovementEnabled && (
+        <InteractionPrompt
+          interactable={nearestInteractable}
+          destinationInfoById={destinationInfoById}
+          npcNameById={npcNameById}
+          onTalk={nearestInteractable?.kind === 'npc' ? handleInteract : undefined}
+        />
+      )}
     </div>
   )
 }

@@ -13,7 +13,8 @@ test.describe('Admin panel', () => {
       missions: 'Items: 6',
       'sql-reference-answers': 'Items: 6',
       districts: 'Items: 4',
-      npcs: 'Items: 7',
+      // 9, not 7: Batch 3A.3 added the two learning-path teachers (math-teacher, english-teacher) to the NPC registry.
+      npcs: 'Items: 9',
       rewards: 'Items: 6',
       progression: 'Items: 6',
       'player-state': 'Items: 0',

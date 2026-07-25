@@ -11,6 +11,8 @@ const REAL_NPC_IDS = [
   'south-engineer',
   'east-broker',
   'city-voice',
+  'math-teacher',
+  'english-teacher',
 ]
 
 const HEX_COLOR = /^#[0-9a-f]{6}$/i

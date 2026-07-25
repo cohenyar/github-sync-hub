@@ -25,7 +25,21 @@
   font-weight: 600;
 }
 
+.startLessonButton {
+  display: inline-block;
+  margin-inline-end: 8px;
+  min-height: 44px;
+  padding: 6px 16px;
+  border-radius: 6px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #0a0f1a;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 .closeButton {
+  min-height: 44px;
   padding: 6px 16px;
   border-radius: 6px;
   border: 1px solid var(--border);

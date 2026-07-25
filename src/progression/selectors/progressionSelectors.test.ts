@@ -2,12 +2,14 @@ import { describe, expect, it } from 'vitest'
 import type { GameCampaign } from '../../campaign'
 import { defaultCampaign } from '../../campaign'
 import { createInitialPlayerProgress } from '../services/createInitialPlayerProgress'
+import { recordLessonCompletion } from '../services/recordLessonCompletion'
 import { recordMissionCompletion } from '../services/recordMissionCompletion'
 import {
   getCompletionPercentage,
   getCurrentMissionId,
   getPlayerProgressSummary,
   getUnlockedMissionIds,
+  isLessonCompleted,
   isMissionUnlocked,
 } from './progressionSelectors'
 
@@ -82,6 +84,46 @@ describe('getPlayerProgressSummary', () => {
       currentMissionId: 'b',
       isCampaignComplete: false,
     })
+  })
+})
+
+describe('isLessonCompleted (Batch 3A.4B)', () => {
+  it('is false before the lesson is recorded', () => {
+    const progress = createInitialPlayerProgress(threeStageCampaign)
+    expect(isLessonCompleted(progress, 'lesson:math-001')).toBe(false)
+  })
+
+  it('is true once the lesson is recorded', () => {
+    const progress = recordLessonCompletion(createInitialPlayerProgress(threeStageCampaign), 'lesson:math-001')
+    expect(isLessonCompleted(progress, 'lesson:math-001')).toBe(true)
+  })
+
+  it('defaults to false when completedLessonIds is entirely absent (an older save)', () => {
+    const progress = { ...createInitialPlayerProgress(threeStageCampaign), completedLessonIds: undefined }
+    expect(isLessonCompleted(progress, 'lesson:math-001')).toBe(false)
+  })
+})
+
+describe('lesson completion does not affect SQL campaign completion (Batch 3A.4B)', () => {
+  it('completing a lesson does not change completedMissionIds-derived counts', () => {
+    let progress = createInitialPlayerProgress(threeStageCampaign)
+    progress = recordMissionCompletion(progress, 'a', threeStageCampaign)
+    const before = getPlayerProgressSummary(progress, threeStageCampaign)
+
+    progress = recordLessonCompletion(progress, 'lesson:math-001')
+    progress = recordLessonCompletion(progress, 'lesson:english-001')
+    const after = getPlayerProgressSummary(progress, threeStageCampaign)
+
+    expect(after).toEqual(before)
+  })
+
+  it('completing every lesson never makes the SQL campaign complete on its own', () => {
+    let progress = createInitialPlayerProgress(threeStageCampaign)
+    progress = recordLessonCompletion(progress, 'lesson:math-001')
+    progress = recordLessonCompletion(progress, 'lesson:english-001')
+
+    expect(getPlayerProgressSummary(progress, threeStageCampaign).isCampaignComplete).toBe(false)
+    expect(getCompletionPercentage(progress, threeStageCampaign)).toBe(0)
   })
 })
 

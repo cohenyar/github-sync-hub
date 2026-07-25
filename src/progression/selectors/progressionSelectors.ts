@@ -19,6 +19,11 @@ export function getCompletionPercentage(progress: PlayerProgress, campaign: Game
   return Math.round((progress.completedMissionIds.length / total) * 100)
 }
 
+/** Batch 3A.4B — reads the separate lesson-completion field, defaulting a missing one to []. */
+export function isLessonCompleted(progress: PlayerProgress, lessonId: string): boolean {
+  return (progress.completedLessonIds ?? []).includes(lessonId)
+}
+
 export interface PlayerProgressSummary {
   completedMissions: number
   totalMissions: number

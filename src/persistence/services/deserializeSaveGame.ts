@@ -15,7 +15,10 @@ function isValidPlayerProgress(value: unknown): boolean {
     Array.isArray(value.completedMissionIds) &&
     Array.isArray(value.completions) &&
     isRecord(value.unlockState) &&
-    isRecord(value.campaignProgress)
+    isRecord(value.campaignProgress) &&
+    // completedLessonIds (Batch 3A.4B) is optional — absent entirely on a
+    // save written before this batch, which must still load safely.
+    (value.completedLessonIds === undefined || Array.isArray(value.completedLessonIds))
   )
 }
 

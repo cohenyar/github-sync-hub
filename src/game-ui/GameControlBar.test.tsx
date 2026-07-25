@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { fireEvent, render, screen } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { GameControlBar } from './GameControlBar'
 
 function renderBar(overrides: Partial<Parameters<typeof GameControlBar>[0]> = {}) {
@@ -62,5 +62,22 @@ describe('GameControlBar — Bug A fix (stray focus double-fire on Enter)', () =
 
     expect(props.onToggleWorldScene).toHaveBeenCalledTimes(1)
     expect(document.activeElement).not.toBe(worldToggle)
+  })
+})
+
+describe('GameControlBar — Admin visibility (Phase 3A.1)', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  it('shows the admin toggle in a dev build (the test environment)', () => {
+    renderBar()
+    expect(screen.getByTestId('admin-toggle-button')).toBeInTheDocument()
+  })
+
+  it('hides the admin toggle when import.meta.env.DEV is false, as it will be in a production build', () => {
+    vi.stubEnv('DEV', false)
+    renderBar()
+    expect(screen.queryByTestId('admin-toggle-button')).not.toBeInTheDocument()
   })
 })

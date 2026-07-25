@@ -38,7 +38,8 @@ test.describe('Admin CRUD for Missions and NPCs', () => {
     await page.getByTestId('admin-toggle-button').click()
 
     const npcsCard = page.locator('[data-section-id="npcs"]')
-    await expect(npcsCard).toContainText('Items: 7')
+    // 9, not 7: Batch 3A.3 added the two learning-path teachers (math-teacher, english-teacher) to the NPC registry.
+    await expect(npcsCard).toContainText('Items: 9')
 
     await npcsCard.getByLabel('NPC id').fill('e2e-test-npc')
     await npcsCard.getByLabel('NPC name').fill('E2E Test NPC')
@@ -47,7 +48,7 @@ test.describe('Admin CRUD for Missions and NPCs', () => {
     await npcsCard.getByLabel('NPC description').fill('A temporary NPC created by a Playwright test.')
     await npcsCard.getByRole('button', { name: 'Add NPC' }).click()
 
-    await expect(npcsCard).toContainText('Items: 8')
+    await expect(npcsCard).toContainText('Items: 10')
     await expect(npcsCard.getByText('E2E Test NPC')).toBeVisible()
 
     // Not gated by any unlock rule, but the Unlock Engine's rule set is
@@ -64,7 +65,7 @@ test.describe('Admin CRUD for Missions and NPCs', () => {
 
     await npcsCard.getByRole('button', { name: 'Delete E2E Test NPC (renamed)' }).click()
 
-    await expect(npcsCard).toContainText('Items: 7')
+    await expect(npcsCard).toContainText('Items: 9')
     await expect(npcsCard.getByText('E2E Test NPC (renamed)')).toHaveCount(0)
   })
 

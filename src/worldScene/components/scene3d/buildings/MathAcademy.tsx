@@ -1,0 +1,84 @@
+import { LEARNING_BUILDING_SCALE, MATH_ACADEMY_POSITION } from '../../../logic/scenePositions3D'
+
+export interface MathAcademyProps {
+  /** Brightens the roof accent when this building is the player's chosen learning path (Batch 3A.2). */
+  isHighlighted?: boolean
+  /** Batch 3A.5 — shows a small, restrained completion badge near the sign once lesson:math-001 is completed. Independent of isHighlighted: the two can be true at once. */
+  isCompleted?: boolean
+}
+
+// Batch 3A.5: brightened from the original #4d5f82/#2f3c56 — at the fixed
+// camera's distance and the scene's dark ambient/fog, the original muted
+// tones read as barely distinguishable from the night background (confirmed
+// via a screenshot). Same hue family (cool slate blue), just more saturated
+// and lighter so the silhouette actually reads at a glance.
+const WALL_COLOR = '#5f74a3'
+const ROOF_COLOR = '#3d4d70'
+const ACCENT_COLOR = '#e8c14a'
+const DOOR_COLOR = '#232b3d'
+const LANTERN_COLOR = '#ffcf8a'
+const COMPLETED_COLOR = '#5fd382'
+
+/**
+ * A cool-toned, pyramid-roofed building — deliberately distinct in
+ * silhouette and palette from every existing district building (all warm
+ * browns/tans) and from EnglishCenter's rounded dome. The door sits on the
+ * -Z face (facing back toward the spawn/approach direction).
+ *
+ * Batch 3A.5: the whole body is wrapped in one scale group
+ * (LEARNING_BUILDING_SCALE) rather than resizing individual meshes, so
+ * every proportion below is unchanged from the original design — only the
+ * silhouette's overall size increased. The sign is enlarged and tilted
+ * slightly toward the fixed camera's elevated angle for readability; a
+ * small warm lantern accent sits beside the door.
+ */
+export function MathAcademy({ isHighlighted = false, isCompleted = false }: MathAcademyProps) {
+  const { x, z } = MATH_ACADEMY_POSITION
+
+  return (
+    <group position={[x, 0, z]} scale={LEARNING_BUILDING_SCALE}>
+      <mesh position={[0, 1.1, 0]}>
+        <boxGeometry args={[2.6, 2.2, 2.2]} />
+        <meshStandardMaterial color={WALL_COLOR} flatShading />
+      </mesh>
+      <mesh position={[0, 2.55, 0]} rotation={[0, Math.PI / 4, 0]}>
+        <coneGeometry args={[1.85, 1.1, 4]} />
+        <meshStandardMaterial
+          color={ROOF_COLOR}
+          emissive={isHighlighted ? ACCENT_COLOR : undefined}
+          emissiveIntensity={isHighlighted ? 0.6 : 0}
+          flatShading
+        />
+      </mesh>
+      <mesh position={[0, 0.55, -1.11]}>
+        <boxGeometry args={[0.7, 1.1, 0.05]} />
+        <meshStandardMaterial color={DOOR_COLOR} flatShading />
+      </mesh>
+      {/* Sign: enlarged slightly and tilted toward the fixed elevated
+          camera (rotation.x) so its face reads more directly instead of
+          nearly edge-on. */}
+      <mesh position={[0, 2.05, -1.16]} rotation={[-0.3, 0, 0]}>
+        <boxGeometry args={[1.3, 0.45, 0.05]} />
+        <meshStandardMaterial color={ACCENT_COLOR} flatShading />
+      </mesh>
+      {/* A small warm lantern beside the door — a subtle emissive accent
+          rather than a new dynamic light source, matching LampPost's own
+          glowing-sphere language. */}
+      <mesh position={[0.55, 0.9, -1.1]}>
+        <sphereGeometry args={[0.11, 10, 10]} />
+        <meshStandardMaterial color={LANTERN_COLOR} emissive={LANTERN_COLOR} emissiveIntensity={0.9} flatShading />
+      </mesh>
+      {isCompleted && (
+        <mesh position={[0, 2.75, -1.16]}>
+          <sphereGeometry args={[0.16, 10, 10]} />
+          <meshStandardMaterial
+            color={COMPLETED_COLOR}
+            emissive={COMPLETED_COLOR}
+            emissiveIntensity={0.85}
+            flatShading
+          />
+        </mesh>
+      )}
+    </group>
+  )
+}

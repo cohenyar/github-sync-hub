@@ -122,14 +122,16 @@ export function GameControlBar({
           </Button>
         )}
 
-        <Button
-          variant="ghost"
-          size="sm"
-          data-testid="admin-toggle-button"
-          onClick={blurOnPointerActivation(onToggleAdmin)}
-        >
-          {showAdmin ? he.hideAdmin : he.admin}
-        </Button>
+        {import.meta.env.DEV && (
+          <Button
+            variant="ghost"
+            size="sm"
+            data-testid="admin-toggle-button"
+            onClick={blurOnPointerActivation(onToggleAdmin)}
+          >
+            {showAdmin ? he.hideAdmin : he.admin}
+          </Button>
+        )}
         <Button
           variant="secondary"
           size="sm"

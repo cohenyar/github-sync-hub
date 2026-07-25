@@ -10,7 +10,28 @@
   color: var(--text);
   font-size: 0.85rem;
   white-space: nowrap;
-  /* Pure text readout, no clickable content — must never intercept a
-     pointer click meant for the 3D canvas beneath it (Bug B). */
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  /* Pure text readout, no clickable content of its own — must never
+     intercept a pointer click meant for the 3D canvas beneath it (Bug B).
+     .talkButton below is a deliberate, scoped exception to this, not a
+     regression of it. */
   pointer-events: none;
+}
+
+.talkButton {
+  /* Re-enables pointer events for just this button. Mobile-safe: meets the
+     44px minimum touch target regardless of viewport width (Batch 3A.3). */
+  pointer-events: auto;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #0a0f1a;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
 }

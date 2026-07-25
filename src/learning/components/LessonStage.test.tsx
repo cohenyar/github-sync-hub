@@ -1,0 +1,92 @@
+// @vitest-environment jsdom
+import { fireEvent, render, screen } from '@testing-library/react'
+import { describe, expect, it, vi } from 'vitest'
+import { he } from '../../i18n'
+import type { EnglishLessonConfig, MathLessonConfig } from '../types'
+import { LessonStage } from './LessonStage'
+
+const MATH_LESSON: MathLessonConfig = {
+  id: 'lesson:math-001',
+  subject: 'math',
+  title: 'חשבון בסיסי',
+  instructions: 'כמה זה 3 + 4 × 2?',
+  exercise: { correctAnswer: 11, hint: 'בצע קודם את הכפל.' },
+}
+
+const ENGLISH_LESSON: EnglishLessonConfig = {
+  id: 'lesson:english-001',
+  subject: 'english',
+  title: 'אוצר מילים באנגלית',
+  instructions: 'תרגם/י.',
+  exercise: { items: [{ hebrew: 'כלב', english: 'dog' }], hint: 'D' },
+}
+
+describe('LessonStage — renders the right panel for the right subject only', () => {
+  it('renders MathExercisePanel, never EnglishExercisePanel, for a math lesson', () => {
+    render(<LessonStage lesson={MATH_LESSON} isCompleted={false} onResult={vi.fn()} onReturnToWorld={vi.fn()} />)
+    expect(screen.getByTestId('math-exercise-panel')).toBeInTheDocument()
+    expect(screen.queryByTestId('english-exercise-panel')).not.toBeInTheDocument()
+  })
+
+  it('renders EnglishExercisePanel, never MathExercisePanel, for an english lesson', () => {
+    render(<LessonStage lesson={ENGLISH_LESSON} isCompleted={false} onResult={vi.fn()} onReturnToWorld={vi.fn()} />)
+    expect(screen.getByTestId('english-exercise-panel')).toBeInTheDocument()
+    expect(screen.queryByTestId('math-exercise-panel')).not.toBeInTheDocument()
+  })
+})
+
+describe('LessonStage — completion flow', () => {
+  it('bubbles a wrong answer up via onResult(false) and keeps showing the exercise, not the success message', () => {
+    const onResult = vi.fn()
+    render(<LessonStage lesson={MATH_LESSON} isCompleted={false} onResult={onResult} onReturnToWorld={vi.fn()} />)
+
+    fireEvent.change(screen.getByTestId('math-answer-input'), { target: { value: '7' } })
+    fireEvent.click(screen.getByTestId('math-submit-button'))
+
+    expect(onResult).toHaveBeenCalledWith(false)
+    expect(screen.queryByTestId('lesson-success-message')).not.toBeInTheDocument()
+    expect(screen.getByTestId('math-exercise-panel')).toBeInTheDocument()
+  })
+
+  it('bubbles a correct answer up via onResult(true) and swaps to the success message', () => {
+    const onResult = vi.fn()
+    render(<LessonStage lesson={MATH_LESSON} isCompleted={false} onResult={onResult} onReturnToWorld={vi.fn()} />)
+
+    fireEvent.change(screen.getByTestId('math-answer-input'), { target: { value: '11' } })
+    fireEvent.click(screen.getByTestId('math-submit-button'))
+
+    expect(onResult).toHaveBeenCalledWith(true)
+    expect(screen.getByTestId('lesson-success-message')).toHaveTextContent(he.lessonSuccessMessage)
+    expect(screen.queryByTestId('math-exercise-panel')).not.toBeInTheDocument()
+  })
+
+  it('shows the success message immediately, with no exercise panel, when isCompleted is true from the start', () => {
+    render(<LessonStage lesson={MATH_LESSON} isCompleted={true} onResult={vi.fn()} onReturnToWorld={vi.fn()} />)
+
+    expect(screen.getByTestId('lesson-success-message')).toBeInTheDocument()
+    expect(screen.queryByTestId('math-exercise-panel')).not.toBeInTheDocument()
+  })
+
+  it('calls onReturnToWorld when the return button is clicked, whether or not the lesson passed yet', () => {
+    const onReturnToWorld = vi.fn()
+    render(<LessonStage lesson={MATH_LESSON} isCompleted={false} onResult={vi.fn()} onReturnToWorld={onReturnToWorld} />)
+
+    fireEvent.click(screen.getByTestId('lesson-return-to-world-button'))
+    expect(onReturnToWorld).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('LessonStage — success wording (Batch 3A.5)', () => {
+  it('shows a distinct what-to-do-next line alongside the success message, once passed', () => {
+    render(<LessonStage lesson={MATH_LESSON} isCompleted={true} onResult={vi.fn()} onReturnToWorld={vi.fn()} />)
+
+    const nextSteps = screen.getByTestId('lesson-success-next-steps')
+    expect(nextSteps).toHaveTextContent(he.lessonSuccessNextStepsMessage)
+    expect(nextSteps.textContent).not.toBe(screen.getByTestId('lesson-success-message').textContent)
+  })
+
+  it('does not show the next-steps line while the exercise is still active', () => {
+    render(<LessonStage lesson={MATH_LESSON} isCompleted={false} onResult={vi.fn()} onReturnToWorld={vi.fn()} />)
+    expect(screen.queryByTestId('lesson-success-next-steps')).not.toBeInTheDocument()
+  })
+})

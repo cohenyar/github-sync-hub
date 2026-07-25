@@ -49,6 +49,26 @@ describe('getNpcDialogue — static NPCs', () => {
   })
 })
 
+describe('getNpcDialogue — lesson-linked NPCs (Batch 3A.4B)', () => {
+  it('gives the math teacher a mission-context line introducing the lesson only in the "available" phase', () => {
+    const available = getNpcDialogue('math-teacher', { kind: 'lesson', phase: 'available' })
+    expect(available.missionContext).toBeDefined()
+    expect(available.missionContext!.length).toBeGreaterThan(0)
+
+    const completed = getNpcDialogue('math-teacher', { kind: 'lesson', phase: 'completed' })
+    expect(completed.missionContext).toBeDefined()
+  })
+
+  it('gives a distinct line for "available" vs "completed" for both teachers', () => {
+    for (const npcId of ['math-teacher', 'english-teacher']) {
+      const available = getNpcDialogue(npcId, { kind: 'lesson', phase: 'available' })
+      const completed = getNpcDialogue(npcId, { kind: 'lesson', phase: 'completed' })
+      expect(available.greeting).not.toBe(completed.greeting)
+      expect(available.missionContext).not.toBe(completed.missionContext)
+    }
+  })
+})
+
 describe('getNpcDialogue — fallback', () => {
   it('falls back to a generic greeting for an NPC with no authored dialogue for that state', () => {
     const dialogue = getNpcDialogue('does-not-exist', { kind: 'static' })
@@ -69,6 +89,10 @@ describe('getNpcDialogue — content quality', () => {
         { npcId: 'archivist-mera', state: { kind: 'district', status } as NpcDialogueState },
         { npcId: 'east-broker', state: { kind: 'district', status } as NpcDialogueState },
         { npcId: 'south-engineer', state: { kind: 'district', status } as NpcDialogueState },
+      ]),
+      ...(['available', 'completed'] as const).flatMap((phase) => [
+        { npcId: 'math-teacher', state: { kind: 'lesson', phase } as NpcDialogueState },
+        { npcId: 'english-teacher', state: { kind: 'lesson', phase } as NpcDialogueState },
       ]),
       { npcId: 'city-voice', state: { kind: 'static' } },
     ]

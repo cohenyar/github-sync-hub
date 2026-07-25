@@ -18,5 +18,6 @@ export function createInitialPlayerProgress(campaign: GameCampaign = defaultCamp
       currentMissionId,
       isComplete: false,
     },
+    completedLessonIds: [],
   }
 }

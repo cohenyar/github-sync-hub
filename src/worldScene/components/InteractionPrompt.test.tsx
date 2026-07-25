@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-import { render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { fireEvent, render, screen } from '@testing-library/react'
+import { describe, expect, it, vi } from 'vitest'
 import { InteractionPrompt, type DestinationPromptInfo } from './InteractionPrompt'
 
 const AVAILABLE: DestinationPromptInfo = { name: 'רובע הסוחרים', status: 'available', progress: { completed: 1, total: 3 } }
@@ -67,5 +67,67 @@ describe('InteractionPrompt', () => {
       />,
     )
     expect(screen.getByTestId('interaction-prompt')).toHaveTextContent('לחץ לכניסה')
+  })
+})
+
+describe('InteractionPrompt — NPC name and Talk button (Batch 3A.3)', () => {
+  it("includes the NPC's name in the prompt when npcNameById resolves it", () => {
+    render(
+      <InteractionPrompt
+        interactable={{ id: 'math-teacher', kind: 'npc', position: { x: 0, z: 0 } }}
+        destinationInfoById={{}}
+        npcNameById={{ 'math-teacher': 'Nadav Stern' }}
+      />,
+    )
+    const prompt = screen.getByTestId('interaction-prompt')
+    expect(prompt).toHaveTextContent('Nadav Stern')
+    expect(prompt).toHaveTextContent('לחץ לשיחה')
+  })
+
+  it('falls back to the plain talk prompt when the id has no entry in npcNameById', () => {
+    render(
+      <InteractionPrompt
+        interactable={{ id: 'math-teacher', kind: 'npc', position: { x: 0, z: 0 } }}
+        destinationInfoById={{}}
+        npcNameById={{}}
+      />,
+    )
+    expect(screen.getByTestId('interaction-prompt')).toHaveTextContent('לחץ לשיחה')
+  })
+
+  it('renders no Talk button when onTalk is not provided', () => {
+    render(
+      <InteractionPrompt
+        interactable={{ id: 'math-teacher', kind: 'npc', position: { x: 0, z: 0 } }}
+        destinationInfoById={{}}
+      />,
+    )
+    expect(screen.queryByTestId('npc-talk-button')).not.toBeInTheDocument()
+  })
+
+  it('renders a clickable Talk button for an NPC when onTalk is provided, and calls it on click', () => {
+    const onTalk = vi.fn()
+    render(
+      <InteractionPrompt
+        interactable={{ id: 'math-teacher', kind: 'npc', position: { x: 0, z: 0 } }}
+        destinationInfoById={{}}
+        onTalk={onTalk}
+      />,
+    )
+
+    fireEvent.click(screen.getByTestId('npc-talk-button'))
+
+    expect(onTalk).toHaveBeenCalledTimes(1)
+  })
+
+  it('never renders a Talk button for a district-kind interactable, even when onTalk is provided', () => {
+    render(
+      <InteractionPrompt
+        interactable={{ id: 'east', kind: 'district', position: { x: 0, z: 0 } }}
+        destinationInfoById={{ east: AVAILABLE }}
+        onTalk={vi.fn()}
+      />,
+    )
+    expect(screen.queryByTestId('npc-talk-button')).not.toBeInTheDocument()
   })
 })

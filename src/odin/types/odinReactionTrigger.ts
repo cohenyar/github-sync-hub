@@ -12,3 +12,5 @@ export type OdinReactionTrigger =
   | { event: 'CampaignCompleted'; campaignId?: string }
   | { event: 'WorldStateChanged' }
   | { event: 'QueryFailed'; missionId?: string; reason?: 'mismatch' | 'sql-error' }
+  | { event: 'LessonCompleted'; lessonId?: string }
+  | { event: 'LessonFailed'; lessonId?: string }

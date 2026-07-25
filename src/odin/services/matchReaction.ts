@@ -28,6 +28,12 @@ function triggerMatches(trigger: OdinReactionTrigger, event: GameEvent): boolean
       if (trigger.missionId !== undefined && trigger.missionId !== event.missionId) return false
       if (trigger.reason !== undefined && trigger.reason !== event.reason) return false
       return true
+    case 'LessonCompleted':
+      return (
+        event.type === 'LessonCompleted' && (trigger.lessonId === undefined || trigger.lessonId === event.lessonId)
+      )
+    case 'LessonFailed':
+      return event.type === 'LessonFailed' && (trigger.lessonId === undefined || trigger.lessonId === event.lessonId)
     default:
       return false
   }

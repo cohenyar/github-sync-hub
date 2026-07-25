@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { PlayerProgress } from '../../progression'
+import { isLessonCompleted, type PlayerProgress } from '../../progression'
 import { createWorldState } from '../../worldState'
 import { clearSavedGame, loadCurrentGame, saveCurrentGame } from './gameSaveService'
 import type { GameStorage } from './storageAdapter'
@@ -63,5 +63,29 @@ describe('gameSaveService', () => {
     storage.setItem('meridian:save', 'not valid json')
 
     expect(loadCurrentGame(storage)).toBeNull()
+  })
+})
+
+describe('gameSaveService — completedLessonIds (Batch 3A.4B)', () => {
+  it('saves and reloads with the lesson still marked completed', () => {
+    const storage = createFakeStorage()
+    const world = createWorldState([])
+    const withLesson: PlayerProgress = { ...playerProgress, completedLessonIds: ['lesson:math-001'] }
+
+    saveCurrentGame(world, withLesson, storage)
+    const reloaded = loadCurrentGame(storage)
+
+    expect(reloaded).not.toBeNull()
+    expect(isLessonCompleted(reloaded!.playerProgress, 'lesson:math-001')).toBe(true)
+  })
+
+  it('loads an older save with no completedLessonIds field safely, treating every lesson as not completed', () => {
+    const storage = createFakeStorage()
+    // playerProgress (module-level fixture) has no completedLessonIds field at all.
+    saveCurrentGame(createWorldState([]), playerProgress, storage)
+
+    const reloaded = loadCurrentGame(storage)
+    expect(reloaded).not.toBeNull()
+    expect(isLessonCompleted(reloaded!.playerProgress, 'lesson:math-001')).toBe(false)
   })
 })

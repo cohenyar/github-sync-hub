@@ -60,6 +60,26 @@ describe('useProgression', () => {
     expect(result.current.progress).toEqual(preloaded)
   })
 
+  it('updates completedLessonIds when recordLessonCompletion is called, without touching mission-side state (Batch 3A.4B)', () => {
+    const { result } = renderHook(() => useProgression(twoStageCampaign))
+    const before = result.current.progress
+
+    act(() => result.current.recordLessonCompletion('lesson:math-001'))
+
+    expect(result.current.progress.completedLessonIds).toEqual(['lesson:math-001'])
+    expect(result.current.progress.completedMissionIds).toEqual(before.completedMissionIds)
+    expect(result.current.progress.campaignProgress).toEqual(before.campaignProgress)
+  })
+
+  it('does not duplicate a lesson completion recorded twice', () => {
+    const { result } = renderHook(() => useProgression(twoStageCampaign))
+
+    act(() => result.current.recordLessonCompletion('lesson:math-001'))
+    act(() => result.current.recordLessonCompletion('lesson:math-001'))
+
+    expect(result.current.progress.completedLessonIds).toEqual(['lesson:math-001'])
+  })
+
   it('replaces progress wholesale when restoreProgress is called', () => {
     const { result } = renderHook(() => useProgression(twoStageCampaign))
     act(() => result.current.recordCompletion('a'))

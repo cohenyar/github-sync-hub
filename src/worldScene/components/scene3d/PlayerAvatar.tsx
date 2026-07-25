@@ -1,6 +1,7 @@
 import { useFrame } from '@react-three/fiber'
 import { useRef } from 'react'
 import type { Group } from 'three'
+import { resolveBuildingCollision, type CircleCollider } from '../../logic/collision'
 import { computeFacingAngle, computeNextPosition, type Position2D } from '../../logic/movement'
 import {
   getInteractablesInRadius,
@@ -21,6 +22,8 @@ export interface PlayerAvatarProps {
   onDistrictChange: (districtId: string) => void
   onNearestInteractableChange: (interactable: Interactable | null) => void
   onInRangeIdsChange: (ids: readonly string[]) => void
+  /** Batch 3A.2 — the only two colliders in the world (the new learning buildings). Optional so every other caller/test is unaffected. */
+  colliders?: readonly CircleCollider[]
 }
 
 /**
@@ -41,6 +44,7 @@ export function PlayerAvatar({
   onDistrictChange,
   onNearestInteractableChange,
   onInRangeIdsChange,
+  colliders,
 }: PlayerAvatarProps) {
   const groupRef = useRef<Group>(null)
   const positionRef = useRef<Position2D>(initialPosition)
@@ -52,7 +56,8 @@ export function PlayerAvatar({
 
   useFrame((_state, delta) => {
     if (isMovementEnabled) {
-      positionRef.current = computeNextPosition(positionRef.current, inputRef.current, delta)
+      const next = computeNextPosition(positionRef.current, inputRef.current, delta)
+      positionRef.current = colliders ? resolveBuildingCollision(next, colliders) : next
       facingRef.current = computeFacingAngle(inputRef.current, facingRef.current)
     }
 

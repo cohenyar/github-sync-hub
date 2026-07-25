@@ -5,6 +5,7 @@ import { defaultCampaign, getCampaignSummary, isCampaignComplete, type CampaignP
 import { CampaignCompleteBanner, MissionPanel, MissionSelect, SqlEditorPanel } from './components'
 import { createProgressionMissionCompletedHandler, createUnlockReactionHandler, gameEventBus } from './events'
 import { he } from './i18n'
+import { getLearningPath, getLessonById, LessonStage } from './learning'
 import { getDefaultMission, getMissionById, missionRegistry, useMissionManager } from './missions'
 import { getNpcById } from './npcs'
 import { OdinPanel, useOdin } from './odin'
@@ -59,12 +60,29 @@ import {
 
 const initialWorldState: WorldState = createWorldState(initialDistricts)
 
-function GameApp() {
+export interface GameAppProps {
+  /** Batch 3A.2 — the Dashboard's chosen subject, carried in as the /world?path= query param (see App.tsx's WorldRoute). Undefined/invalid resolves to no highlighted building — every existing caller (tests included) that renders <GameApp /> with no props is unaffected. */
+  initialLearningPathId?: string | null
+}
+
+function GameApp({ initialLearningPathId }: GameAppProps = {}) {
   // Checked once, synchronously, on the very first render — a valid save
   // boots the app straight into it; no save (or a corrupted one, since
   // loadCurrentGame already returns null for that) falls back to the same
   // fresh start as before.
   const [bootSave] = useState(() => loadCurrentGame())
+  // Batch 3A.2: resolved once at mount, the same way bootSave is — this
+  // batch only uses it to highlight a building; later batches may read it
+  // for more (spawn/NPC/lesson), all from this single already-resolved value.
+  const [learningPath] = useState(() => getLearningPath(initialLearningPathId ?? null))
+  // Batch 3A.4B: set by NpcDialogue's "Start Lesson" action, resolved
+  // through lessonRegistry only (getLessonById) — never fed into
+  // activeMissionId/useMissionManager, so a Math/English lesson id can
+  // never reach the SQL mission runtime or verifier. An id that doesn't
+  // resolve to a real lesson (should never happen via the real UI, but
+  // kept safe regardless) simply leaves this null — no crash, no SQL
+  // fallback.
+  const [activeLessonId, setActiveLessonId] = useState<string | null>(null)
   const [world, setWorld] = useState<WorldState>(() => bootSave?.world ?? initialWorldState)
   const [showAdmin, setShowAdmin] = useState(false)
   // Raw world-state JSON is a debug view, not something a player needs to
@@ -106,8 +124,10 @@ function GameApp() {
   const {
     progress: playerProgress,
     recordCompletion,
+    recordLessonCompletion,
     restoreProgress,
   } = useProgression(defaultCampaign, bootSave?.playerProgress)
+  const completedLessonIds = playerProgress.completedLessonIds ?? []
   const { latestMessage: odinMessage, history: odinHistory } = useOdin()
   // The single most recent narration entry, if any — the same history
   // useOdin already tracks, just handed to OdinPresence as one object so it
@@ -207,6 +227,38 @@ function GameApp() {
     restoreProgress(freshProgress)
     resetUnlockBaseline(freshProgress)
     setConfirmingNewGame(false)
+  }
+
+  // Batch 3A.4B: resolves strictly through lessonRegistry (getLessonById) —
+  // never touches activeMissionId/useMissionManager, so a lesson id can
+  // never reach the SQL mission runtime or verifier. An id that fails to
+  // resolve fails safely: activeLessonId becomes null (nothing renders),
+  // it never falls back to a SQL mission.
+  function handleStartLesson(lessonId: string) {
+    const lesson = getLessonById(lessonId)
+    setActiveLessonId(lesson ? lesson.id : null)
+    setSceneState(closeDialogue)
+  }
+
+  // Fired by LessonStage on every exercise submission, pass or fail. Only
+  // ever writes to completedLessonIds (via Progression's separate
+  // recordLessonCompletion) and publishes the lesson-side events Odin
+  // listens for — never touches completedMissionIds, campaignProgress, or
+  // WorldState, so a lesson can never move the SQL campaign's completion
+  // count.
+  function handleLessonResult(lessonId: string, pass: boolean) {
+    if (pass) {
+      recordLessonCompletion(lessonId)
+      gameEventBus.publish({ type: 'LessonCompleted', lessonId })
+      playPass()
+    } else {
+      gameEventBus.publish({ type: 'LessonFailed', lessonId })
+      playFail()
+    }
+  }
+
+  function handleReturnFromLesson() {
+    setActiveLessonId(null)
   }
 
   // Guards against selecting a locked mission even though MissionSelect
@@ -315,7 +367,10 @@ function GameApp() {
     districtStatusByDistrictId: Object.fromEntries(
       Object.values(world.districts).map((district) => [district.id, getDistrictStatus(district)]),
     ),
+    completedLessonIds,
   }
+
+  const activeLesson = activeLessonId ? getLessonById(activeLessonId) : undefined
 
   // Living World Sprint, Batch 3: the Records Core's own current status,
   // read the same way the world scene's HUD already does — TerminalView's
@@ -443,6 +498,9 @@ function GameApp() {
                 onMoveToDistrict={(districtId) => setSceneState((current) => moveToDistrict(current, districtId))}
                 onEnterDestination={handleEnterDestination}
                 onSelectNpc={(npcId) => setSceneState((current) => openNpcDialogue(current, npcId))}
+                highlightedBuildingId={learningPath?.buildingId}
+                highlightedNpcId={learningPath?.npcId}
+                completedLessonIds={completedLessonIds}
               />
               {sceneState.mode.kind === 'dialogue' &&
                 (() => {
@@ -453,9 +511,22 @@ function GameApp() {
                       context={npcDialogueContext}
                       onOpen={playNpcTalk}
                       onClose={() => setSceneState(closeDialogue)}
+                      onStartLesson={handleStartLesson}
                     />
                   ) : null
                 })()}
+              {/* Batch 3A.4B: the real exercise flow. Rendering is decided
+                  entirely by activeLesson's own subject (via LessonStage's
+                  isMathLesson/isEnglishLesson type guards) — never routed
+                  through activeMissionId/useMissionManager/runQuery. */}
+              {activeLesson && (
+                <LessonStage
+                  lesson={activeLesson}
+                  isCompleted={completedLessonIds.includes(activeLesson.id)}
+                  onResult={(pass) => handleLessonResult(activeLesson.id, pass)}
+                  onReturnToWorld={handleReturnFromLesson}
+                />
+              )}
             </>
           )}
           {/* Both stay mounted across the world<->Terminal switch above: Odin

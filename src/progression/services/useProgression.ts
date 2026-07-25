@@ -2,11 +2,14 @@ import { useState } from 'react'
 import { defaultCampaign, type GameCampaign } from '../../campaign'
 import type { PlayerProgress } from '../types'
 import { createInitialPlayerProgress } from './createInitialPlayerProgress'
+import { recordLessonCompletion as applyLessonCompletion } from './recordLessonCompletion'
 import { recordMissionCompletion } from './recordMissionCompletion'
 
 export interface UseProgressionResult {
   progress: PlayerProgress
   recordCompletion: (missionId: string) => void
+  /** Batch 3A.4B — the lesson-side counterpart to recordCompletion; never touches completedMissionIds/campaignProgress. */
+  recordLessonCompletion: (lessonId: string) => void
   restoreProgress: (progress: PlayerProgress) => void
 }
 
@@ -29,9 +32,13 @@ export function useProgression(
     setProgress((current) => recordMissionCompletion(current, missionId, campaign))
   }
 
+  function recordLessonCompletion(lessonId: string) {
+    setProgress((current) => applyLessonCompletion(current, lessonId))
+  }
+
   function restoreProgress(next: PlayerProgress) {
     setProgress(next)
   }
 
-  return { progress, recordCompletion, restoreProgress }
+  return { progress, recordCompletion, recordLessonCompletion, restoreProgress }
 }
