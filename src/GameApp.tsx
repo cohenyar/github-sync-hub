@@ -4,10 +4,11 @@ import { defaultCampaign, getCampaignSummary, isCampaignComplete, type CampaignP
 import { CampaignCompleteBanner, MissionPanel, MissionSelect, SqlEditorPanel } from './components'
 import { createProgressionMissionCompletedHandler, createUnlockReactionHandler, gameEventBus } from './events'
 import { he } from './i18n'
-import { getLearningPath, getLessonById, LessonStage } from './learning'
+import { getLearningPath, getLessonById, LEARNING_PATHS, LessonStage } from './learning'
 import { getDefaultMission, getMissionById, missionRegistry, useMissionManager } from './missions'
 import { getNpcById } from './npcs'
 import { OdinPanel, useOdin } from './odin'
+import { BootSequence, clearOnboardingFlag, hasCompletedOnboarding, markOnboardingComplete } from './onboarding'
 import { clearSavedGame, loadCurrentGame, saveCurrentGame } from './persistence'
 import {
   createInitialPlayerProgress,
@@ -73,7 +74,12 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
   // Batch 3A.2: resolved once at mount, the same way bootSave is — this
   // batch only uses it to highlight a building; later batches may read it
   // for more (spawn/NPC/lesson), all from this single already-resolved value.
-  const [learningPath] = useState(() => getLearningPath(initialLearningPathId ?? null))
+  // Onboarding: an explicit ?path= is always preserved as-is; with none
+  // given (the normal first-time-onboarding case, since there's no subject
+  // picker in that flow), this now defaults to Math rather than resolving
+  // to no highlight at all — a first-time player needs a real, visible
+  // starting building/NPC to walk toward, not just "the only unlocked node."
+  const [learningPath] = useState(() => getLearningPath(initialLearningPathId ?? null) ?? LEARNING_PATHS.math)
   // Batch 3A.4B: set by NpcDialogue's "Start Lesson" action, resolved
   // through lessonRegistry only (getLessonById) — never fed into
   // activeMissionId/useMissionManager, so a Math/English lesson id can
@@ -99,13 +105,20 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
   // Which NPC's bio is open, if any — session-scoped UI state, same as
   // showDebug/confirmingNewGame. Not part of SaveGame.
   const [selectedNpcId, setSelectedNpcId] = useState<string | null>(null)
-  // The primary 3D world scene (Phase 2) — still an additional view
-  // alongside the classic dashboard, not a replacement of it (that's a
-  // separate future decision). sceneState is exactly as session-scoped as
-  // selectedNpcId/showDebug above: never persisted, never touches an
-  // engine, just tracks where the player currently is in the scene.
-  const [showWorldScene, setShowWorldScene] = useState(false)
+  // Onboarding: the World Scene is now the default home experience (not the
+  // classic dashboard) for both first-time and returning players — the
+  // classic dashboard is still fully available via the existing manual
+  // toggle, it's just no longer what a player sees first. sceneState is
+  // exactly as session-scoped as selectedNpcId/showDebug above: never
+  // persisted, never touches an engine, just tracks where the player
+  // currently is in the scene.
+  const [showWorldScene, setShowWorldScene] = useState(true)
   const [sceneState, setSceneState] = useState(() => createInitialSceneState('north'))
+  // Onboarding: true only for a player who has never finished (or skipped)
+  // the boot sequence before — read once at mount from onboardingStorage,
+  // exactly like bootSave/learningPath above. A returning player (flag
+  // already set) never sees this at all.
+  const [showBootSequence, setShowBootSequence] = useState(() => !hasCompletedOnboarding())
   const savedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   useEffect(() => {
     return () => {
@@ -259,12 +272,34 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
   // explicit confirmation step — this function is the actual reset.
   function handleConfirmNewGame() {
     clearSavedGame()
+    // Onboarding: a full reset also clears "has this player onboarded
+    // before" — but deliberately does NOT reopen the boot sequence within
+    // this same mounted session (that would mean re-showing it right on
+    // top of the reset confirmation, which is jarring). It reappears
+    // correctly on the next fresh entry (reload or re-navigation to
+    // /world), since showBootSequence's initializer re-reads this flag.
+    clearOnboardingFlag()
 
     const freshProgress = createInitialPlayerProgress(defaultCampaign)
     setWorld(initialWorldState)
     restoreProgress(freshProgress)
     resetUnlockBaseline(freshProgress)
     setConfirmingNewGame(false)
+  }
+
+  // Onboarding: called exactly once, either when BootSequence's scripted
+  // lines finish naturally or when the player clicks Skip — both paths are
+  // already deduplicated inside BootSequence itself (see its doneRef
+  // guard), so this never runs twice for the same boot sequence. Marking
+  // the flag here (not earlier) means an interrupted session — the tab
+  // closed mid-sequence — correctly shows the boot sequence again next
+  // time. Publishing WorldEntered here (rather than from a generic mount
+  // effect) is what guarantees it fires only for this first-time path, and
+  // never again from toggling the classic dashboard afterward.
+  function handleBootSequenceDone() {
+    markOnboardingComplete()
+    gameEventBus.publish({ type: 'WorldEntered' })
+    setShowBootSequence(false)
   }
 
   // Batch 3A.4B: resolves strictly through lessonRegistry (getLessonById) —
@@ -487,6 +522,10 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
 
   function handleContinue() {
     if (nextMission) handleSelectMission(nextMission.id)
+  }
+
+  if (showBootSequence) {
+    return <BootSequence onDone={handleBootSequenceDone} />
   }
 
   return (

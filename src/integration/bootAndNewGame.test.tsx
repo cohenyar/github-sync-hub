@@ -5,6 +5,7 @@ import GameApp from '../GameApp'
 import { defaultCampaign } from '../campaign'
 import { he } from '../i18n'
 import { firstContactMission, missionRegistry } from '../missions'
+import { hasCompletedOnboarding, markOnboardingComplete } from '../onboarding'
 import { saveCurrentGame } from '../persistence'
 import { createInitialPlayerProgress, recordMissionCompletion } from '../progression'
 import { applyEffect, createWorldState, initialDistricts } from '../worldState'
@@ -19,6 +20,11 @@ const SAVE_KEY = 'meridian:save'
 const ONE_MISSION_PERCENTAGE = Math.round(100 / missionRegistry.length)
 
 async function readyRunButton() {
+  // The World Scene (not the classic dashboard) is now the default view —
+  // switch to the classic dashboard first if we're not there already.
+  if (screen.queryByTestId('world-scene-3d')) {
+    fireEvent.click(screen.getByTestId('toggle-world-scene-button'))
+  }
   const runButton = await screen.findByRole('button', { name: he.run })
   await waitFor(() => expect(runButton).toBeEnabled())
   return runButton
@@ -50,6 +56,10 @@ function completedFirstContactSave() {
 
 beforeEach(() => {
   window.localStorage.clear()
+  // This file's own boot/new-game tests need a fully-clean localStorage
+  // (no leftover save from a prior test) — but that also wipes the global
+  // setup's onboarding flag, so re-seed it here.
+  markOnboardingComplete()
 })
 
 describe('Load-on-boot', () => {
@@ -130,6 +140,12 @@ describe('New Game reset', () => {
 
     // The save was cleared too, so a later boot won't resurrect the old game.
     expect(window.localStorage.getItem(SAVE_KEY)).toBeNull()
+
+    // Onboarding: New Game also clears the "has onboarded" flag, so the
+    // boot sequence returns on the next fresh entry — but not within this
+    // same mounted session (see GameApp.tsx's handleConfirmNewGame).
+    expect(hasCompletedOnboarding()).toBe(false)
+    expect(screen.queryByTestId('boot-sequence')).not.toBeInTheDocument()
   })
 
   it('does not spuriously re-narrate once the reset progress is re-evaluated against the reset baseline', async () => {

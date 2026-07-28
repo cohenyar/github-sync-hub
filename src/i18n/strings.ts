@@ -207,6 +207,15 @@ export const he = {
   authUnavailableMessage: 'לא ניתן להתחבר לשירות ההתחברות כרגע. אפשר להמשיך במצב אורח.',
   authProfileErrorMessage: 'לא ניתן היה לאמת הרשאות משתמש. מחוברים ללא הרשאות ניהול.',
   navAdminLabel: 'ניהול',
+
+  // Onboarding — first-time boot sequence (see src/onboarding/BootSequence.tsx).
+  bootLogInitializing: 'מאתחל את מרידיאן…',
+  bootLogConnectingAi: 'מתחבר לבינה המרכזית…',
+  bootLogLoadingCity: 'טוען את מערכות העיר…',
+  bootLogDetectingRecruit: 'מזהה מגויס חדש…',
+  bootLogConnectionEstablished: 'החיבור הושלם.',
+  bootOdinIntro: 'שלום. אני אודין, ואלווה אותך במרידיאן. בוא נתחיל.',
+  bootSkipAction: 'דלג',
 } as const
 
 export type HebrewStringKey = keyof typeof he

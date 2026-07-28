@@ -14,6 +14,12 @@ import type { OdinReaction } from '../types'
  */
 export const defaultOdinReactions: OdinReaction[] = [
   {
+    id: 'world-entered-greeting',
+    trigger: { event: 'WorldEntered' },
+    message: 'Welcome to Meridian. The Records Core is waiting — that’s your starting point.',
+    messageHe: 'ברוך הבא למרידיאן. מוקד הרשומות ממתין לך — זו נקודת ההתחלה שלך.',
+  },
+  {
     id: 'mission-started',
     trigger: { event: 'MissionStarted' },
     message: 'A new query awaits. I am listening.',

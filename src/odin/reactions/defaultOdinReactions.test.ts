@@ -186,6 +186,13 @@ describe('defaultOdinReactions', () => {
     expect(englishReaction?.id).toBe('lesson-english-completed')
   })
 
+  it('reacts to WorldEntered with a one-time welcome/greeting', () => {
+    const reaction = find('world-entered-greeting')
+    expect(reaction.trigger).toEqual({ event: 'WorldEntered' })
+    const matched = matchReaction(defaultOdinReactions, { type: 'WorldEntered' })
+    expect(matched?.id).toBe('world-entered-greeting')
+  })
+
   it('every reaction has a non-empty id and message', () => {
     for (const reaction of defaultOdinReactions) {
       expect(reaction.id.length).toBeGreaterThan(0)

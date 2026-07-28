@@ -1,0 +1,80 @@
+.boot {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  padding: 24px;
+  background: var(--bg);
+  color: var(--text);
+  text-align: center;
+}
+
+.lines {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 560px;
+  min-height: 168px;
+  justify-content: center;
+}
+
+.logLine,
+.odinLine {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  opacity: 1;
+  animation: reveal 220ms ease-out;
+}
+
+.odinLine {
+  margin-top: 8px;
+  font-family: var(--sans);
+  font-size: 1.05rem;
+  color: var(--text);
+}
+
+.odinLabel {
+  display: block;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .logLine,
+  .odinLine {
+    animation: none;
+  }
+}
+
+.skipButton {
+  min-height: 44px;
+  padding: 8px 24px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--panel-bg);
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.skipButton:hover,
+.skipButton:focus-visible {
+  color: var(--text);
+  border-color: var(--accent);
+}

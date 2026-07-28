@@ -1,5 +1,4 @@
-import { expect, test } from '@playwright/test'
-import { runSql, verdictIsFail, verdictIsPass, waitForMissionReady } from './helpers.js'
+import { expect, runSql, test, verdictIsFail, verdictIsPass, waitForMissionReady } from './helpers.js'
 
 test.describe('World reacts to verified queries', () => {
   test('districts show their starting statuses', async ({ page }) => {

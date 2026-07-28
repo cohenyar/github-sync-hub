@@ -1,5 +1,4 @@
-import { expect, test } from '@playwright/test'
-import { runSql, verdictIsPass, waitForMissionReady } from './helpers.js'
+import { expect, runSql, test, verdictIsPass, waitForMissionReady } from './helpers.js'
 
 test.describe('NPC world map integration', () => {
   test('always-unlocked NPCs are visible from the start; the gated one appears only after its mission completes', async ({

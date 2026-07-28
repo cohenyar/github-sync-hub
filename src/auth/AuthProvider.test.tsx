@@ -49,6 +49,9 @@ function Probe() {
       <button data-testid="sign-out" onClick={() => void auth.signOut()}>
         sign out
       </button>
+      <button data-testid="sign-in" onClick={() => void auth.signInWithGoogle()}>
+        sign in
+      </button>
     </div>
   )
 }
@@ -155,5 +158,42 @@ describe('AuthProvider — fail-closed role resolution', () => {
 
     await waitFor(() => expect(mocks.signOut).toHaveBeenCalledTimes(1))
     expect(localStorage.getItem('meridian:save')).toBe('untouched-save-payload')
+  })
+
+  it('sign-out never touches the onboarding-completed flag either — logging out returns to guest, not a fresh boot sequence', async () => {
+    mocks.getSession.mockResolvedValue({ data: { session: FAKE_SESSION } })
+    mocks.from.mockReturnValue(queryBuilder({ data: { role: 'student' }, error: null }))
+    localStorage.setItem('meridian:onboarded', 'true')
+
+    render(
+      <AuthProvider>
+        <Probe />
+      </AuthProvider>,
+    )
+    await waitFor(() => expect(screen.getByTestId('status')).toHaveTextContent('signed-in'))
+
+    screen.getByTestId('sign-out').click()
+
+    await waitFor(() => expect(mocks.signOut).toHaveBeenCalledTimes(1))
+    expect(localStorage.getItem('meridian:onboarded')).toBe('true')
+  })
+
+  it('signs in with a redirect back to the exact page the user started from, not just the site root', async () => {
+    mocks.getSession.mockResolvedValue({ data: { session: null } })
+
+    render(
+      <AuthProvider>
+        <Probe />
+      </AuthProvider>,
+    )
+    await waitFor(() => expect(screen.getByTestId('status')).toHaveTextContent('signed-out'))
+
+    screen.getByTestId('sign-in').click()
+
+    await waitFor(() => expect(mocks.signInWithOAuth).toHaveBeenCalledTimes(1))
+    expect(mocks.signInWithOAuth).toHaveBeenCalledWith({
+      provider: 'google',
+      options: { redirectTo: window.location.href },
+    })
   })
 })

@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import GameApp from '../GameApp'
 import { he } from '../i18n'
 import { missionRegistry } from '../missions'
+import { markOnboardingComplete } from '../onboarding'
 
 vi.mock('../db/database', async () => {
   const { createTestDatabase } = await import('../verifier/testDb')
@@ -14,6 +15,18 @@ async function readyRunButton() {
   const runButton = await screen.findByRole('button', { name: he.run })
   await waitFor(() => expect(runButton).toBeEnabled())
   return runButton
+}
+
+// Onboarding: the World Scene is the new default view, but this suite is
+// specifically about the classic dashboard's SQL console — pre-seed the
+// flag (as a returning player would have) and switch views via the
+// existing toggle, exactly like the equivalent helper in the other
+// GameApp-rendering integration suites.
+function renderClassicDashboard() {
+  markOnboardingComplete()
+  const rendered = render(<GameApp />)
+  fireEvent.click(screen.getByTestId('toggle-world-scene-button'))
+  return rendered
 }
 
 beforeEach(() => {
@@ -34,7 +47,7 @@ beforeEach(() => {
  */
 describe('Meridian 1.0 closeout — auto-save on leaving /world (unmount)', () => {
   it('persists a completed mission even when the player never clicks Save, just navigates away', async () => {
-    const first = render(<GameApp />)
+    const first = renderClassicDashboard()
     const runButton = await readyRunButton()
 
     fireEvent.change(screen.getByPlaceholderText(he.sqlPlaceholder), {
@@ -51,14 +64,14 @@ describe('Meridian 1.0 closeout — auto-save on leaving /world (unmount)', () =
 
     // A fresh GameApp instance, the same way a route change to /dashboard
     // and back to /world would remount it.
-    render(<GameApp />)
+    renderClassicDashboard()
     await readyRunButton()
 
     expect(screen.getByText(`${he.progressLabelPrefix}${expectedPercentage}%`)).toBeInTheDocument()
   })
 
   it('does not affect the manual Save button — it keeps working exactly as before', async () => {
-    const first = render(<GameApp />)
+    const first = renderClassicDashboard()
     const runButton = await readyRunButton()
 
     fireEvent.click(screen.getByTestId('save-button'))
@@ -71,14 +84,14 @@ describe('Meridian 1.0 closeout — auto-save on leaving /world (unmount)', () =
     await screen.findByText(he.pass)
     first.unmount()
 
-    render(<GameApp />)
+    renderClassicDashboard()
     await readyRunButton()
     const expectedPercentage = Math.round(100 / missionRegistry.length)
     expect(screen.getByText(`${he.progressLabelPrefix}${expectedPercentage}%`)).toBeInTheDocument()
   })
 
   it('does not throw or warn when unmounted immediately after mount, before any progress exists', () => {
-    const first = render(<GameApp />)
+    const first = renderClassicDashboard()
     expect(() => first.unmount()).not.toThrow()
   })
 })

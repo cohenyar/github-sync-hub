@@ -101,9 +101,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function signInWithGoogle() {
     if (!supabase) return
     setAuthError(null)
+    // The full current URL (not just the origin), so signing in from /world
+    // or /dashboard returns there after the OAuth round trip, instead of
+    // always landing back on the root path.
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin },
+      options: { redirectTo: window.location.href },
     })
     if (error) setAuthError(error.message)
   }

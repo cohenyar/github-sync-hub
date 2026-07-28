@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 import { AppRoutes } from './App'
 import { AuthProvider } from './auth'
 import { he } from './i18n'
+import { markOnboardingComplete } from './onboarding'
 
 // GameApp (mounted at /world) needs the same test-friendly database loader
 // every existing GameApp test already relies on.
@@ -32,13 +33,24 @@ describe('Routing foundation', () => {
     expect(screen.getByText(he.landingTagline)).toBeInTheDocument()
   })
 
+  // Onboarding: a fresh visit to /world now shows the boot sequence, then
+  // the World Scene (not the classic dashboard) by default — see
+  // onboarding.spec.ts / onboardingFlow.test.tsx for that flow itself.
+  // These two tests are specifically about the classic dashboard/SQL
+  // console rendering at /world, so each pre-seeds the onboarding flag (as
+  // a returning player would have) and switches to the classic view via the
+  // existing toggle, exactly as a player would.
   it('renders the real game, unwrapped, at /world', async () => {
+    markOnboardingComplete()
     renderAt('/world')
+    fireEvent.click(await screen.findByTestId('toggle-world-scene-button'))
     expect(await screen.findByRole('button', { name: he.run })).toBeInTheDocument()
   })
 
   it('renders the real game at /world?path=math too (Batch 3A.2 query param), with no crash', async () => {
+    markOnboardingComplete()
     renderAt('/world?path=math')
+    fireEvent.click(await screen.findByTestId('toggle-world-scene-button'))
     expect(await screen.findByRole('button', { name: he.run })).toBeInTheDocument()
   })
 

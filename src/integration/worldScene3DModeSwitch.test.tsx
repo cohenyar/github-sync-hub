@@ -25,25 +25,26 @@ vi.mock('@react-three/drei', () => ({
 }))
 
 describe('World Scene (Phase 2): mode-switch wiring', () => {
-  it('mounts the 3D scene container when toggled on, without touching the classic dashboard', async () => {
+  it('shows the 3D scene container by default — the World Scene is the home view — without touching the classic dashboard', async () => {
     render(<GameApp />)
-
-    fireEvent.click(screen.getByTestId('toggle-world-scene-button'))
 
     expect(await screen.findByTestId('world-scene-3d')).toBeInTheDocument()
     expect(screen.getByTestId('district-status-hud')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: he.run })).not.toBeInTheDocument()
   })
 
-  it('returns to the unaffected classic dashboard when toggled back off', async () => {
+  it('switches to the classic dashboard when toggled, and back to the World Scene when toggled again', async () => {
     render(<GameApp />)
-
-    fireEvent.click(screen.getByTestId('toggle-world-scene-button'))
     await screen.findByTestId('world-scene-3d')
 
     fireEvent.click(screen.getByTestId('toggle-world-scene-button'))
 
     expect(screen.queryByTestId('world-scene-3d')).not.toBeInTheDocument()
     expect(await screen.findByRole('button', { name: he.run })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByTestId('toggle-world-scene-button'))
+
+    expect(await screen.findByTestId('world-scene-3d')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: he.run })).not.toBeInTheDocument()
   })
 })

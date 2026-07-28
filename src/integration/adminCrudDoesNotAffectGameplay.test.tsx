@@ -5,6 +5,7 @@ import { AdminPanel } from '../admin'
 import GameApp from '../GameApp'
 import { he } from '../i18n'
 import { getDefaultMission, removeMission } from '../missions'
+import { markOnboardingComplete } from '../onboarding'
 import { createInitialPlayerProgress } from '../progression'
 import { getUnlockedNpcIds } from '../unlocks'
 
@@ -23,6 +24,21 @@ afterEach(() => {
     // not present; nothing to clean up
   }
 })
+
+// Onboarding: pre-seeds the flag (as a returning player would have it) and
+// switches to the classic dashboard via the existing toggle — the World
+// Scene is the new default view, but this suite is specifically about the
+// classic dashboard's Mission/SQL console and Admin's live registries.
+function renderGameWithAdmin() {
+  markOnboardingComplete()
+  render(
+    <>
+      <GameApp />
+      <AdminPanel />
+    </>,
+  )
+  fireEvent.click(screen.getByTestId('toggle-world-scene-button'))
+}
 
 async function readyRunButton() {
   const runButton = await screen.findByRole('button', { name: he.run })
@@ -48,12 +64,7 @@ function fillMissionForm() {
 // underlying registry — without needing a route or an admin session.
 describe('Admin CRUD does not affect live gameplay', () => {
   it('adding a mission through Admin leaves the active mission and SQL console untouched', async () => {
-    render(
-      <>
-        <GameApp />
-        <AdminPanel />
-      </>,
-    )
+    renderGameWithAdmin()
     await readyRunButton()
 
     const missionBeforeAdmin = getDefaultMission().id
@@ -77,12 +88,7 @@ describe('Admin CRUD does not affect live gameplay', () => {
   })
 
   it('adding an NPC through Admin does not change the unlock status of existing NPCs', async () => {
-    render(
-      <>
-        <GameApp />
-        <AdminPanel />
-      </>,
-    )
+    renderGameWithAdmin()
     await readyRunButton()
 
     const progress = createInitialPlayerProgress()

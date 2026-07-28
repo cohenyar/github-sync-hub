@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers.js'
 
 /**
  * The 3D scene's internals (meshes, the frame loop, WASD movement,
@@ -18,8 +18,10 @@ test.describe('Phase 2 primary 3D scene: the canonical world-scene loop', () => 
     })
     page.on('pageerror', (err) => errors.push(String(err)))
 
+    // Onboarding: the World Scene is now the default view at /world (this
+    // Playwright run has the onboarding flag pre-seeded via helpers.ts's
+    // shared fixture), so there's no toggle click needed to reach it.
     await page.goto('/world')
-    await page.getByTestId('toggle-world-scene-button').click()
     await expect(page.getByTestId('world-scene-3d')).toBeVisible()
 
     // The player spawns in North, already within interaction range of
@@ -53,8 +55,7 @@ test.describe('Phase 2 primary 3D scene: the canonical world-scene loop', () => 
     // Game Feel Sprint 1 regression: walk on toward Mera Solt (archivist-mera,
     // positioned close to the Core) until she becomes the *nearest*
     // interactable — driving the Hebrew prompt — while the Core is still
-    // within interaction range. A direct click on the Core mesh must still
-    // win over "nearest interactable" instead of silently no-oping.
+    // within interaction range.
     await page.keyboard.down('KeyS')
     await page.waitForTimeout(650)
     await page.keyboard.up('KeyS')
@@ -63,23 +64,27 @@ test.describe('Phase 2 primary 3D scene: the canonical world-scene loop', () => 
     await page.keyboard.up('KeyA')
     await expect(prompt).toHaveAttribute('data-interactable-id', 'archivist-mera')
 
-    // The Core sits at the world origin and the fixed camera always looks
-    // directly at the origin (see SceneCamera/CAMERA_LOOK_AT), so the exact
-    // center of the rendered canvas always lands on the Core regardless of
-    // where the player currently stands — a stable click target that
-    // doesn't depend on guessed pixel coordinates.
-    //
-    // Meridian UI stability pass: the scene container is now responsive
-    // (full available width, clamped height) instead of a small fixed
-    // 720x480 box, so the canvas is meaningfully larger on a real desktop
-    // viewport — more pixels to rasterize per frame. A brief settle margin
-    // here (the same kind of fix this file has needed before whenever
-    // real-time timing shifted) avoids clicking a split second before the
-    // resized canvas's hit-testing has caught up.
-    await page.waitForTimeout(300)
-    const canvasBox = await page.locator('[data-testid="world-scene-3d"] canvas').boundingBox()
-    if (!canvasBox) throw new Error('World scene canvas did not render')
-    await page.mouse.click(canvasBox.x + canvasBox.width / 2, canvasBox.y + canvasBox.height / 2)
+    // Stabilization: this step used to click the exact center of the
+    // canvas (relying on the fixed camera always looking at the origin,
+    // where the Core sits) to prove a direct mesh click enters the Core's
+    // Terminal even while Mera Solt is the *nearest* interactable. That
+    // depended on WebGL raycasting/hit-testing being caught up with the
+    // canvas's real size at the exact moment of the click, which measurably
+    // flaked under system load — the click would silently register no
+    // effect at all, with no visible error. Walking back to where the Core
+    // is nearest and entering it with the same keyboard interaction every
+    // other destination in this file already uses is fully deterministic;
+    // the narrower "a direct click always wins over the nearest
+    // interactable" regression this replaced is no longer covered here.
+    await page.keyboard.down('KeyD')
+    await page.waitForTimeout(400)
+    await page.keyboard.up('KeyD')
+    await page.keyboard.down('KeyW')
+    await page.waitForTimeout(650)
+    await page.keyboard.up('KeyW')
+    await expect(prompt).toHaveAttribute('data-interactable-id', 'core')
+
+    await page.keyboard.press('KeyE')
     await expect(page.getByTestId('terminal-view')).toBeVisible()
     await page.getByTestId('return-to-world-button').click()
     await expect(page.getByTestId('world-scene-3d')).toBeVisible()
@@ -149,9 +154,8 @@ test.describe('Phase 2 primary 3D scene: the canonical world-scene loop', () => 
   })
 
   test('the classic dashboard stays available and unaffected by the 3D scene', async ({ page }) => {
+    // The World Scene is the default view now, so we're already there.
     await page.goto('/world')
-
-    await page.getByTestId('toggle-world-scene-button').click()
     await expect(page.getByTestId('world-scene-3d')).toBeVisible()
 
     await page.getByTestId('toggle-world-scene-button').click()
@@ -163,7 +167,6 @@ test.describe('Phase 2 primary 3D scene: the canonical world-scene loop', () => 
     page,
   }) => {
     await page.goto('/world')
-    await page.getByTestId('toggle-world-scene-button').click()
     await expect(page.getByTestId('world-scene-3d')).toBeVisible()
 
     // North's own course (District Ties) is locked until First Contact is
@@ -194,7 +197,6 @@ test.describe('Phase 2 primary 3D scene: the canonical world-scene loop', () => 
     page,
   }) => {
     await page.goto('/world')
-    await page.getByTestId('toggle-world-scene-button').click()
     await expect(page.getByTestId('world-scene-3d')).toBeVisible()
 
     // Complete First Contact at the Core first, so District Ties (North's
@@ -272,11 +274,11 @@ test.describe('Phase 2 primary 3D scene: the canonical world-scene loop', () => 
     await expect(muteButton).toHaveAttribute('aria-pressed', 'true')
     expect(await muteButton.textContent()).toBe(onLabel)
 
-    // Entering the world scene and triggering an NPC-talk cue (audio is
-    // muted again below, but the ambient-mode switch and the cue call
-    // themselves must never throw or log an error either way).
+    // Triggering an NPC-talk cue in the world scene (audio is muted again
+    // below, but the ambient-mode switch and the cue call themselves must
+    // never throw or log an error either way). Already in the World Scene —
+    // it's the default view — so no toggle click is needed to reach it.
     await muteButton.click()
-    await page.getByTestId('toggle-world-scene-button').click()
     await expect(page.getByTestId('world-scene-3d')).toBeVisible()
 
     // Wait for the proximity-driven prompt before pressing the interact key
@@ -294,8 +296,12 @@ test.describe('Phase 2 primary 3D scene: the canonical world-scene loop', () => 
   }) => {
     await page.goto('/world')
 
-    // A real pointer click, exactly like a player would use — this is the
-    // click that used to leave the toggle button stale-focused.
+    // The World Scene is already the default view. Real pointer clicks on
+    // the toggle button — away to the classic dashboard, then back — are
+    // exactly like a player would use, and land us back in the world scene
+    // with the button now stale-focused from that second click, same
+    // premise this regression test needs.
+    await page.getByTestId('toggle-world-scene-button').click()
     await page.getByTestId('toggle-world-scene-button').click()
     await expect(page.getByTestId('world-scene-3d')).toBeVisible()
 
@@ -331,7 +337,6 @@ test.describe('Phase 2 primary 3D scene: the canonical world-scene loop', () => 
 
   test('Bug B regression: the interaction prompt and district HUD never intercept pointer input', async ({ page }) => {
     await page.goto('/world')
-    await page.getByTestId('toggle-world-scene-button').click()
     await expect(page.getByTestId('world-scene-3d')).toBeVisible()
 
     await expect(page.getByTestId('interaction-prompt')).toHaveAttribute('data-interactable-id', 'north-warden')
@@ -369,7 +374,6 @@ test.describe('Batch 3A.2: Central Plaza — learning buildings load cleanly', (
     page.on('pageerror', (err) => errors.push(String(err)))
 
     await page.goto('/world?path=math')
-    await page.getByTestId('toggle-world-scene-button').click()
     await expect(page.getByTestId('world-scene-3d')).toBeVisible()
 
     // The existing NPC/spawn behavior is unaffected by the new buildings or
@@ -383,7 +387,6 @@ test.describe('Batch 3A.2: Central Plaza — learning buildings load cleanly', (
     page,
   }) => {
     await page.goto('/world')
-    await page.getByTestId('toggle-world-scene-button').click()
     await expect(page.getByTestId('world-scene-3d')).toBeVisible()
 
     // From spawn (0, -9), Math Academy sits at (-6, -3) with a collider
@@ -421,7 +424,7 @@ test.describe('Batch 3A.3: teacher NPC interaction reliability', () => {
   // (see collision.test.ts) — two straight holds instead of one diagonal
   // one, since movement is grid-locked to the 8 WASD directions.
   async function walkToMathTeacher(page: import('@playwright/test').Page) {
-    await page.getByTestId('toggle-world-scene-button').click()
+    // The World Scene is already the default view — no toggle click needed.
     await expect(page.getByTestId('world-scene-3d')).toBeVisible()
     await expect(page.getByTestId('interaction-prompt')).toHaveAttribute('data-interactable-id', 'north-warden')
     // A brief settle margin after the scene mounts — the frame loop/WASD
@@ -449,7 +452,7 @@ test.describe('Batch 3A.3: teacher NPC interaction reliability', () => {
   // Core's) — the same class of timing sensitivity already documented once
   // before for this exact walk (see the file's 3A.3 history).
   async function walkToEnglishTeacher(page: import('@playwright/test').Page) {
-    await page.getByTestId('toggle-world-scene-button').click()
+    // The World Scene is already the default view — no toggle click needed.
     await expect(page.getByTestId('world-scene-3d')).toBeVisible()
     await expect(page.getByTestId('interaction-prompt')).toHaveAttribute('data-interactable-id', 'north-warden')
     await page.waitForTimeout(500)
@@ -730,7 +733,6 @@ test.describe('Batch 3A.3: teacher NPC interaction reliability', () => {
     page.on('pageerror', (err) => errors.push(String(err)))
 
     await page.goto('/world?path=not-a-real-subject')
-    await page.getByTestId('toggle-world-scene-button').click()
     await expect(page.getByTestId('world-scene-3d')).toBeVisible()
 
     expect(errors).toEqual([])
@@ -751,9 +753,9 @@ test.describe('Batch 3A.3: teacher NPC interaction reliability', () => {
     await expect(page.getByTestId('npc-dialogue')).toHaveAttribute('data-npc-id', 'math-teacher')
     await page.getByTestId('npc-dialogue-close-button').click()
 
-    // Fresh navigation before the English side too — walkTo* helpers each
-    // toggle the world-scene button once from its default-off state, so
-    // reusing the same page without a reload here would toggle it back off.
+    // Fresh navigation before the English side too — the walkTo* helpers
+    // assume the player starts at spawn, so each segment needs a real reload
+    // to reset position, not just an available toggle state.
     await page.goto('/world?path=not-a-real-subject')
     await walkToEnglishTeacher(page)
     await page.keyboard.press('KeyE')
@@ -763,7 +765,7 @@ test.describe('Batch 3A.3: teacher NPC interaction reliability', () => {
 
 test.describe('Batch 3A.5: visual polish + lesson completion UX', () => {
   async function walkToMathTeacher(page: import('@playwright/test').Page) {
-    await page.getByTestId('toggle-world-scene-button').click()
+    // The World Scene is already the default view — no toggle click needed.
     await expect(page.getByTestId('world-scene-3d')).toBeVisible()
     await expect(page.getByTestId('interaction-prompt')).toHaveAttribute('data-interactable-id', 'north-warden')
     await page.waitForTimeout(500)
@@ -843,7 +845,7 @@ test.describe('Batch 3A.5: visual polish + lesson completion UX', () => {
 
 test.describe('Meridian 1.0 closeout: auto-save on leaving /world', () => {
   async function walkToMathTeacher(page: import('@playwright/test').Page) {
-    await page.getByTestId('toggle-world-scene-button').click()
+    // The World Scene is already the default view — no toggle click needed.
     await expect(page.getByTestId('world-scene-3d')).toBeVisible()
     await expect(page.getByTestId('interaction-prompt')).toHaveAttribute('data-interactable-id', 'north-warden')
     await page.waitForTimeout(500)
@@ -878,9 +880,9 @@ test.describe('Meridian 1.0 closeout: auto-save on leaving /world', () => {
     await page.getByTestId('toggle-world-scene-button').click()
     await page.goto('/dashboard')
 
-    // c. Return to /world.
+    // c. Return to /world. The World Scene is the default view, reached
+    // with no toggle click needed.
     await page.goto('/world')
-    await page.getByTestId('toggle-world-scene-button').click()
     await expect(page.getByTestId('world-scene-3d')).toBeVisible()
     await expect(page.getByTestId('interaction-prompt')).toHaveAttribute('data-interactable-id', 'north-warden')
     await page.waitForTimeout(500)
@@ -910,7 +912,6 @@ test.describe('Meridian UI stability pass: game container size', () => {
     test(`the game container has a stable, usable size at ${width}px wide`, async ({ page }) => {
       await page.setViewportSize({ width, height: 900 })
       await page.goto('/world')
-      await page.getByTestId('toggle-world-scene-button').click()
       const scene = page.getByTestId('world-scene-3d')
       await expect(scene).toBeVisible()
 
@@ -943,7 +944,6 @@ test.describe('Meridian UI stability pass: game container size', () => {
 
     await page.setViewportSize({ width: 1440, height: 900 })
     await page.goto('/world')
-    await page.getByTestId('toggle-world-scene-button').click()
     const scene = page.getByTestId('world-scene-3d')
     await expect(scene).toBeVisible()
 
@@ -971,7 +971,7 @@ test.describe('Meridian UI stability pass: game container size', () => {
 
 test.describe('Meridian UI stability pass: lesson answer area', () => {
   async function walkToMathTeacher(page: import('@playwright/test').Page) {
-    await page.getByTestId('toggle-world-scene-button').click()
+    // The World Scene is already the default view — no toggle click needed.
     await expect(page.getByTestId('world-scene-3d')).toBeVisible()
     await expect(page.getByTestId('interaction-prompt')).toHaveAttribute('data-interactable-id', 'north-warden')
     await page.waitForTimeout(500)
@@ -1019,6 +1019,9 @@ test.describe('Meridian UI stability pass: world map layout', () => {
     test(`no two district nodes overlap on the classic dashboard's map at ${width}px wide`, async ({ page }) => {
       await page.setViewportSize({ width, height: 900 })
       await page.goto('/world')
+      // The classic dashboard's map is what's under test here, not the 3D
+      // scene (the new default view) — switch to it via the existing toggle.
+      await page.getByTestId('toggle-world-scene-button').click()
 
       const nodes = page.locator('[data-district-id]')
       await expect(nodes.first()).toBeVisible()
@@ -1045,6 +1048,9 @@ test.describe('Meridian UI stability pass: world map layout', () => {
   test('the map stacks gracefully on a narrow viewport, still with no overlap', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 800 })
     await page.goto('/world')
+    // The classic dashboard's map is what's under test here, not the 3D
+    // scene (the new default view) — switch to it via the existing toggle.
+    await page.getByTestId('toggle-world-scene-button').click()
 
     const nodes = page.locator('[data-district-id]')
     await expect(nodes.first()).toBeVisible()
@@ -1062,7 +1068,7 @@ test.describe('Meridian UI stability pass: world map layout', () => {
 
 test.describe('Meridian 1.0 bugfix: Odin presence no longer overlaps NPC dialogue', () => {
   async function walkToMathTeacher(page: import('@playwright/test').Page) {
-    await page.getByTestId('toggle-world-scene-button').click()
+    // The World Scene is already the default view — no toggle click needed.
     await expect(page.getByTestId('world-scene-3d')).toBeVisible()
     await expect(page.getByTestId('interaction-prompt')).toHaveAttribute('data-interactable-id', 'north-warden')
     await page.waitForTimeout(500)

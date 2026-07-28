@@ -1,5 +1,5 @@
 export { AuthContext, AuthProvider } from './AuthProvider'
-export { useAuth } from './useAuth'
+export { useAuth, useOptionalAuth } from './useAuth'
 export { ProtectedAdminRoute } from './ProtectedAdminRoute'
 export { AuthButton } from './AuthButton'
 export type { AuthContextValue, AuthStatus, AuthUser, Role } from './types'

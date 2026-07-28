@@ -34,6 +34,8 @@ function triggerMatches(trigger: OdinReactionTrigger, event: GameEvent): boolean
       )
     case 'LessonFailed':
       return event.type === 'LessonFailed' && (trigger.lessonId === undefined || trigger.lessonId === event.lessonId)
+    case 'WorldEntered':
+      return event.type === 'WorldEntered'
     default:
       return false
   }

@@ -1,5 +1,4 @@
-import { expect, test } from '@playwright/test'
-import { runSql, verdictIsPass, waitForMissionReady } from './helpers.js'
+import { expect, runSql, test, verdictIsPass, waitForMissionReady } from './helpers.js'
 
 test.describe('Vertical slice: the full six-mission campaign is playable end to end', () => {
   test('switches missions, unlocks the full chain, and completes the campaign', async ({ page }) => {

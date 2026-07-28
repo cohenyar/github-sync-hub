@@ -1,5 +1,4 @@
-import { expect, test } from '@playwright/test'
-import { runSql, verdictIsFail, verdictIsPass, waitForMissionReady } from './helpers.js'
+import { expect, runSql, test, verdictIsFail, verdictIsPass, waitForMissionReady } from './helpers.js'
 
 test.describe('Mission progression and unlock gating', () => {
   test('starts at Mission 1 of 6, 0% progress, with District Ties locked', async ({ page }) => {

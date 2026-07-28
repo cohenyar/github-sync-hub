@@ -56,6 +56,16 @@ export interface LessonFailedEvent {
   lessonId: string
 }
 
+/**
+ * Onboarding — published exactly once, only the first time a player
+ * finishes (or skips) the boot sequence and actually reaches the World
+ * Scene. Never published for a returning player, and never republished by
+ * toggling the classic dashboard afterward (see GameApp.tsx).
+ */
+export interface WorldEnteredEvent {
+  type: 'WorldEntered'
+}
+
 export type GameEvent =
   | MissionCompletedEvent
   | MissionStartedEvent
@@ -65,6 +75,7 @@ export type GameEvent =
   | QueryFailedEvent
   | LessonCompletedEvent
   | LessonFailedEvent
+  | WorldEnteredEvent
 
 export type GameEventType = GameEvent['type']
 
@@ -77,4 +88,5 @@ export const ALL_EVENT_TYPES: readonly GameEventType[] = [
   'QueryFailed',
   'LessonCompleted',
   'LessonFailed',
+  'WorldEntered',
 ]

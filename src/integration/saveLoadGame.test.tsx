@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import GameApp from '../GameApp'
 import { he } from '../i18n'
 import { missionRegistry } from '../missions'
+import { markOnboardingComplete } from '../onboarding'
 
 vi.mock('../db/database', async () => {
   const { createTestDatabase } = await import('../verifier/testDb')
@@ -11,6 +12,11 @@ vi.mock('../db/database', async () => {
 })
 
 async function readyRunButton() {
+  // The World Scene (not the classic dashboard) is now the default view —
+  // switch to the classic dashboard first if we're not there already.
+  if (screen.queryByTestId('world-scene-3d')) {
+    fireEvent.click(screen.getByTestId('toggle-world-scene-button'))
+  }
   const runButton = await screen.findByRole('button', { name: he.run })
   await waitFor(() => expect(runButton).toBeEnabled())
   return runButton
@@ -24,6 +30,10 @@ function openDebugView() {
 
 beforeEach(() => {
   window.localStorage.clear()
+  // This file's own save/load isolation needs a fully-clean localStorage
+  // (no leftover save from a prior test) — but that also wipes the global
+  // setup's onboarding flag, so re-seed it here.
+  markOnboardingComplete()
 })
 
 describe('Save/Load restores world and progress across a simulated reload', () => {

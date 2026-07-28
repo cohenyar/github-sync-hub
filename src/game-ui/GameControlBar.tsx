@@ -1,4 +1,5 @@
 import type { MouseEvent } from 'react'
+import { AuthButton } from '../auth'
 import { he } from '../i18n'
 import { Button } from '../platform/ui'
 import styles from './GameControlBar.module.css'
@@ -137,6 +138,13 @@ export function GameControlBar({
         >
           {isMuted ? he.soundToggleOff : he.soundToggleOn}
         </Button>
+        {/* The persistent auth control for the main app flow (/world) — a
+            guest sees "Sign in with Google"; a signed-in player sees their
+            account and "Sign out". Renders nothing if Supabase isn't
+            configured or (in the many existing tests that render <GameApp/>
+            directly) there's no AuthProvider ancestor — see AuthButton's
+            own useOptionalAuth. */}
+        <AuthButton />
       </div>
     </header>
   )

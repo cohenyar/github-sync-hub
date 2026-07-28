@@ -13,6 +13,7 @@ const ODIN_SUBSCRIBED_EVENTS: readonly GameEventType[] = [
   'QueryFailed',
   'LessonCompleted',
   'LessonFailed',
+  'WorldEntered',
 ]
 
 export interface UseOdinResult {

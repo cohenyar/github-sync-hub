@@ -14,3 +14,4 @@ export type OdinReactionTrigger =
   | { event: 'QueryFailed'; missionId?: string; reason?: 'mismatch' | 'sql-error' }
   | { event: 'LessonCompleted'; lessonId?: string }
   | { event: 'LessonFailed'; lessonId?: string }
+  | { event: 'WorldEntered' }

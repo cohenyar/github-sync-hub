@@ -10,6 +10,11 @@ vi.mock('../db/database', async () => {
 })
 
 async function readyRunButton() {
+  // The World Scene (not the classic dashboard) is now the default view —
+  // switch to the classic dashboard first if we're not there already.
+  if (screen.queryByTestId('world-scene-3d')) {
+    fireEvent.click(screen.getByTestId('toggle-world-scene-button'))
+  }
   const runButton = await screen.findByRole('button', { name: he.run })
   await waitFor(() => expect(runButton).toBeEnabled())
   return runButton

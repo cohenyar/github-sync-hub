@@ -1,5 +1,4 @@
-import { expect, test } from '@playwright/test'
-import { runSql, verdictIsFail, verdictIsPass, waitForMissionReady } from './helpers.js'
+import { expect, runSql, test, verdictIsFail, verdictIsPass, waitForMissionReady } from './helpers.js'
 
 test.describe('SQL console', () => {
   test('a correct query shows Pass and the matching rows', async ({ page }) => {

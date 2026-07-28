@@ -1,5 +1,4 @@
-import { expect, test } from '@playwright/test'
-import { runSql, verdictIsFail, verdictIsPass, waitForMissionReady } from './helpers.js'
+import { expect, runSql, test, verdictIsFail, verdictIsPass, waitForMissionReady } from './helpers.js'
 
 test.describe('Odin narrates real gameplay events', () => {
   test('greets the player once ready and shows the deterministic/offline status', async ({ page }) => {

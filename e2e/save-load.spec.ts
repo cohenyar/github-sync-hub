@@ -1,5 +1,4 @@
-import { expect, test } from '@playwright/test'
-import { runSql, verdictIsPass, waitForMissionReady } from './helpers.js'
+import { expect, runSql, test, verdictIsPass, waitForMissionReady } from './helpers.js'
 
 // The raw world-state JSON is a collapsed debug view (Sprint 1 polish) —
 // expand it before asserting on its contents. Resets closed on every full

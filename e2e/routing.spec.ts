@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './helpers.js'
 
 test.describe('Routing foundation', () => {
   test('direct navigation to every route renders something, and refresh on a route works', async ({ page }) => {
