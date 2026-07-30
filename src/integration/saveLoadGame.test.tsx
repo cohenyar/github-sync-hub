@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import GameApp from '../GameApp'
 import { he } from '../i18n'
 import { missionRegistry } from '../missions'
 import { markOnboardingComplete } from '../onboarding'
+import { renderGameApp } from '../test/renderGameApp'
 
 vi.mock('../db/database', async () => {
   const { createTestDatabase } = await import('../verifier/testDb')
@@ -51,7 +51,7 @@ beforeEach(() => {
 
 describe('Save/Load restores world and progress across a simulated reload', () => {
   it('persists mission completion and world state, then boots straight into them on the next app instance', async () => {
-    const first = render(<GameApp />)
+    const first = renderGameApp()
     const runButton = await readyRunButton()
     openDebugView()
 
@@ -72,7 +72,7 @@ describe('Save/Load restores world and progress across a simulated reload', () =
     // A brand new App instance starts from the same fresh initial state a
     // real page reload would, except that Step 23's load-on-boot now finds
     // the save and restores it immediately — no Load click needed.
-    render(<GameApp />)
+    renderGameApp()
     await readyRunButton()
     openDebugView()
 
@@ -84,7 +84,7 @@ describe('Save/Load restores world and progress across a simulated reload', () =
   })
 
   it('does nothing when Load is clicked with no save present', async () => {
-    render(<GameApp />)
+    renderGameApp()
     await readyRunButton()
 
     expect(screen.getByText(`${he.progressLabelPrefix}0%`)).toBeInTheDocument()

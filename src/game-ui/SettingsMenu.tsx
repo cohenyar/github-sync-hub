@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState, type MouseEvent } from 'react'
+import { useEffect, useRef, useState, type CSSProperties, type MouseEvent } from 'react'
 import { he } from '../i18n'
 import { Button } from '../platform/ui'
+import { getPlayerAvatarPreset } from '../worldScene/logic/playerAppearance'
 import styles from './SettingsMenu.module.css'
 
 /**
@@ -31,6 +32,10 @@ export interface SettingsMenuProps {
   onCancelNewGame: () => void
   onToggleWorldScene: () => void
   onToggleMuted: () => void
+  /** Meridian 1.4 — Player Identity MVP. Undefined (no local profile yet) omits the row entirely rather than showing an empty name. */
+  playerName?: string
+  playerAvatarId?: string
+  onEditProfile: () => void
 }
 
 /**
@@ -50,6 +55,9 @@ export function SettingsMenu({
   onCancelNewGame,
   onToggleWorldScene,
   onToggleMuted,
+  playerName,
+  playerAvatarId,
+  onEditProfile,
 }: SettingsMenuProps) {
   const [isOpen, setIsOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -109,6 +117,27 @@ export function SettingsMenu({
 
       {isOpen && (
         <div className={styles.menu} role="menu" aria-label={he.settingsMenuLabel}>
+          {playerName && (
+            <button
+              type="button"
+              className={styles.profileRow}
+              data-testid="edit-profile-button"
+              onClick={runAndClose(onEditProfile)}
+            >
+              <span
+                className={styles.profileSwatch}
+                aria-hidden="true"
+                style={
+                  {
+                    '--swatch-body': getPlayerAvatarPreset(playerAvatarId).bodyColor,
+                    '--swatch-accent': getPlayerAvatarPreset(playerAvatarId).accentColor,
+                  } as CSSProperties
+                }
+              />
+              <span className={styles.profileName}>{playerName}</span>
+              <span className={styles.profileEditLabel}>{he.profileEditButtonLabel}</span>
+            </button>
+          )}
           <Button
             variant="ghost"
             size="sm"

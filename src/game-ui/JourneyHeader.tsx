@@ -9,6 +9,8 @@ export interface JourneyHeaderProps {
   /** Hebrew name of the destination/area the active mission belongs to. */
   destinationName?: string
   activeMission: MissionConfig
+  /** The active mission's own position in the campaign (1-based) — distinct from campaignSummary's furthest-incomplete pointer, which can point at a different mission entirely once an earlier one is revisited. */
+  activeMissionOrder?: number
   completionPercentage: number
   campaignSummary?: CampaignSummary
   companion?: NpcConfig
@@ -38,6 +40,7 @@ function initials(name: string): string {
 export function JourneyHeader({
   destinationName,
   activeMission,
+  activeMissionOrder,
   completionPercentage,
   campaignSummary,
   companion,
@@ -54,9 +57,9 @@ export function JourneyHeader({
             ◉
           </span>
           {destinationName && <span className={styles.location}>{destinationName}</span>}
-          {campaignSummary?.currentMissionIndex != null && (
+          {activeMissionOrder != null && campaignSummary && (
             <span className={styles.stage} dir="rtl">
-              {he.stageLabel} <span dir="ltr">{campaignSummary.currentMissionIndex} / {campaignSummary.totalMissions}</span>
+              {he.stageLabel} <span dir="ltr">{activeMissionOrder} / {campaignSummary.totalMissions}</span>
             </span>
           )}
         </div>

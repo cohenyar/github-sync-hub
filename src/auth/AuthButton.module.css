@@ -125,6 +125,16 @@
   font-size: 0.78rem;
 }
 
+/* Meridian 1.4 — Auth UX clarity pass: the account and the local save are
+   separate systems (see the Meridian 1.4 UX diagnostic) — this note says so
+   right where a player might otherwise fear losing progress by signing out. */
+.signOutNote {
+  margin: 4px 8px 2px;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .trigger {
     transition: none;

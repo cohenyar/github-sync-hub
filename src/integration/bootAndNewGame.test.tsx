@@ -1,13 +1,13 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import GameApp from '../GameApp'
 import { defaultCampaign } from '../campaign'
 import { he } from '../i18n'
 import { firstContactMission, missionRegistry } from '../missions'
 import { hasCompletedOnboarding, markOnboardingComplete } from '../onboarding'
 import { saveCurrentGame } from '../persistence'
 import { createInitialPlayerProgress, recordMissionCompletion } from '../progression'
+import { passEntryGates, renderGameApp } from '../test/renderGameApp'
 import { applyEffect, createWorldState, initialDistricts } from '../worldState'
 
 vi.mock('../db/database', async () => {
@@ -56,6 +56,10 @@ function newGame() {
   ensureSettingsMenuOpen()
   fireEvent.click(screen.getByTestId('new-game-button'))
   fireEvent.click(screen.getByTestId('confirm-reset-yes-button'))
+  // The reset also clears the local profile — GameApp's own mandatory
+  // Profile Creation gate reappears immediately, ahead of whatever the
+  // caller checks next.
+  passEntryGates()
 }
 
 function completedFirstContactSave() {
@@ -78,7 +82,7 @@ beforeEach(() => {
 
 describe('Load-on-boot', () => {
   it('boots into a fresh game when no save exists', async () => {
-    render(<GameApp />)
+    renderGameApp()
     await readyRunButton()
 
     expect(screen.getByText(`${he.progressLabelPrefix}0%`)).toBeInTheDocument()
@@ -90,7 +94,7 @@ describe('Load-on-boot', () => {
     const { world, playerProgress } = completedFirstContactSave()
     saveCurrentGame(world, playerProgress)
 
-    render(<GameApp />)
+    renderGameApp()
     await readyRunButton()
     openDebugView()
 
@@ -105,7 +109,7 @@ describe('Load-on-boot', () => {
     const { world, playerProgress } = completedFirstContactSave()
     saveCurrentGame(world, playerProgress)
 
-    render(<GameApp />)
+    renderGameApp()
     await readyRunButton()
 
     // First Contact is already completed per the save, so booting into it is
@@ -124,7 +128,7 @@ describe('Load-on-boot', () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
     window.localStorage.setItem(SAVE_KEY, 'not valid json{')
 
-    render(<GameApp />)
+    renderGameApp()
     await readyRunButton()
 
     expect(screen.getByText(`${he.progressLabelPrefix}0%`)).toBeInTheDocument()
@@ -137,7 +141,7 @@ describe('Load-on-boot', () => {
 
 describe('New Game reset', () => {
   it('clears the save and resets world and progress', async () => {
-    render(<GameApp />)
+    renderGameApp()
     const runButton = await readyRunButton()
     openDebugView()
 
@@ -167,7 +171,7 @@ describe('New Game reset', () => {
   })
 
   it('does not spuriously re-narrate once the reset progress is re-evaluated against the reset baseline', async () => {
-    render(<GameApp />)
+    renderGameApp()
     const runButton = await readyRunButton()
 
     fireEvent.change(screen.getByPlaceholderText(he.sqlPlaceholder), {
@@ -195,7 +199,7 @@ describe('New Game reset', () => {
   it('keeps the app stable with no console errors across a full New Game cycle', async () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
-    render(<GameApp />)
+    renderGameApp()
     const runButton = await readyRunButton()
 
     fireEvent.change(screen.getByPlaceholderText(he.sqlPlaceholder), {
@@ -214,7 +218,7 @@ describe('New Game reset', () => {
   })
 
   it('does nothing until the reset is confirmed, and Cancel dismisses the prompt without resetting', async () => {
-    render(<GameApp />)
+    renderGameApp()
     const runButton = await readyRunButton()
 
     fireEvent.change(screen.getByPlaceholderText(he.sqlPlaceholder), {

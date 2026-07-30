@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
-import GameApp from '../GameApp'
 import { he } from '../i18n'
+import { renderGameApp } from '../test/renderGameApp'
 
 vi.mock('../db/database', async () => {
   const { createTestDatabase } = await import('../verifier/testDb')
@@ -38,7 +38,7 @@ function ensureSettingsMenuOpen() {
 
 describe('World Scene (Phase 2): mode-switch wiring', () => {
   it('shows the 3D scene container by default — the World Scene is the home view — without touching the classic dashboard', async () => {
-    render(<GameApp />)
+    renderGameApp()
 
     expect(await screen.findByTestId('world-scene-3d')).toBeInTheDocument()
     expect(screen.getByTestId('district-status-hud')).toBeInTheDocument()
@@ -46,7 +46,7 @@ describe('World Scene (Phase 2): mode-switch wiring', () => {
   })
 
   it('switches to the classic dashboard when toggled, and back to the World Scene when toggled again', async () => {
-    render(<GameApp />)
+    renderGameApp()
     await screen.findByTestId('world-scene-3d')
 
     ensureSettingsMenuOpen()

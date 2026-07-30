@@ -10,6 +10,8 @@ export interface MissionPanelProps {
   mission: MissionConfig
   phase?: MissionPhase
   campaignSummary?: CampaignSummary
+  /** The active mission's own position in the campaign (1-based) — distinct from campaignSummary's furthest-incomplete pointer, which can point at a different mission once an earlier one is revisited. */
+  activeMissionOrder?: number
   nextMission?: MissionConfig
   nextMissionContentStatus?: ContentStatus
   completionPercentage?: number
@@ -38,6 +40,7 @@ export function MissionPanel({
   mission,
   phase,
   campaignSummary,
+  activeMissionOrder,
   nextMission,
   nextMissionContentStatus,
   completionPercentage,
@@ -90,10 +93,10 @@ export function MissionPanel({
             <span
               className={styles.badge}
               data-testid="mission-index-badge"
-              data-current={campaignSummary.currentMissionIndex ?? undefined}
+              data-current={activeMissionOrder ?? undefined}
               data-total={campaignSummary.totalMissions}
             >
-              {he.missionLabel} {campaignSummary.currentMissionIndex ?? '—'} {he.ofLabel} {campaignSummary.totalMissions}
+              {he.missionLabel} {activeMissionOrder ?? '—'} {he.ofLabel} {campaignSummary.totalMissions}
             </span>
           )}
           {contentStatus && (

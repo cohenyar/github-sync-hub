@@ -44,7 +44,12 @@ const MISSION_DIALOGUE: Readonly<Record<string, Readonly<Record<MissionDialogueP
 const DISTRICT_DIALOGUE: Readonly<Record<string, Readonly<Record<DistrictStatus, NpcDialogueContent>>>> = {
   'archivist-mera': {
     unstable: { greeting: 'ברוכה הבאה למוקד הרשומות. אני מרה, שומרת הארכיון. האות עדיין לא יציב.' },
-    stable: { greeting: 'ברוכה הבאה שוב. אני מרה. האות במוקד יציב יותר משהיה.' },
+    // Meridian 1.4 — the Core's single stat (signal) jumps unstable→thriving
+    // in one atomic step (see firstContact.ts's successEffect), so this
+    // phase is not currently reachable in any playthrough. Written to state
+    // the current condition plainly rather than implying a remembered
+    // "better than it was" trajectory the world can't actually show yet.
+    stable: { greeting: 'ברוכה הבאה. אני מרה, שומרת הארכיון. האות במוקד יציב.' },
     thriving: { greeting: 'ברוכה הבאה, שוב. אני מרה. המוקד לא נראה כה בהיר מזמן.' },
   },
   'east-broker': {

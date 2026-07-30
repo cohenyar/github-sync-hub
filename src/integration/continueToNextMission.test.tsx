@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
-import GameApp from '../GameApp'
 import { he } from '../i18n'
+import { renderGameApp } from '../test/renderGameApp'
 
 vi.mock('../db/database', async () => {
   const { createTestDatabase } = await import('../verifier/testDb')
@@ -23,7 +23,7 @@ async function readyRunButton() {
 
 describe('The Continue to Next Mission CTA', () => {
   it('is absent before a mission completes, then loads the next mission when clicked', async () => {
-    render(<GameApp />)
+    renderGameApp()
     const runButton = await readyRunButton()
 
     expect(

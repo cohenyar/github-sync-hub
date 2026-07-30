@@ -16,6 +16,7 @@ function renderMenu(overrides: Partial<SettingsMenuProps> = {}) {
     onCancelNewGame: vi.fn(),
     onToggleWorldScene: vi.fn(),
     onToggleMuted: vi.fn(),
+    onEditProfile: vi.fn(),
     ...overrides,
   }
   render(<SettingsMenu {...props} />)
@@ -87,6 +88,7 @@ describe('SettingsMenu', () => {
         onCancelNewGame={vi.fn()}
         onToggleWorldScene={vi.fn()}
         onToggleMuted={vi.fn()}
+        onEditProfile={vi.fn()}
       />,
     )
     fireEvent.click(screen.getByTestId('settings-menu-button'))
@@ -107,6 +109,7 @@ describe('SettingsMenu', () => {
         onCancelNewGame={vi.fn()}
         onToggleWorldScene={vi.fn()}
         onToggleMuted={vi.fn()}
+        onEditProfile={vi.fn()}
       />,
     )
     expect(screen.getByTestId('reset-confirm-prompt')).toBeInTheDocument()
@@ -116,5 +119,26 @@ describe('SettingsMenu', () => {
     renderMenu({ showWorldScene: true })
     fireEvent.click(screen.getByTestId('settings-menu-button'))
     expect(screen.getByTestId('toggle-world-scene-button')).toHaveTextContent('תצוגה קלאסית')
+  })
+
+  describe('Meridian 1.4 — local profile row', () => {
+    it('omits the profile row entirely when there is no local profile yet', () => {
+      renderMenu({ playerName: undefined })
+      fireEvent.click(screen.getByTestId('settings-menu-button'))
+      expect(screen.queryByTestId('edit-profile-button')).not.toBeInTheDocument()
+    })
+
+    it('shows the player name and opens the editor on click, closing the menu (a genuine pointer click)', () => {
+      const onEditProfile = vi.fn()
+      renderMenu({ playerName: 'נועה', playerAvatarId: 'azure', onEditProfile })
+      fireEvent.click(screen.getByTestId('settings-menu-button'))
+
+      const row = screen.getByTestId('edit-profile-button')
+      expect(row).toHaveTextContent('נועה')
+
+      fireEvent.click(row, { detail: 1 })
+      expect(onEditProfile).toHaveBeenCalledTimes(1)
+      expect(screen.queryByRole('menu')).not.toBeInTheDocument()
+    })
   })
 })

@@ -10,6 +10,7 @@ import {
   type DistrictPoint,
   type Interactable,
 } from '../../logic/proximity'
+import { getPlayerAvatarPreset } from '../../logic/playerAppearance'
 import { Eyes } from './npcFigures'
 import { useWasdInput } from './useWasdInput'
 
@@ -24,6 +25,8 @@ export interface PlayerAvatarProps {
   onInRangeIdsChange: (ids: readonly string[]) => void
   /** Batch 3A.2 — the only two colliders in the world (the new learning buildings). Optional so every other caller/test is unaffected. */
   colliders?: readonly CircleCollider[]
+  /** Meridian 1.4 — Player Identity MVP; an id into PLAYER_AVATAR_PRESETS. Undefined resolves to the original 'ember' colors, so every existing caller/test is unaffected. */
+  avatarId?: string
 }
 
 /**
@@ -45,7 +48,9 @@ export function PlayerAvatar({
   onNearestInteractableChange,
   onInRangeIdsChange,
   colliders,
+  avatarId,
 }: PlayerAvatarProps) {
+  const { bodyColor, accentColor } = getPlayerAvatarPreset(avatarId)
   const groupRef = useRef<Group>(null)
   const positionRef = useRef<Position2D>(initialPosition)
   const facingRef = useRef(0)
@@ -101,11 +106,11 @@ export function PlayerAvatar({
        */}
       <mesh position={[0, 0.05, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <ringGeometry args={[0.55, 0.75, 24]} />
-        <meshStandardMaterial color="#ffd9a0" flatShading />
+        <meshStandardMaterial color={accentColor} flatShading />
       </mesh>
       <mesh position={[0, 0.61, 0]}>
         <capsuleGeometry args={[0.36, 0.5, 4, 8]} />
-        <meshStandardMaterial color="#ff7530" flatShading />
+        <meshStandardMaterial color={bodyColor} flatShading />
       </mesh>
       <mesh position={[0, 0.52, 0]}>
         <cylinderGeometry args={[0.4, 0.4, 0.12, 12]} />
@@ -113,7 +118,7 @@ export function PlayerAvatar({
       </mesh>
       <mesh position={[0, 1.37, 0]}>
         <sphereGeometry args={[0.4, 16, 16]} />
-        <meshStandardMaterial color="#ff7530" flatShading />
+        <meshStandardMaterial color={bodyColor} flatShading />
       </mesh>
       <Eyes headRadius={0.4} />
     </group>

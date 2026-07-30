@@ -25,6 +25,7 @@ function renderBar(overrides: Partial<Parameters<typeof GameControlBar>[0]> = {}
     onCancelNewGame: vi.fn(),
     onToggleWorldScene: vi.fn(),
     onToggleMuted: vi.fn(),
+    onEditProfile: vi.fn(),
     ...overrides,
   }
   render(<GameControlBar {...props} />)
@@ -102,6 +103,7 @@ describe('GameControlBar — "Saved." confirmation survives the settings menu cl
       onCancelNewGame: vi.fn(),
       onToggleWorldScene: vi.fn(),
       onToggleMuted: vi.fn(),
+      onEditProfile: vi.fn(),
     }
     const { rerender } = render(<GameControlBar {...props} />)
     openSettingsMenu()
@@ -167,6 +169,7 @@ function renderBarWithAuth(authValue: AuthContextValue) {
     onCancelNewGame: vi.fn(),
     onToggleWorldScene: vi.fn(),
     onToggleMuted: vi.fn(),
+    onEditProfile: vi.fn(),
   }
   render(
     <AuthContext.Provider value={authValue}>

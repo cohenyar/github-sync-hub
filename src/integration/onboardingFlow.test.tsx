@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
-import { act, fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import GameApp from '../GameApp'
 import { clearOnboardingFlag, hasCompletedOnboarding, markOnboardingComplete } from '../onboarding'
+import { passEntryGates, renderGameApp } from '../test/renderGameApp'
 
 vi.mock('../db/database', async () => {
   const { createTestDatabase } = await import('../verifier/testDb')
@@ -46,7 +46,7 @@ beforeEach(() => {
 
 describe('Onboarding: first-time player', () => {
   it('shows the boot sequence on first mount, not the World Scene or classic dashboard', () => {
-    render(<GameApp />)
+    renderGameApp()
 
     expect(screen.getByTestId('boot-sequence')).toBeInTheDocument()
     expect(screen.queryByTestId('world-scene-3d')).not.toBeInTheDocument()
@@ -54,7 +54,7 @@ describe('Onboarding: first-time player', () => {
   })
 
   it('Skip reveals the World Scene immediately and marks onboarding complete', () => {
-    render(<GameApp />)
+    renderGameApp()
 
     fireEvent.click(screen.getByTestId('boot-sequence-skip-button'))
 
@@ -65,7 +65,7 @@ describe('Onboarding: first-time player', () => {
 
   it('finishing the sequence naturally (no Skip) reaches the same end state', async () => {
     vi.useFakeTimers()
-    render(<GameApp />)
+    renderGameApp()
 
     await advanceThroughAllLines()
 
@@ -76,14 +76,14 @@ describe('Onboarding: first-time player', () => {
   })
 
   it('greets the player with a one-time Odin narration once the World Scene is reached', () => {
-    render(<GameApp />)
+    renderGameApp()
     fireEvent.click(screen.getByTestId('boot-sequence-skip-button'))
 
     expect(screen.getByTestId('odin-presence')).toHaveTextContent('ברוך הבא למרידיאן')
   })
 
   it('never replays the world-entry greeting when toggling between the World Scene and classic dashboard afterward', () => {
-    render(<GameApp />)
+    renderGameApp()
     fireEvent.click(screen.getByTestId('boot-sequence-skip-button'))
     expect(screen.getByTestId('odin-presence')).toHaveTextContent('ברוך הבא למרידיאן')
 
@@ -104,7 +104,7 @@ describe('Onboarding: first-time player', () => {
   })
 
   it('does not replay the first-time world-entry greeting after a real unmount/remount (Meridian 1.3: a welcome-back line plays instead)', () => {
-    const first = render(<GameApp />)
+    const first = renderGameApp()
     fireEvent.click(screen.getByTestId('boot-sequence-skip-button'))
     expect(hasCompletedOnboarding()).toBe(true)
     first.unmount()
@@ -113,7 +113,7 @@ describe('Onboarding: first-time player', () => {
     // player path) and must not show the boot sequence or replay the
     // first-time greeting — but Meridian 1.3 gives a returning player its
     // own one-time welcome-back line (Core Loop §01), so Odin is not silent.
-    render(<GameApp />)
+    renderGameApp()
     expect(screen.queryByTestId('boot-sequence')).not.toBeInTheDocument()
     expect(screen.getByTestId('world-scene-3d')).toBeInTheDocument()
     expect(screen.getByTestId('odin-presence')).not.toHaveTextContent('ברוך הבא למרידיאן')
@@ -127,14 +127,14 @@ describe('Onboarding: returning player', () => {
   })
 
   it('never shows the boot sequence; the World Scene is immediately visible', () => {
-    render(<GameApp />)
+    renderGameApp()
 
     expect(screen.queryByTestId('boot-sequence')).not.toBeInTheDocument()
     expect(screen.getByTestId('world-scene-3d')).toBeInTheDocument()
   })
 
   it('does not narrate the first-time world-entry greeting, but does get a Meridian 1.3 welcome-back line instead', () => {
-    render(<GameApp />)
+    renderGameApp()
 
     expect(screen.getByTestId('odin-presence')).not.toHaveTextContent('ברוך הבא למרידיאן')
     expect(screen.getByTestId('odin-presence')).toHaveTextContent('ברוך שובך למרידיאן')
@@ -143,7 +143,7 @@ describe('Onboarding: returning player', () => {
 
 describe('Onboarding: SessionResumed (Meridian 1.3)', () => {
   it('never fires for a first-time player — WorldEntered is their only greeting', () => {
-    render(<GameApp />)
+    renderGameApp()
     // The boot sequence owns the screen; skip it to reach the World Scene.
     fireEvent.click(screen.getByTestId('boot-sequence-skip-button'))
 
@@ -153,7 +153,7 @@ describe('Onboarding: SessionResumed (Meridian 1.3)', () => {
 
   it('fires exactly once per mount for a returning player, not once per render', () => {
     markOnboardingComplete()
-    render(<GameApp />)
+    renderGameApp()
 
     // Switch to the classic dashboard (a re-render, not a remount) to read
     // Odin's full narration history via OdinPanel.
@@ -171,7 +171,7 @@ describe('Onboarding: SessionResumed (Meridian 1.3)', () => {
 describe('Onboarding: New Game reset', () => {
   it('clears the onboarding flag, but does not reopen the boot sequence within the same mounted session', () => {
     markOnboardingComplete()
-    render(<GameApp />)
+    renderGameApp()
     expect(screen.getByTestId('world-scene-3d')).toBeInTheDocument()
 
     ensureSettingsMenuOpen()
@@ -179,6 +179,10 @@ describe('Onboarding: New Game reset', () => {
     ensureSettingsMenuOpen()
     fireEvent.click(screen.getByTestId('new-game-button'))
     fireEvent.click(screen.getByTestId('confirm-reset-yes-button'))
+    // The reset also clears the local profile — GameApp's own mandatory
+    // Profile Creation gate reappears immediately, ahead of whatever this
+    // test checks next.
+    passEntryGates()
 
     expect(hasCompletedOnboarding()).toBe(false)
     expect(screen.queryByTestId('boot-sequence')).not.toBeInTheDocument()

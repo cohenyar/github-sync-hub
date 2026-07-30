@@ -1,4 +1,4 @@
-import { expect, runSql, test, verdictIsPass, waitForMissionReady } from './helpers.js'
+import { expect, passProfileCreationIfShown, runSql, test, verdictIsPass, waitForMissionReady } from './helpers.js'
 
 // The raw world-state JSON is a collapsed debug view (Sprint 1 polish) —
 // expand it before asserting on its contents. Resets closed on every full
@@ -45,6 +45,12 @@ test.describe('Save/Load and load-on-boot persist world and progress across a re
     await page.getByTestId('new-game-button').click()
     await expect(page.getByTestId('reset-confirm-prompt')).toBeVisible()
     await page.getByTestId('confirm-reset-yes-button').click()
+
+    // The reset also clears the local profile — Profile Creation's own
+    // mandatory gate reappears immediately (no Welcome Screen in between:
+    // that one only shows on a fresh mount, and this reset didn't remount
+    // anything), ahead of the dashboard.
+    await passProfileCreationIfShown(page)
 
     await expect(page.getByTestId('progress-badge')).toHaveAttribute('data-percentage', '0')
     await expect(page.getByTestId('next-mission-label')).toHaveAttribute('data-status', 'locked')

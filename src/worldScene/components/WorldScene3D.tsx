@@ -49,6 +49,8 @@ export interface WorldScene3DProps {
   highlightedNpcId?: string
   /** Batch 3A.5 — namespaced lesson ids the player has completed. Drives the small completion badge on each teacher and their building; defaults to none completed when omitted. */
   completedLessonIds?: readonly string[]
+  /** Meridian 1.4 — Player Identity MVP; the local profile's chosen avatar preset id. Undefined resolves to the original colors, so every existing caller/test is unaffected. */
+  playerAvatarId?: string
 }
 
 const CORE_DISTRICT_ID = 'core'
@@ -71,6 +73,7 @@ export function WorldScene3D({
   highlightedBuildingId,
   highlightedNpcId,
   completedLessonIds = [],
+  playerAvatarId,
 }: WorldScene3DProps) {
   const [nearestInteractable, setNearestInteractable] = useState<Interactable | null>(null)
   const [inRangeIds, setInRangeIds] = useState<ReadonlySet<string>>(new Set())
@@ -287,6 +290,7 @@ export function WorldScene3D({
           onNearestInteractableChange={setNearestInteractable}
           onInRangeIdsChange={(ids) => setInRangeIds(new Set(ids))}
           colliders={LEARNING_BUILDING_COLLIDERS}
+          avatarId={playerAvatarId}
         />
       </Canvas>
       </WebglErrorBoundary>

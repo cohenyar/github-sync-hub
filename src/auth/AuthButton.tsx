@@ -94,6 +94,9 @@ export function AuthButton() {
                 {authError}
               </span>
             )}
+            <p className={styles.signOutNote} data-testid="sign-out-progress-note">
+              {he.signOutProgressNote}
+            </p>
             <button
               type="button"
               role="menuitem"

@@ -45,6 +45,48 @@
   z-index: 40;
 }
 
+/* Meridian 1.4 — Player Identity MVP: the local profile row at the top of
+   the menu, distinct from AuthButton's own Google-account control
+   elsewhere in the HUD — two identities, never conflated. */
+.profileRow {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ds-space-2);
+  padding: var(--ds-space-2) var(--ds-space-3);
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-radius-sm);
+  background: var(--ds-surface-muted);
+  cursor: pointer;
+  text-align: start;
+}
+
+.profileRow:hover,
+.profileRow:focus-visible {
+  border-color: var(--ds-border-strong);
+}
+
+.profileSwatch {
+  inline-size: 20px;
+  block-size: 20px;
+  border-radius: 50%;
+  background: var(--swatch-body);
+  border: 2px solid var(--swatch-accent);
+  flex-shrink: 0;
+}
+
+.profileName {
+  flex: 1;
+  font-size: var(--ds-text-sm);
+  font-weight: 600;
+  color: var(--ds-text-strong);
+}
+
+.profileEditLabel {
+  font-size: var(--ds-text-2xs);
+  color: var(--ds-accent-strong);
+}
+
 .confirmPrompt {
   display: inline-flex;
   flex-wrap: wrap;

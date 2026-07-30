@@ -13,18 +13,29 @@ test.describe('Mission progression and unlock gating', () => {
     await expect(page.getByTestId('next-mission-label')).toHaveAttribute('data-status', 'locked')
   })
 
-  test('advances to Mission 2 of 6 and unlocks District Ties once First Contact passes', async ({ page }) => {
+  test('unlocks District Ties once First Contact passes, while First Contact (still the active mission) stays at index 1 (Meridian 1.4)', async ({
+    page,
+  }) => {
     await page.goto('/world')
     await waitForMissionReady(page)
 
     await runSql(page, 'SELECT * FROM citizens;')
     await verdictIsPass(page)
 
-    await expect(page.getByTestId('mission-index-badge')).toHaveAttribute('data-current', '2')
+    // Passing First Contact doesn't switch the active mission away from it —
+    // the ordinal badge tracks the mission actually on screen (still index
+    // 1), not the campaign's own furthest-incomplete pointer (which has
+    // moved to District Ties) — see the Meridian 1.4 ordinal fix.
+    await expect(page.getByTestId('mission-index-badge')).toHaveAttribute('data-current', '1')
     await expect(page.getByTestId('progress-badge')).toHaveAttribute('data-percentage', '17')
     await expect(page.getByTestId('content-status-badge')).toHaveAttribute('data-status', 'completed')
     await expect(page.getByTestId('next-mission-label')).toHaveAttribute('data-mission-id', 'district-ties')
     await expect(page.getByTestId('next-mission-label')).toHaveAttribute('data-status', 'available')
+
+    // Switching to District Ties is what actually advances the badge to 2.
+    await page.getByTestId('mission-option-district-ties').click()
+    await waitForMissionReady(page)
+    await expect(page.getByTestId('mission-index-badge')).toHaveAttribute('data-current', '2')
   })
 
   test('a failing query leaves progression and unlocks unchanged', async ({ page }) => {

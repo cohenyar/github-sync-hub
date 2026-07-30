@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
-import GameApp from '../GameApp'
 import { he } from '../i18n'
+import { renderGameApp } from '../test/renderGameApp'
 
 // The real createDatabase() loads sql.js's wasm binary via a Vite asset URL,
 // which has no server to fetch from under jsdom. Swap in the Node-friendly
@@ -32,7 +32,7 @@ function openDebugView() {
 
 describe('A verified query changes the visible world (Information is Action)', () => {
   it('raises the core district signal to 100 once First Contact passes', async () => {
-    render(<GameApp />)
+    renderGameApp()
     const runButton = await readyRunButton()
     openDebugView()
 
@@ -49,7 +49,7 @@ describe('A verified query changes the visible world (Information is Action)', (
   })
 
   it('leaves the world unchanged when the query fails', async () => {
-    render(<GameApp />)
+    renderGameApp()
     const runButton = await readyRunButton()
     openDebugView()
 

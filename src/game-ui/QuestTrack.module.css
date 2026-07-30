@@ -16,3 +16,42 @@
   align-items: center;
   gap: var(--ds-space-3);
 }
+
+/* Meridian 1.4 — Mission Hub canonicalization: Archive Pages, surfaced
+   directly in the dashboard's own quest hub instead of only a floating HUD
+   button. */
+.archiveLink {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ds-space-2);
+  align-self: flex-start;
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-radius-pill);
+  background: var(--ds-surface-muted);
+  color: var(--ds-text);
+  font-size: var(--ds-text-sm);
+  padding: var(--ds-space-2) var(--ds-space-4);
+  cursor: pointer;
+  transition: border-color var(--ds-duration-base) var(--ds-ease-out), background var(--ds-duration-base) var(--ds-ease-out);
+}
+
+.archiveLink:hover,
+.archiveLink:focus-visible {
+  border-color: var(--ds-border-strong);
+  background: var(--ds-surface);
+}
+
+.archiveCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding-inline: 4px;
+  border-radius: var(--ds-radius-pill);
+  background: var(--ds-gradient-brand);
+  color: var(--ds-on-accent);
+  font-size: var(--ds-text-2xs);
+  font-weight: 700;
+}

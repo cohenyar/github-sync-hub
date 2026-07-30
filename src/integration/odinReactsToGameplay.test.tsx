@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
-import GameApp from '../GameApp'
 import { he } from '../i18n'
+import { renderGameApp } from '../test/renderGameApp'
 
 vi.mock('../db/database', async () => {
   const { createTestDatabase } = await import('../verifier/testDb')
@@ -23,7 +23,7 @@ async function readyRunButton() {
 
 describe('Odin reacts to real gameplay end to end', () => {
   it('greets the player once the mission database is ready', async () => {
-    render(<GameApp />)
+    renderGameApp()
     await readyRunButton()
 
     await waitFor(() => {
@@ -33,7 +33,7 @@ describe('Odin reacts to real gameplay end to end', () => {
   })
 
   it('comments on the restored signal when First Contact passes, then hints at District Ties unlocking', async () => {
-    render(<GameApp />)
+    renderGameApp()
     const runButton = await readyRunButton()
 
     fireEvent.change(screen.getByPlaceholderText(he.sqlPlaceholder), {
@@ -57,7 +57,7 @@ describe('Odin reacts to real gameplay end to end', () => {
   })
 
   it('does not narrate a mission completion for a failing query, but does narrate the failure', async () => {
-    render(<GameApp />)
+    renderGameApp()
     const runButton = await readyRunButton()
 
     fireEvent.change(screen.getByPlaceholderText(he.sqlPlaceholder), {
@@ -76,7 +76,7 @@ describe('Odin reacts to real gameplay end to end', () => {
   })
 
   it('narrates a SQL error distinctly from a row mismatch', async () => {
-    render(<GameApp />)
+    renderGameApp()
     const runButton = await readyRunButton()
 
     fireEvent.change(screen.getByPlaceholderText(he.sqlPlaceholder), {
@@ -92,7 +92,7 @@ describe('Odin reacts to real gameplay end to end', () => {
   })
 
   it('narrates a mission-specific hint for a mismatched query on District Ties, not the generic one', async () => {
-    render(<GameApp />)
+    renderGameApp()
     const runButton = await readyRunButton()
 
     // Pass First Contact to unlock District Ties.

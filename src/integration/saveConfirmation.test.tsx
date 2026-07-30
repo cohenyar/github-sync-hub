@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import GameApp from '../GameApp'
 import { he } from '../i18n'
+import { renderGameApp } from '../test/renderGameApp'
 
 vi.mock('../db/database', async () => {
   const { createTestDatabase } = await import('../verifier/testDb')
@@ -43,7 +43,7 @@ afterEach(() => {
 
 describe('Save confirmation', () => {
   it('shows "Saved." after clicking Save, then hides it again after a few seconds', async () => {
-    render(<GameApp />)
+    renderGameApp()
     await readyRunButton()
 
     expect(screen.queryByTestId('saved-confirmation')).not.toBeInTheDocument()

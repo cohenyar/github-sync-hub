@@ -140,3 +140,14 @@ const NPC_FAMILIARITY_LABEL: Readonly<Record<NpcFamiliarityTier, string>> = {
 export function getNpcFamiliarityLabel(tier: NpcFamiliarityTier): string {
   return NPC_FAMILIARITY_LABEL[tier]
 }
+
+/**
+ * Meridian 1.4 — Player Identity MVP. Whether Profile Creation has ever run
+ * for this save. A blank/whitespace-only name never counts (see
+ * setPlayerProfile, which never persists one) — the Welcome Screen and
+ * GameApp's own render gate both read this same check, so they can never
+ * disagree about whether a profile already exists.
+ */
+export function hasLocalPlayerProfile(progress: PlayerProgress): boolean {
+  return Boolean(progress.playerName && progress.playerName.trim().length > 0)
+}

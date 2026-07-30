@@ -58,8 +58,14 @@ describe('MissionPanel', () => {
     ).not.toBeInTheDocument()
   })
 
-  it('renders "Mission X of Y" from the campaign summary', () => {
-    render(<MissionPanel mission={mission} campaignSummary={summary({ totalMissions: 3, currentMissionIndex: 2 })} />)
+  it('renders "Mission X of Y" from the active mission\'s own order, not the campaign\'s furthest-incomplete pointer', () => {
+    render(
+      <MissionPanel
+        mission={mission}
+        campaignSummary={summary({ totalMissions: 3, currentMissionIndex: 3 })}
+        activeMissionOrder={2}
+      />,
+    )
     expect(screen.getByText(`${he.missionLabel} 2 ${he.ofLabel} 3`)).toBeInTheDocument()
   })
 

@@ -6,6 +6,7 @@ import { recordArchivePageFound as applyArchivePageFound } from './recordArchive
 import { recordLessonCompletion as applyLessonCompletion } from './recordLessonCompletion'
 import { recordMissionCompletion } from './recordMissionCompletion'
 import { recordNpcConversation as applyNpcConversation } from './recordNpcConversation'
+import { setPlayerProfile as applySetPlayerProfile } from './setPlayerProfile'
 
 export interface UseProgressionResult {
   progress: PlayerProgress
@@ -16,6 +17,8 @@ export interface UseProgressionResult {
   recordNpcConversation: (npcId: string) => void
   /** Meridian 1.3 — idempotent; finding an already-collected page again is a no-op. */
   recordArchivePageFound: (pageId: string) => void
+  /** Meridian 1.4 — Player Identity MVP; sets the local profile's name + chosen avatar preset. */
+  setPlayerProfile: (name: string, avatarId: string) => void
   restoreProgress: (progress: PlayerProgress) => void
 }
 
@@ -50,6 +53,10 @@ export function useProgression(
     setProgress((current) => applyArchivePageFound(current, pageId))
   }
 
+  function setPlayerProfile(name: string, avatarId: string) {
+    setProgress((current) => applySetPlayerProfile(current, name, avatarId))
+  }
+
   function restoreProgress(next: PlayerProgress) {
     setProgress(next)
   }
@@ -60,6 +67,7 @@ export function useProgression(
     recordLessonCompletion,
     recordNpcConversation,
     recordArchivePageFound,
+    setPlayerProfile,
     restoreProgress,
   }
 }

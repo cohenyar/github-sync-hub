@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import GameApp from '../GameApp'
 import { gameEventBus } from '../events'
 import type { GameEvent } from '../events'
 import { he } from '../i18n'
+import { renderGameApp } from '../test/renderGameApp'
 
 vi.mock('../db/database', async () => {
   const { createTestDatabase } = await import('../verifier/testDb')
@@ -54,7 +54,7 @@ afterEach(() => {
 describe('Full campaign playthrough: all six missions in order, switching between them', () => {
   it('unlocks every mission and NPC in the chain and completes the campaign exactly once', async () => {
     const events = watch()
-    render(<GameApp />)
+    renderGameApp()
     await readyRunButton()
 
     // 1. First Contact (1/6 ≈ 17%)

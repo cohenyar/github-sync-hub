@@ -1,0 +1,249 @@
+.screen {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
+  padding: var(--ds-space-6);
+  color: var(--ds-text);
+}
+
+/* Same layered deep-space treatment as GameDashboardShell — the game's
+   established "cosmic city at night" backdrop, reused verbatim so the
+   title screen reads as the same world, not a different app. */
+.backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  background:
+    radial-gradient(1100px 640px at 16% 6%, rgba(124, 156, 255, 0.16), transparent 60%),
+    radial-gradient(900px 620px at 90% 10%, rgba(56, 120, 220, 0.12), transparent 60%),
+    radial-gradient(1100px 820px at 50% 112%, rgba(167, 139, 250, 0.18), transparent 62%),
+    linear-gradient(180deg, var(--ds-bg) 0%, #070a14 55%, var(--ds-bg) 100%);
+}
+
+.nebula {
+  position: absolute;
+  inset: -10%;
+  background:
+    radial-gradient(40% 30% at 28% 36%, rgba(124, 156, 255, 0.1), transparent 70%),
+    radial-gradient(36% 28% at 72% 62%, rgba(167, 139, 250, 0.1), transparent 70%);
+  filter: blur(34px);
+}
+
+.stars {
+  position: absolute;
+  inset: 0;
+  opacity: 0.5;
+  background-image:
+    radial-gradient(1px 1px at 20% 30%, rgba(230, 236, 255, 0.9), transparent),
+    radial-gradient(1px 1px at 70% 80%, rgba(203, 213, 255, 0.7), transparent),
+    radial-gradient(1.5px 1.5px at 42% 62%, rgba(255, 255, 255, 0.8), transparent),
+    radial-gradient(1px 1px at 85% 18%, rgba(165, 180, 252, 0.7), transparent),
+    radial-gradient(1px 1px at 12% 78%, rgba(230, 236, 255, 0.7), transparent),
+    radial-gradient(1.5px 1.5px at 55% 26%, rgba(224, 231, 255, 0.8), transparent);
+}
+
+.content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--ds-space-5);
+  width: min(480px, 100%);
+  text-align: center;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-3);
+}
+
+.brandMark {
+  inline-size: 56px;
+  block-size: 56px;
+  border-radius: var(--ds-radius-lg);
+  background: var(--ds-gradient-brand);
+  box-shadow: var(--ds-glow-accent);
+}
+
+.brandName {
+  margin: 0;
+  font-family: var(--ds-font-display);
+  font-weight: 700;
+  font-size: var(--ds-text-4xl);
+  letter-spacing: var(--ds-tracking-tighter);
+  color: var(--ds-text-strong);
+}
+
+.tagline {
+  margin: 0;
+  color: var(--ds-text-muted);
+  font-size: var(--ds-text-md);
+}
+
+.identityChip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ds-space-3);
+  padding: var(--ds-space-2) var(--ds-space-4);
+  border-radius: var(--ds-radius-pill);
+  background: var(--ds-surface);
+  border: 1px solid var(--ds-border);
+  backdrop-filter: var(--ds-glass-blur);
+  -webkit-backdrop-filter: var(--ds-glass-blur);
+}
+
+.avatarSwatch {
+  inline-size: 28px;
+  block-size: 28px;
+  border-radius: 50%;
+  background: var(--swatch-body);
+  border: 2px solid var(--swatch-accent);
+  flex-shrink: 0;
+}
+
+.identityText {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: start;
+}
+
+.identityLabel {
+  font-size: var(--ds-text-2xs);
+  color: var(--ds-text-subtle);
+}
+
+.identityName {
+  font-size: var(--ds-text-sm);
+  font-weight: 600;
+  color: var(--ds-text-strong);
+}
+
+.editLink {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--ds-accent-strong);
+  font-size: var(--ds-text-xs);
+  font-weight: 600;
+  cursor: pointer;
+  padding: var(--ds-space-1) var(--ds-space-2);
+}
+
+.editLink:hover,
+.editLink:focus-visible {
+  text-decoration: underline;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-3);
+  width: min(320px, 100%);
+}
+
+.accountRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ds-space-3);
+  font-size: var(--ds-text-sm);
+}
+
+.accountStatus {
+  color: var(--ds-text-muted);
+}
+
+.accountIdentity {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ds-space-2);
+}
+
+.accountAvatar,
+.accountAvatarFallback {
+  inline-size: 24px;
+  block-size: 24px;
+  border-radius: 50%;
+}
+
+.accountAvatarFallback {
+  display: grid;
+  place-items: center;
+  background: var(--ds-surface-muted);
+  color: var(--ds-text);
+  font-size: var(--ds-text-2xs);
+  font-weight: 700;
+}
+
+.accountName {
+  color: var(--ds-text-muted);
+}
+
+.settingsAnchor {
+  position: relative;
+  margin-top: var(--ds-space-2);
+}
+
+.settingsTrigger {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ds-space-2);
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-radius-pill);
+  background: var(--ds-surface-muted);
+  color: var(--ds-text-muted);
+  font-size: var(--ds-text-xs);
+  padding: var(--ds-space-2) var(--ds-space-4);
+  cursor: pointer;
+}
+
+.settingsTrigger:hover,
+.settingsTrigger:focus-visible {
+  color: var(--ds-text-strong);
+  border-color: var(--ds-border-strong);
+}
+
+/* Centered under its trigger without a translateX hack (which would need a
+   direction-specific sign under RTL) — the anchor is already horizontally
+   centered by .content's flex layout, so inset-inline-start/end: 0 plus an
+   inline auto margin centers this panel the same way regardless of
+   direction. */
+.settingsPanel {
+  position: absolute;
+  inset-inline-start: 0;
+  inset-inline-end: 0;
+  margin-inline: auto;
+  margin-top: var(--ds-space-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-2);
+  padding: var(--ds-space-3);
+  width: fit-content;
+  min-width: 220px;
+  border-radius: var(--ds-radius-md);
+  background: var(--ds-surface-strong);
+  border: 1px solid var(--ds-border);
+  box-shadow: var(--ds-shadow-lg);
+  z-index: 2;
+}
+
+.confirmPrompt {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-2);
+}
+
+.confirmPromptText {
+  font-size: var(--ds-text-xs);
+  color: var(--ds-text-muted);
+}

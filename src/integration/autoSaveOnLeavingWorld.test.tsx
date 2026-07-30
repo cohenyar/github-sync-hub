@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import GameApp from '../GameApp'
 import { he } from '../i18n'
 import { missionRegistry } from '../missions'
 import { markOnboardingComplete } from '../onboarding'
+import { renderGameApp } from '../test/renderGameApp'
 
 vi.mock('../db/database', async () => {
   const { createTestDatabase } = await import('../verifier/testDb')
@@ -36,7 +36,7 @@ function ensureSettingsMenuOpen() {
 // GameApp-rendering integration suites.
 function renderClassicDashboard() {
   markOnboardingComplete()
-  const rendered = render(<GameApp />)
+  const rendered = renderGameApp()
   ensureSettingsMenuOpen()
   fireEvent.click(screen.getByTestId('toggle-world-scene-button'))
   return rendered

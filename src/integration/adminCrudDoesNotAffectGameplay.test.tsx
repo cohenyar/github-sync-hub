@@ -7,6 +7,7 @@ import { he } from '../i18n'
 import { getDefaultMission, removeMission } from '../missions'
 import { markOnboardingComplete } from '../onboarding'
 import { createInitialPlayerProgress } from '../progression'
+import { passEntryGates } from '../test/renderGameApp'
 import { getUnlockedNpcIds } from '../unlocks'
 
 vi.mock('../db/database', async () => {
@@ -37,6 +38,7 @@ function renderGameWithAdmin() {
       <AdminPanel />
     </>,
   )
+  passEntryGates()
   fireEvent.click(screen.getByTestId('settings-menu-button'))
   fireEvent.click(screen.getByTestId('toggle-world-scene-button'))
 }

@@ -242,6 +242,33 @@ export const he = {
   archivePagesButtonLabel: 'ארכיון',
   archivePagesEmpty: 'עדיין לא נמצאו עמודים.',
   archivePageFoundToast: 'עמוד ארכיון נמצא: ',
+
+  // Meridian 1.4 — Player Identity MVP (src/onboarding/ProfileCreation.tsx).
+  profileCreationEyebrow: 'לפני שממשיכים',
+  profileCreationTitle: 'איך נקרא לך?',
+  profileCreationSubtitle: 'מרידיאן זקוקה לשם ולזהות לפני שממשיכים.',
+  profileEditTitle: 'ערוך פרופיל',
+  profileNameLabel: 'השם שלך',
+  profileNamePlaceholder: 'הקלד/י שם…',
+  profileNameRequiredError: 'יש להזין שם כדי להמשיך.',
+  profileAvatarLabel: 'בחר/י מראה',
+  profileCreationSubmitCta: 'המשך למרידיאן',
+  profileEditSubmitCta: 'שמור שינויים',
+  profileEditButtonLabel: 'ערוך פרופיל',
+  currentPlayerLabel: 'המשתמש/ת שלך',
+
+  // Meridian 1.4 — Welcome Screen (src/onboarding/WelcomeScreen.tsx), the
+  // game's title screen. "Meridian" itself stays untranslated (a proper
+  // noun/wordmark), matching Odin's own convention elsewhere.
+  welcomeTagline: 'מרידיאן מחכה לאות שלך.',
+  welcomeContinueCta: 'המשך במסע',
+  welcomeGuestCta: 'המשך כאורח/ת',
+  welcomeNoAccountYet: 'עדיין לא מחוברים לחשבון.',
+  // Meridian 1.4 — Auth UX clarity pass: the account (Google sign-in) and
+  // the local profile/save are two separate things (see the Meridian 1.4
+  // UX diagnostic, §A/§C) — this line says so at the one place a player
+  // might fear losing progress by signing out.
+  signOutProgressNote: 'ההתנתקות משפיעה רק על חיבור החשבון. ההתקדמות שלך נשארת במכשיר הזה.',
 } as const
 
 export type HebrewStringKey = keyof typeof he

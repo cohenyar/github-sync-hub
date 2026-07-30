@@ -15,6 +15,7 @@ import {
   getNpcFamiliarityTier,
   getPlayerProgressSummary,
   getUnlockedMissionIds,
+  hasLocalPlayerProfile,
   isLessonCompleted,
   isMissionUnlocked,
 } from './progressionSelectors'
@@ -228,5 +229,19 @@ describe('NPC familiarity (Meridian 1.3)', () => {
     const labels = tiers.map(getNpcFamiliarityLabel)
     for (const label of labels) expect(label.length).toBeGreaterThan(0)
     expect(new Set(labels).size).toBe(tiers.length)
+  })
+})
+
+describe('hasLocalPlayerProfile (Meridian 1.4)', () => {
+  it('is false for a fresh save with no name set yet', () => {
+    expect(hasLocalPlayerProfile(createInitialPlayerProgress())).toBe(false)
+  })
+
+  it('is true once a real name is set', () => {
+    expect(hasLocalPlayerProfile({ ...createInitialPlayerProgress(), playerName: 'נועה' })).toBe(true)
+  })
+
+  it('treats a whitespace-only name the same as no name', () => {
+    expect(hasLocalPlayerProfile({ ...createInitialPlayerProgress(), playerName: '   ' })).toBe(false)
   })
 })

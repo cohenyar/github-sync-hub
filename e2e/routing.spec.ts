@@ -1,4 +1,4 @@
-import { expect, test } from './helpers.js'
+import { expect, passEntryGates, test } from './helpers.js'
 
 test.describe('Routing foundation', () => {
   test('direct navigation to every route renders something, and refresh on a route works', async ({ page }) => {
@@ -24,12 +24,20 @@ test.describe('Routing foundation', () => {
   test('browser back/forward navigates between routes', async ({ page }) => {
     await page.goto('/')
     await page.getByTestId('landing-enter-world-link').click()
+    // An in-app link click, not page.goto/page.reload — the shared
+    // fixture's wrapper only intercepts those two, so the Welcome
+    // Screen/Profile Creation gates need passing through explicitly here.
+    await passEntryGates(page)
     await expect(page.getByTestId('settings-menu-button')).toBeVisible()
 
     await page.goBack()
     await expect(page.getByTestId('landing-enter-world-link')).toBeVisible()
 
     await page.goForward()
+    // Going forward remounts GameApp fresh (a real route change), so the
+    // Welcome Screen shows again — but the profile now exists, so this
+    // pass-through is just Continue Journey, no Profile Creation.
+    await passEntryGates(page)
     await expect(page.getByTestId('settings-menu-button')).toBeVisible()
   })
 })

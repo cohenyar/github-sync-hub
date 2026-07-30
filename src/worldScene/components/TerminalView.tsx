@@ -17,6 +17,8 @@ export interface TerminalViewProps {
   onRun: (sql: string) => void
   onRetry?: () => void
   campaignSummary: CampaignSummary
+  /** The active mission's own position in the campaign (1-based) — distinct from campaignSummary's furthest-incomplete pointer, which can point at a different mission once an earlier one is revisited. */
+  activeMissionOrder?: number
   nextMission?: MissionConfig
   nextMissionContentStatus?: ContentStatus
   completionPercentage: number
@@ -85,6 +87,7 @@ export function TerminalView({
   onRun,
   onRetry,
   campaignSummary,
+  activeMissionOrder,
   nextMission,
   nextMissionContentStatus,
   completionPercentage,
@@ -143,6 +146,7 @@ export function TerminalView({
           mission={mission}
           phase={status.phase}
           campaignSummary={campaignSummary}
+          activeMissionOrder={activeMissionOrder}
           nextMission={nextMission}
           nextMissionContentStatus={nextMissionContentStatus}
           completionPercentage={completionPercentage}

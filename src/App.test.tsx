@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { fireEvent, screen, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
-import GameApp from './GameApp'
 import { he } from './i18n'
 import { markOnboardingComplete } from './onboarding'
+import { renderGameApp } from './test/renderGameApp'
 
 // The real createDatabase() loads sql.js's wasm binary via a Vite asset URL,
 // which has no server to fetch from under jsdom. Swap in the Node-friendly
@@ -22,7 +22,7 @@ vi.mock('./db/database', async () => {
 // about the classic dashboard's own rendering changed.
 function renderReturningPlayer() {
   markOnboardingComplete()
-  render(<GameApp />)
+  renderGameApp()
   fireEvent.click(screen.getByTestId('settings-menu-button'))
   fireEvent.click(screen.getByTestId('toggle-world-scene-button'))
 }

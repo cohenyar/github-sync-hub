@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import GameApp from '../GameApp'
 import { gameEventBus } from '../events'
 import type { GameEvent } from '../events'
 import { he } from '../i18n'
+import { renderGameApp } from '../test/renderGameApp'
 
 vi.mock('../db/database', async () => {
   const { createTestDatabase } = await import('../verifier/testDb')
@@ -51,7 +51,7 @@ afterEach(() => {
 describe('The event bus publishes real gameplay events end to end', () => {
   it('publishes MissionStarted once the mission database is ready', async () => {
     const events = watch()
-    render(<GameApp />)
+    renderGameApp()
     await readyRunButton()
 
     await waitFor(() => {
@@ -62,7 +62,7 @@ describe('The event bus publishes real gameplay events end to end', () => {
 
   it('publishes WorldStateChanged, MissionCompleted, and ContentUnlocked (but not CampaignCompleted) when only the first of two missions passes', async () => {
     const events = watch()
-    render(<GameApp />)
+    renderGameApp()
     const runButton = await readyRunButton()
 
     fireEvent.change(screen.getByPlaceholderText(he.sqlPlaceholder), {
@@ -109,7 +109,7 @@ describe('The event bus publishes real gameplay events end to end', () => {
 
   it('does not publish MissionCompleted, CampaignCompleted, or ContentUnlocked for a failing query', async () => {
     const events = watch()
-    render(<GameApp />)
+    renderGameApp()
     const runButton = await readyRunButton()
 
     fireEvent.change(screen.getByPlaceholderText(he.sqlPlaceholder), {

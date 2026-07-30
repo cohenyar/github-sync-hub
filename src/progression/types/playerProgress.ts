@@ -35,4 +35,18 @@ export interface PlayerProgress {
   npcFamiliarity?: Readonly<Record<string, number>>
   /** Meridian 1.3 — Core Loop §04 collectibles. Optional, same empty-default convention as completedLessonIds. */
   collectedArchivePageIds?: readonly string[]
+  /**
+   * Meridian 1.4 — Player Identity MVP. The name the player chose during
+   * Profile Creation. Optional, same fallback convention as every other
+   * 1.3 addition: absent on any save from before this field existed, and
+   * every reader treats an absent/empty name as "no local profile yet" —
+   * see hasLocalPlayerProfile in playerProfile.ts.
+   */
+  playerName?: string
+  /**
+   * Meridian 1.4 — an id into PLAYER_AVATAR_PRESETS (see
+   * worldScene/logic/playerAppearance.ts). Optional; an absent or unknown
+   * id resolves to the default preset, never a crash.
+   */
+  playerAvatarId?: string
 }

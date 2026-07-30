@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
-import GameApp from '../GameApp'
 import { markOnboardingComplete } from '../onboarding'
 import { saveCurrentGame } from '../persistence'
 import { createInitialPlayerProgress, recordArchivePageFound } from '../progression'
+import { renderGameApp } from '../test/renderGameApp'
 import { createWorldState, initialDistricts } from '../worldState'
 
 vi.mock('../db/database', async () => {
@@ -21,7 +21,7 @@ function seedSaveWithArchivePages(pageIds: readonly string[]) {
 describe('Archive Pages toggle (Meridian 1.3)', () => {
   it('starts closed, with no count badge, when nothing has been found yet', () => {
     markOnboardingComplete()
-    render(<GameApp />)
+    renderGameApp()
 
     expect(screen.queryByTestId('archive-pages-panel')).not.toBeInTheDocument()
     expect(screen.getByTestId('archive-pages-toggle-button')).not.toHaveTextContent(/\d/)
@@ -30,7 +30,7 @@ describe('Archive Pages toggle (Meridian 1.3)', () => {
   it('opens on click and shows every previously found page', () => {
     markOnboardingComplete()
     seedSaveWithArchivePages(['archive-page:trade-count', 'archive-page:lost-and-found'])
-    render(<GameApp />)
+    renderGameApp()
 
     fireEvent.click(screen.getByTestId('archive-pages-toggle-button'))
 
@@ -42,7 +42,7 @@ describe('Archive Pages toggle (Meridian 1.3)', () => {
   it('closes again on a second click of the toggle, and via its own close button', () => {
     markOnboardingComplete()
     seedSaveWithArchivePages(['archive-page:trade-count'])
-    render(<GameApp />)
+    renderGameApp()
 
     const toggle = screen.getByTestId('archive-pages-toggle-button')
     fireEvent.click(toggle)
@@ -59,7 +59,7 @@ describe('Archive Pages toggle (Meridian 1.3)', () => {
   it('shows a count badge matching how many pages have been found', () => {
     markOnboardingComplete()
     seedSaveWithArchivePages(['archive-page:trade-count'])
-    render(<GameApp />)
+    renderGameApp()
 
     expect(screen.getByTestId('archive-pages-toggle-button')).toHaveTextContent('1')
   })

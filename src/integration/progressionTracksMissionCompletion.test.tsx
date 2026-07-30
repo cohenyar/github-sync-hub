@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
-import GameApp from '../GameApp'
 import { he } from '../i18n'
 import { missionRegistry } from '../missions'
+import { renderGameApp } from '../test/renderGameApp'
 
 vi.mock('../db/database', async () => {
   const { createTestDatabase } = await import('../verifier/testDb')
@@ -26,7 +26,7 @@ async function readyRunButton() {
 
 describe('Progression tracks mission completion end to end', () => {
   it('starts at 0% with the mission available', async () => {
-    render(<GameApp />)
+    renderGameApp()
     await readyRunButton()
 
     expect(screen.getByText(`${he.progressLabelPrefix}0%`)).toBeInTheDocument()
@@ -34,7 +34,7 @@ describe('Progression tracks mission completion end to end', () => {
   })
 
   it('advances by one mission worth of progress once the first mission passes', async () => {
-    render(<GameApp />)
+    renderGameApp()
     const runButton = await readyRunButton()
 
     fireEvent.change(screen.getByPlaceholderText(he.sqlPlaceholder), {
@@ -48,7 +48,7 @@ describe('Progression tracks mission completion end to end', () => {
   })
 
   it('does not advance progress on a failing query', async () => {
-    render(<GameApp />)
+    renderGameApp()
     const runButton = await readyRunButton()
 
     fireEvent.change(screen.getByPlaceholderText(he.sqlPlaceholder), {

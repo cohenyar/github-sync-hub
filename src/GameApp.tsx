@@ -9,13 +9,21 @@ import { getLearningPath, getLessonById, LEARNING_PATHS, LessonStage } from './l
 import { getDefaultMission, getMissionById, getMissionDisplayText, missionRegistry, useMissionManager } from './missions'
 import { getNpcById } from './npcs'
 import { OdinPanel, useOdin } from './odin'
-import { BootSequence, clearOnboardingFlag, hasCompletedOnboarding, markOnboardingComplete } from './onboarding'
+import {
+  BootSequence,
+  clearOnboardingFlag,
+  hasCompletedOnboarding,
+  markOnboardingComplete,
+  ProfileCreation,
+  WelcomeScreen,
+} from './onboarding'
 import { clearSavedGame, loadCurrentGame, saveCurrentGame } from './persistence'
 import {
   createInitialPlayerProgress,
   getExplorerRank,
   getNpcFamiliarityTier,
   getPlayerProgressSummary,
+  hasLocalPlayerProfile,
   useProgression,
   type PlayerProgress,
 } from './progression'
@@ -123,6 +131,15 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
   // exactly like bootSave/learningPath above. A returning player (flag
   // already set) never sees this at all.
   const [showBootSequence, setShowBootSequence] = useState(() => !hasCompletedOnboarding())
+  // Meridian 1.4 — the title screen, shown once per app mount (every real
+  // launch, not just the first one — distinct from onboarding/showBootSequence,
+  // which are one-time-ever). showProfileEditor reopens ProfileCreation for
+  // an existing profile (from the Welcome Screen or the settings menu);
+  // whether Profile Creation shows at all for a NEW profile is derived from
+  // playerProgress itself (hasLocalPlayerProfile below), not its own state,
+  // so it can never disagree with what's actually saved.
+  const [showWelcomeScreen, setShowWelcomeScreen] = useState(true)
+  const [showProfileEditor, setShowProfileEditor] = useState(false)
   const savedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   useEffect(() => {
     return () => {
@@ -142,6 +159,7 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
     recordLessonCompletion,
     recordNpcConversation,
     recordArchivePageFound,
+    setPlayerProfile,
     restoreProgress,
   } = useProgression(defaultCampaign, bootSave?.playerProgress)
   const completedLessonIds = playerProgress.completedLessonIds ?? []
@@ -329,6 +347,16 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
     setShowBootSequence(false)
   }
 
+  // Meridian 1.4 — Player Identity MVP. The same handler serves both the
+  // one-time, mandatory creation gate (hasProfile is false, no onCancel
+  // passed to ProfileCreation) and the reopenable editor for an existing
+  // profile (showProfileEditor) — setPlayerProfile always overwrites, so
+  // there is no separate "create" vs "update" branch to keep in sync.
+  function handleProfileSubmit(name: string, avatarId: string) {
+    setPlayerProfile(name, avatarId)
+    setShowProfileEditor(false)
+  }
+
   // Batch 3A.4B: resolves strictly through lessonRegistry (getLessonById) —
   // never touches activeMissionId/useMissionManager, so a lesson id can
   // never reach the SQL mission runtime or verifier. An id that fails to
@@ -449,6 +477,7 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
   const campaignSummary = getCampaignSummary(defaultCampaign, campaignProgress)
   const progressSummary = getPlayerProgressSummary(playerProgress)
   const explorerRank = getExplorerRank(playerProgress)
+  const hasProfile = hasLocalPlayerProfile(playerProgress)
   const unlockedNpcIds = getUnlockedNpcIds(playerProgress)
   const selectedNpc = selectedNpcId ? getNpcById(selectedNpcId) : undefined
   const missionOptions = missionRegistry.map((mission) => ({
@@ -565,12 +594,48 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
     if (nextMission) handleSelectMission(nextMission.id)
   }
 
+  // Meridian 1.4 — the title screen comes first, on every mount, ahead of
+  // even Profile Creation: a returning player with a profile already sees
+  // Continue Journey; a first-time player sees the sign-in/guest choice,
+  // then Profile Creation right after dismissing this screen.
+  if (showWelcomeScreen) {
+    return (
+      <WelcomeScreen
+        hasProfile={hasProfile}
+        playerName={playerProgress.playerName}
+        playerAvatarId={playerProgress.playerAvatarId}
+        onContinue={() => setShowWelcomeScreen(false)}
+        onEditProfile={() => setShowProfileEditor(true)}
+        isMuted={isMuted}
+        onToggleMuted={toggleMuted}
+        confirmingNewGame={confirmingNewGame}
+        onRequestNewGame={() => setConfirmingNewGame(true)}
+        onConfirmNewGame={handleConfirmNewGame}
+        onCancelNewGame={() => setConfirmingNewGame(false)}
+      />
+    )
+  }
+
+  // A first-time player (no local profile yet) must set one before anything
+  // else — no onCancel, so there's no way to dismiss without submitting.
+  if (!hasProfile) {
+    return <ProfileCreation onSubmit={handleProfileSubmit} />
+  }
+
   if (showBootSequence) {
     return <BootSequence onDone={handleBootSequenceDone} />
   }
 
   return (
     <div id="app-root">
+      {showProfileEditor && (
+        <ProfileCreation
+          initialName={playerProgress.playerName}
+          initialAvatarId={playerProgress.playerAvatarId}
+          onSubmit={handleProfileSubmit}
+          onCancel={() => setShowProfileEditor(false)}
+        />
+      )}
       <GameControlBar
         explorerRank={explorerRank}
         archivePageCount={collectedArchivePages.length}
@@ -586,6 +651,9 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
         onCancelNewGame={() => setConfirmingNewGame(false)}
         onToggleWorldScene={() => setShowWorldScene((current) => !current)}
         onToggleMuted={toggleMuted}
+        playerName={playerProgress.playerName}
+        playerAvatarId={playerProgress.playerAvatarId}
+        onEditProfile={() => setShowProfileEditor(true)}
       />
       {campaignSummary.isComplete && <CampaignCompleteBanner totalMissions={campaignSummary.totalMissions} />}
       {showArchivePages && (
@@ -600,6 +668,7 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
               onRun={run}
               onRetry={retry}
               campaignSummary={campaignSummary}
+              activeMissionOrder={activeCampaignEntry?.order}
               nextMission={nextMission}
               nextMissionContentStatus={nextMissionContentStatus}
               completionPercentage={progressSummary.completionPercentage}
@@ -621,7 +690,7 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
               {!activeLesson && (
                 <QuestChip
                   title={getMissionDisplayText(activeMission).title}
-                  currentMissionIndex={campaignSummary.currentMissionIndex ?? undefined}
+                  currentMissionIndex={activeCampaignEntry?.order}
                   totalMissions={campaignSummary.totalMissions}
                 />
               )}
@@ -636,6 +705,7 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
                 highlightedBuildingId={learningPath?.buildingId}
                 highlightedNpcId={learningPath?.npcId}
                 completedLessonIds={completedLessonIds}
+                playerAvatarId={playerProgress.playerAvatarId}
               />
               {sceneState.mode.kind === 'dialogue' &&
                 (() => {
@@ -681,6 +751,7 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
             <JourneyHeader
               destinationName={activeDestinationName}
               activeMission={activeMission}
+              activeMissionOrder={activeCampaignEntry?.order}
               completionPercentage={progressSummary.completionPercentage}
               campaignSummary={campaignSummary}
               companion={companion}
@@ -713,6 +784,7 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
                   mission={activeMission}
                   phase={status.phase}
                   campaignSummary={campaignSummary}
+                  activeMissionOrder={activeCampaignEntry?.order}
                   nextMission={nextMission}
                   nextMissionContentStatus={nextMissionContentStatus}
                   completionPercentage={progressSummary.completionPercentage}
@@ -724,7 +796,10 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
             />
           }
           questTrack={
-            <QuestTrack>
+            <QuestTrack
+              archivePageCount={collectedArchivePages.length}
+              onOpenArchivePages={() => setShowArchivePages(true)}
+            >
               <MissionSelect options={missionOptions} activeMissionId={activeMission.id} onSelect={handleSelectMission} />
             </QuestTrack>
           }
