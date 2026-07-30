@@ -45,6 +45,27 @@ describe('evaluateCondition — missionCompleted', () => {
   })
 })
 
+describe('evaluateCondition — lessonCompleted', () => {
+  it('is true once the lesson id is in completedLessonIds', () => {
+    const p = progress({ completedLessonIds: ['lesson:english-001'] })
+    expect(evaluateCondition({ kind: 'lessonCompleted', lessonId: 'lesson:english-001' }, p, campaign)).toBe(true)
+  })
+
+  it('is false for a lesson that has not completed', () => {
+    expect(
+      evaluateCondition({ kind: 'lessonCompleted', lessonId: 'lesson:english-001' }, progress(), campaign),
+    ).toBe(false)
+  })
+
+  it('is false when completedLessonIds is entirely absent, rather than throwing', () => {
+    const p = progress()
+    delete (p as { completedLessonIds?: readonly string[] }).completedLessonIds
+    expect(
+      evaluateCondition({ kind: 'lessonCompleted', lessonId: 'lesson:english-001' }, p, campaign),
+    ).toBe(false)
+  })
+})
+
 describe('evaluateCondition — campaignCompleted', () => {
   it('is true once the matching campaign is complete', () => {
     const p = progress({ campaignProgress: { campaignId: campaign.id, currentMissionId: null, isComplete: true } })

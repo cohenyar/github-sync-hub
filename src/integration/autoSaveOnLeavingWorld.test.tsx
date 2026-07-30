@@ -17,6 +17,18 @@ async function readyRunButton() {
   return runButton
 }
 
+// Under Vitest's fireEvent.click (unlike a real browser click), MouseEvent's
+// detail is 0 — the same signal SettingsMenu already treats as
+// "keyboard-sourced" (see blurOnPointerActivation) — so the settings popover
+// never auto-closes here once opened. Checking first, rather than
+// unconditionally clicking the trigger, keeps this correct regardless of
+// whether an earlier action already opened it.
+function ensureSettingsMenuOpen() {
+  if (!screen.queryByRole('menu')) {
+    fireEvent.click(screen.getByTestId('settings-menu-button'))
+  }
+}
+
 // Onboarding: the World Scene is the new default view, but this suite is
 // specifically about the classic dashboard's SQL console — pre-seed the
 // flag (as a returning player would have) and switch views via the
@@ -25,6 +37,7 @@ async function readyRunButton() {
 function renderClassicDashboard() {
   markOnboardingComplete()
   const rendered = render(<GameApp />)
+  ensureSettingsMenuOpen()
   fireEvent.click(screen.getByTestId('toggle-world-scene-button'))
   return rendered
 }
@@ -74,6 +87,7 @@ describe('Meridian 1.0 closeout — auto-save on leaving /world (unmount)', () =
     const first = renderClassicDashboard()
     const runButton = await readyRunButton()
 
+    ensureSettingsMenuOpen()
     fireEvent.click(screen.getByTestId('save-button'))
     expect(await screen.findByTestId('saved-confirmation')).toBeInTheDocument()
 

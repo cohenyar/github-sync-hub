@@ -1,17 +1,20 @@
 import { useEffect, useRef, useState } from 'react'
 import './App.css'
+import { getArchivePageByLessonId, getArchivePageById } from './archive'
 import { defaultCampaign, getCampaignSummary, isCampaignComplete, type CampaignProgress } from './campaign'
-import { CampaignCompleteBanner, MissionPanel, MissionSelect, SqlEditorPanel } from './components'
+import { ArchivePagesPanel, CampaignCompleteBanner, MissionPanel, MissionSelect, SqlEditorPanel } from './components'
 import { createProgressionMissionCompletedHandler, createUnlockReactionHandler, gameEventBus } from './events'
 import { he } from './i18n'
 import { getLearningPath, getLessonById, LEARNING_PATHS, LessonStage } from './learning'
-import { getDefaultMission, getMissionById, missionRegistry, useMissionManager } from './missions'
+import { getDefaultMission, getMissionById, getMissionDisplayText, missionRegistry, useMissionManager } from './missions'
 import { getNpcById } from './npcs'
 import { OdinPanel, useOdin } from './odin'
 import { BootSequence, clearOnboardingFlag, hasCompletedOnboarding, markOnboardingComplete } from './onboarding'
 import { clearSavedGame, loadCurrentGame, saveCurrentGame } from './persistence'
 import {
   createInitialPlayerProgress,
+  getExplorerRank,
+  getNpcFamiliarityTier,
   getPlayerProgressSummary,
   useProgression,
   type PlayerProgress,
@@ -38,6 +41,7 @@ import {
   type NpcDialogueContext,
   OdinPresence,
   openNpcDialogue,
+  QuestChip,
   TerminalView,
   useGameAudio,
   WorldScene3D,
@@ -136,9 +140,16 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
     progress: playerProgress,
     recordCompletion,
     recordLessonCompletion,
+    recordNpcConversation,
+    recordArchivePageFound,
     restoreProgress,
   } = useProgression(defaultCampaign, bootSave?.playerProgress)
   const completedLessonIds = playerProgress.completedLessonIds ?? []
+  // Meridian 1.3 — Core Loop §04: resolved fresh from progress every render, same fallback-to-empty convention as completedLessonIds.
+  const collectedArchivePages = (playerProgress.collectedArchivePageIds ?? [])
+    .map((pageId) => getArchivePageById(pageId))
+    .filter((page) => page !== undefined)
+  const [showArchivePages, setShowArchivePages] = useState(false)
   const { latestMessage: odinMessage, history: odinHistory } = useOdin()
   // The single most recent narration entry, if any — the same history
   // useOdin already tracks, just handed to OdinPresence as one object so it
@@ -146,6 +157,22 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
   // Sprint, Batch 1). Odin itself is unchanged: still read-only, still only
   // ever narrating the same six subscribed event types as before.
   const latestOdinEntry = odinHistory.length > 0 ? odinHistory[odinHistory.length - 1] : null
+
+  // Meridian 1.3 — Core Loop §01: a returning player (the boot sequence
+  // never shows) gets one welcome-back narration per mount, so the world
+  // acknowledges they came back — the counterpart to WorldEntered's
+  // one-time first-arrival greeting. Must run after useOdin() above (React
+  // fires effects in hook-declaration order) so Odin's bus subscription
+  // already exists before this publishes — otherwise the event fires into
+  // an empty room and Odin never sees it. Runs once on mount only: reading
+  // showBootSequence here captures its *initial* value, exactly like
+  // handleBootSequenceDone's own WorldEntered publish is a one-time thing.
+  useEffect(() => {
+    if (!showBootSequence) {
+      gameEventBus.publish({ type: 'SessionResumed' })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Living World Sprint, Batch 5: one shared, presentation-only audio
   // player for the whole session. Every cue is best-effort (see
@@ -321,8 +348,21 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
   // count.
   function handleLessonResult(lessonId: string, pass: boolean) {
     if (pass) {
+      // Meridian 1.3 — Core Loop §04: grant the linked Archive Page only on
+      // the first-ever completion of this lesson, checked against progress
+      // as it stood *before* this call — a replay must never re-grant (it's
+      // already collected) or re-publish ArchivePageFound (which would
+      // replay Odin's one-time reaction to finding it).
+      const isFirstCompletion = !completedLessonIds.includes(lessonId)
       recordLessonCompletion(lessonId)
       gameEventBus.publish({ type: 'LessonCompleted', lessonId })
+      if (isFirstCompletion) {
+        const page = getArchivePageByLessonId(lessonId)
+        if (page) {
+          recordArchivePageFound(page.id)
+          gameEventBus.publish({ type: 'ArchivePageFound', pageId: page.id })
+        }
+      }
       playPass()
     } else {
       gameEventBus.publish({ type: 'LessonFailed', lessonId })
@@ -408,6 +448,7 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
   const campaignProgress: CampaignProgress = { completedMissionIds: playerProgress.completedMissionIds }
   const campaignSummary = getCampaignSummary(defaultCampaign, campaignProgress)
   const progressSummary = getPlayerProgressSummary(playerProgress)
+  const explorerRank = getExplorerRank(playerProgress)
   const unlockedNpcIds = getUnlockedNpcIds(playerProgress)
   const selectedNpc = selectedNpcId ? getNpcById(selectedNpcId) : undefined
   const missionOptions = missionRegistry.map((mission) => ({
@@ -531,6 +572,9 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
   return (
     <div id="app-root">
       <GameControlBar
+        explorerRank={explorerRank}
+        archivePageCount={collectedArchivePages.length}
+        onToggleArchivePages={() => setShowArchivePages((current) => !current)}
         justSaved={justSaved}
         confirmingNewGame={confirmingNewGame}
         showWorldScene={showWorldScene}
@@ -544,6 +588,9 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
         onToggleMuted={toggleMuted}
       />
       {campaignSummary.isComplete && <CampaignCompleteBanner totalMissions={campaignSummary.totalMissions} />}
+      {showArchivePages && (
+        <ArchivePagesPanel pages={collectedArchivePages} onClose={() => setShowArchivePages(false)} />
+      )}
       {showWorldScene ? (
         <>
           {sceneState.mode.kind === 'terminal' ? (
@@ -562,9 +609,22 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
               destinationProgress={currentDestinationProgress}
               onContinue={handleContinue}
               onReturnToWorld={() => setSceneState(exitTerminal)}
+              npc={companion}
+              npcMessage={companionMessage}
             />
           ) : (
             <>
+              {/* Hidden during an active Math/English lesson — that flow
+                  never touches activeMissionId/useMissionManager (see
+                  handleStartLesson), so this SQL-campaign readout would be
+                  showing the wrong context otherwise. */}
+              {!activeLesson && (
+                <QuestChip
+                  title={getMissionDisplayText(activeMission).title}
+                  currentMissionIndex={campaignSummary.currentMissionIndex ?? undefined}
+                  totalMissions={campaignSummary.totalMissions}
+                />
+              )}
               <WorldScene3D
                 world={world}
                 unlockedNpcIds={unlockedNpcIds}
@@ -584,9 +644,13 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
                     <NpcDialogue
                       npc={dialogueNpc}
                       context={npcDialogueContext}
-                      onOpen={playNpcTalk}
+                      onOpen={() => {
+                        playNpcTalk()
+                        recordNpcConversation(dialogueNpc.id)
+                      }}
                       onClose={() => setSceneState(closeDialogue)}
                       onStartLesson={handleStartLesson}
+                      familiarityTier={getNpcFamiliarityTier(playerProgress, dialogueNpc.id)}
                     />
                   ) : null
                 })()}

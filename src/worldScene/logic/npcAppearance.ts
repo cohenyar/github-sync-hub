@@ -26,6 +26,8 @@ const NPC_APPEARANCE: Record<string, NpcAppearance> = {
   // to the building they're stationed outside.
   'math-teacher': { bodyColor: '#4d5f82', accentColor: '#2f3c56', glowColor: '#8fd8ff' },
   'english-teacher': { bodyColor: '#9c7a5a', accentColor: '#7a4f42', glowColor: '#e0c9a6' },
+  // Meridian 1.3 — warm and bright, matching her already-happy-ending state.
+  'reunited-owner': { bodyColor: '#c9906a', accentColor: '#8a5f42', glowColor: '#ffd9a0' },
 }
 
 /** A visibly distinct grey for any NPC not in the table yet, rather than dropping their appearance entirely. */

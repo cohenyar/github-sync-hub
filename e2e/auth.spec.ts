@@ -23,7 +23,7 @@ test.describe('Auth Phase 1 — protected /admin route', () => {
 
   test('the removed in-game admin toggle is gone; /world renders and works normally without it', async ({ page }) => {
     await page.goto('/world')
-    await expect(page.getByTestId('toggle-world-scene-button')).toBeVisible()
+    await expect(page.getByTestId('settings-menu-button')).toBeVisible()
     await expect(page.getByTestId('admin-toggle-button')).toHaveCount(0)
   })
 })
@@ -42,10 +42,11 @@ test.describe('Auth access in the main flow', () => {
     page,
   }) => {
     await page.goto('/world')
-    await expect(page.getByTestId('toggle-world-scene-button')).toBeVisible()
+    await expect(page.getByTestId('settings-menu-button')).toBeVisible()
     await expect(page.getByTestId('google-sign-in-button')).toHaveCount(0)
     await expect(page.getByTestId('auth-account')).toHaveCount(0)
 
+    await page.getByTestId('settings-menu-button').click()
     await page.getByTestId('toggle-world-scene-button').click()
     await expect(page.getByRole('button', { name: 'הרץ' })).toBeVisible()
   })

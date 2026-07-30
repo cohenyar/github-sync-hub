@@ -31,11 +31,22 @@ export { expect }
 export async function waitForMissionReady(page: Page): Promise<Locator> {
   const worldScene = page.getByTestId('world-scene-3d')
   if (await worldScene.isVisible().catch(() => false)) {
+    await openSettingsMenu(page)
     await page.getByTestId('toggle-world-scene-button').click()
   }
   const runButton = page.getByTestId('run-button')
   await expect(runButton).toBeEnabled()
   return runButton
+}
+
+/** Opens the corner HUD's settings popover (Save/Load/New Game/Mute/Classic View), Meridian 1.2. */
+export async function openSettingsMenu(page: Page): Promise<void> {
+  await page.getByTestId('settings-menu-button').click()
+}
+
+/** Opens the corner HUD's account menu (Meridian 1.2) for a signed-in player. */
+export async function openAccountMenu(page: Page): Promise<void> {
+  await page.getByTestId('auth-account').click()
 }
 
 /** Types a query into the SQL editor and clicks Run. */

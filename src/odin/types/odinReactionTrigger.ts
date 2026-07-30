@@ -15,3 +15,5 @@ export type OdinReactionTrigger =
   | { event: 'LessonCompleted'; lessonId?: string }
   | { event: 'LessonFailed'; lessonId?: string }
   | { event: 'WorldEntered' }
+  | { event: 'ArchivePageFound'; pageId?: string }
+  | { event: 'SessionResumed' }

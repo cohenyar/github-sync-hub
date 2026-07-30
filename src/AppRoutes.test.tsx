@@ -43,6 +43,7 @@ describe('Routing foundation', () => {
   it('renders the real game, unwrapped, at /world', async () => {
     markOnboardingComplete()
     renderAt('/world')
+    fireEvent.click(await screen.findByTestId('settings-menu-button'))
     fireEvent.click(await screen.findByTestId('toggle-world-scene-button'))
     expect(await screen.findByRole('button', { name: he.run })).toBeInTheDocument()
   })
@@ -50,6 +51,7 @@ describe('Routing foundation', () => {
   it('renders the real game at /world?path=math too (Batch 3A.2 query param), with no crash', async () => {
     markOnboardingComplete()
     renderAt('/world?path=math')
+    fireEvent.click(await screen.findByTestId('settings-menu-button'))
     fireEvent.click(await screen.findByTestId('toggle-world-scene-button'))
     expect(await screen.findByRole('button', { name: he.run })).toBeInTheDocument()
   })

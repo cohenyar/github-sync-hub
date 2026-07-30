@@ -4,6 +4,8 @@ export interface AuthUser {
   id: string
   email: string | null
   avatarUrl: string | null
+  /** From the OAuth provider's profile (e.g. Google's full name). Null when unavailable — callers fall back to email. */
+  displayName: string | null
 }
 
 export type AuthStatus = 'loading' | 'signed-out' | 'signed-in'

@@ -23,10 +23,12 @@ async function fetchRole(userId: string): Promise<Role | null> {
 }
 
 function toAuthUser(session: Session): AuthUser {
+  const metadata = session.user.user_metadata as Record<string, unknown> | undefined
   return {
     id: session.user.id,
     email: session.user.email ?? null,
-    avatarUrl: (session.user.user_metadata?.avatar_url as string | undefined) ?? null,
+    avatarUrl: (metadata?.avatar_url as string | undefined) ?? null,
+    displayName: (metadata?.full_name as string | undefined) ?? (metadata?.name as string | undefined) ?? null,
   }
 }
 

@@ -158,6 +158,7 @@ test.describe('Phase 2 primary 3D scene: the canonical world-scene loop', () => 
     await page.goto('/world')
     await expect(page.getByTestId('world-scene-3d')).toBeVisible()
 
+    await page.getByTestId('settings-menu-button').click()
     await page.getByTestId('toggle-world-scene-button').click()
     await expect(page.getByTestId('world-scene-3d')).not.toBeVisible()
     await expect(page.getByRole('button', { name: 'הרץ' /* he.run */ })).toBeVisible()
@@ -259,6 +260,7 @@ test.describe('Phase 2 primary 3D scene: the canonical world-scene loop', () => 
     page.on('pageerror', (err) => errors.push(String(err)))
 
     await page.goto('/world')
+    await page.getByTestId('settings-menu-button').click()
     const muteButton = page.getByTestId('mute-toggle-button')
 
     // Sound starts on (unmuted) by default.
@@ -301,7 +303,9 @@ test.describe('Phase 2 primary 3D scene: the canonical world-scene loop', () => 
     // exactly like a player would use, and land us back in the world scene
     // with the button now stale-focused from that second click, same
     // premise this regression test needs.
+    await page.getByTestId('settings-menu-button').click()
     await page.getByTestId('toggle-world-scene-button').click()
+    await page.getByTestId('settings-menu-button').click()
     await page.getByTestId('toggle-world-scene-button').click()
     await expect(page.getByTestId('world-scene-3d')).toBeVisible()
 
@@ -324,6 +328,7 @@ test.describe('Phase 2 primary 3D scene: the canonical world-scene loop', () => 
 
   test('Bug A fix does not affect keyboard operation of the control bar itself', async ({ page }) => {
     await page.goto('/world')
+    await page.getByTestId('settings-menu-button').click()
     const muteButton = page.getByTestId('mute-toggle-button')
 
     // Arrive at the button via focus (as a keyboard user tabbing to it
@@ -553,6 +558,7 @@ test.describe('Batch 3A.3: teacher NPC interaction reliability', () => {
     // The classic dashboard's SQL console is untouched — Start Lesson never
     // reached activeMissionId/useMissionManager/runQuery.
     await page.getByTestId('lesson-return-to-world-button').click()
+    await page.getByTestId('settings-menu-button').click()
     await page.getByTestId('toggle-world-scene-button').click()
     await expect(page.getByRole('button', { name: 'הרץ' /* he.run */ })).toBeVisible()
     await expect(page.getByTestId('active-mission-title')).toHaveAttribute('data-mission-id', 'first-contact')
@@ -601,7 +607,12 @@ test.describe('Batch 3A.3: teacher NPC interaction reliability', () => {
 
     await expect(page.getByTestId('lesson-success-message')).toBeVisible()
     await expect(page.getByTestId('math-exercise-panel')).toHaveCount(0)
-    await expect(page.getByTestId('odin-presence')).toContainText('כל הכבוד')
+    // Meridian 1.3: completing this lesson for the first time also grants its
+    // linked Archive Page (Core Loop §04) in the same synchronous batch as
+    // LessonCompleted — Odin's presence banner shows only the latest
+    // narration, so the archive-page line is what's left on screen, not the
+    // lesson-completion line itself.
+    await expect(page.getByTestId('odin-presence')).toContainText('פנקס ישן, מוחבא מאחורי המניפסט')
   })
 
   test('a wrong English answer does not complete the lesson', async ({ page }) => {
@@ -635,7 +646,13 @@ test.describe('Batch 3A.3: teacher NPC interaction reliability', () => {
     await page.getByTestId('english-submit-button').click()
 
     await expect(page.getByTestId('lesson-success-message')).toBeVisible()
-    await expect(page.getByTestId('odin-presence')).toContainText('כל הכבוד')
+    // Meridian 1.3: completing this lesson for the first time grants its
+    // Archive Page and unlocks the reunited-owner NPC (Core Loop §04) — both
+    // publish their own Odin narration after LessonCompleted, and Odin's
+    // presence banner only ever shows the latest one. The NPC unlock is
+    // evaluated in a later effect tick than the archive page pickup, so it's
+    // the one still on screen once things settle.
+    await expect(page.getByTestId('odin-presence')).toContainText('משהו חדש נפתח בתוך העיר')
   })
 
   test('after completing the Math lesson, talking to the math teacher again reflects the completed state', async ({
@@ -655,7 +672,9 @@ test.describe('Batch 3A.3: teacher NPC interaction reliability', () => {
     await page.keyboard.press('KeyE')
     const dialogue = page.getByTestId('npc-dialogue')
     await expect(dialogue).toBeVisible()
-    await expect(page.getByTestId('npc-dialogue-mission-context')).toContainText('כל הכבוד')
+    // Meridian 1.3 — Narrative Backbone §07: a specific, persistent
+    // consequence line, not the old generic "well done."
+    await expect(page.getByTestId('npc-dialogue-mission-context')).toContainText('המניפסט נסגר בזמן בזכותך')
     // Still offered — replaying an already-completed lesson stays supported.
     await expect(page.getByTestId('npc-dialogue-start-lesson-button')).toBeVisible()
   })
@@ -690,7 +709,9 @@ test.describe('Batch 3A.3: teacher NPC interaction reliability', () => {
     await page.getByTestId('lesson-return-to-world-button').click()
 
     // Save happens from the classic dashboard, same as every other Save/Load test in this codebase.
+    await page.getByTestId('settings-menu-button').click()
     await page.getByTestId('toggle-world-scene-button').click()
+    await page.getByTestId('settings-menu-button').click()
     await page.getByTestId('save-button').click()
     await expect(page.getByTestId('saved-confirmation')).toBeVisible()
 
@@ -698,7 +719,9 @@ test.describe('Batch 3A.3: teacher NPC interaction reliability', () => {
 
     await walkToMathTeacher(page)
     await page.keyboard.press('KeyE')
-    await expect(page.getByTestId('npc-dialogue-mission-context')).toContainText('כל הכבוד')
+    // Meridian 1.3 — Narrative Backbone §07: a specific, persistent
+    // consequence line, not the old generic "well done."
+    await expect(page.getByTestId('npc-dialogue-mission-context')).toContainText('המניפסט נסגר בזמן בזכותך')
     // Batch 3A.5 — the replay wording also survives the reload.
     await expect(page.getByTestId('npc-dialogue-start-lesson-button')).toContainText('תרגל שוב')
   })
@@ -816,6 +839,7 @@ test.describe('Batch 3A.5: visual polish + lesson completion UX', () => {
 
     // The classic dashboard's SQL side is still completely unaffected —
     // same proof as Batch 3A.4B, re-checked after the replay.
+    await page.getByTestId('settings-menu-button').click()
     await page.getByTestId('toggle-world-scene-button').click()
     await expect(page.getByTestId('active-mission-title')).toHaveAttribute('data-mission-id', 'first-contact')
   })
@@ -873,10 +897,13 @@ test.describe('Meridian 1.0 closeout: auto-save on leaving /world', () => {
 
     // Confirmed completed within the same session, before leaving.
     await page.keyboard.press('KeyE')
-    await expect(page.getByTestId('npc-dialogue-mission-context')).toContainText('כל הכבוד')
+    // Meridian 1.3 — Narrative Backbone §07: a specific, persistent
+    // consequence line, not the old generic "well done."
+    await expect(page.getByTestId('npc-dialogue-mission-context')).toContainText('המניפסט נסגר בזמן בזכותך')
     await page.getByTestId('npc-dialogue-close-button').click()
 
     // b. Leave /world for /dashboard — deliberately no Save click anywhere above.
+    await page.getByTestId('settings-menu-button').click()
     await page.getByTestId('toggle-world-scene-button').click()
     await page.goto('/dashboard')
 
@@ -895,13 +922,17 @@ test.describe('Meridian 1.0 closeout: auto-save on leaving /world', () => {
     await page.keyboard.press('KeyE')
 
     // d. Completion remains persisted.
-    await expect(page.getByTestId('npc-dialogue-mission-context')).toContainText('כל הכבוד')
+    // Meridian 1.3 — Narrative Backbone §07: a specific, persistent
+    // consequence line, not the old generic "well done."
+    await expect(page.getByTestId('npc-dialogue-mission-context')).toContainText('המניפסט נסגר בזמן בזכותך')
     await expect(page.getByTestId('npc-dialogue-start-lesson-button')).toContainText('תרגל שוב')
   })
 
   test('does not interfere with the manual Save button or its confirmation', async ({ page }) => {
     await page.goto('/world')
+    await page.getByTestId('settings-menu-button').click()
     await page.getByTestId('toggle-world-scene-button').click()
+    await page.getByTestId('settings-menu-button').click()
     await page.getByTestId('save-button').click()
     await expect(page.getByTestId('saved-confirmation')).toBeVisible()
   })
@@ -962,6 +993,7 @@ test.describe('Meridian UI stability pass: game container size', () => {
     expect(narrowBox!.height).toBeGreaterThan(0)
 
     // Navigation still works after resizing.
+    await page.getByTestId('settings-menu-button').click()
     await page.getByTestId('toggle-world-scene-button').click()
     await expect(page.getByTestId('active-mission-title')).toBeVisible()
 
@@ -1021,6 +1053,7 @@ test.describe('Meridian UI stability pass: world map layout', () => {
       await page.goto('/world')
       // The classic dashboard's map is what's under test here, not the 3D
       // scene (the new default view) — switch to it via the existing toggle.
+      await page.getByTestId('settings-menu-button').click()
       await page.getByTestId('toggle-world-scene-button').click()
 
       const nodes = page.locator('[data-district-id]')
@@ -1050,6 +1083,7 @@ test.describe('Meridian UI stability pass: world map layout', () => {
     await page.goto('/world')
     // The classic dashboard's map is what's under test here, not the 3D
     // scene (the new default view) — switch to it via the existing toggle.
+    await page.getByTestId('settings-menu-button').click()
     await page.getByTestId('toggle-world-scene-button').click()
 
     const nodes = page.locator('[data-district-id]')

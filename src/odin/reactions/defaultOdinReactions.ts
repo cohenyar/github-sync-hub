@@ -172,19 +172,54 @@ export const defaultOdinReactions: OdinReaction[] = [
   {
     id: 'lesson-math-completed',
     trigger: { event: 'LessonCompleted', lessonId: 'lesson:math-001' },
-    message: 'Well done — the numbers line up.',
-    messageHe: 'כל הכבוד — התשובה נכונה, וסדר הפעולות פתר את התרגיל.',
+    // Meridian 1.3 — Narrative Backbone §07: specific to what changed, not a generic "well done."
+    message: 'The manifest is counted. The gate closes on time tonight.',
+    messageHe: 'המניפסט נספר. השער יינעל בזמן הערב.',
   },
   {
     id: 'lesson-english-completed',
     trigger: { event: 'LessonCompleted', lessonId: 'lesson:english-001' },
-    message: 'Well done — every word translated correctly.',
-    messageHe: 'כל הכבוד — כל המילים תורגמו נכון.',
+    // Meridian 1.3 — Narrative Backbone §07: specific to what changed, not a generic "well done."
+    message: 'The board reads in both languages now. Someone will find their way home because of it.',
+    messageHe: 'הלוח נקרא כעת בשתי השפות. מישהו ימצא את דרכו הביתה בזכות זה.',
   },
   {
     id: 'lesson-failed-generic',
     trigger: { event: 'LessonFailed' },
     message: 'Not quite — try again.',
     messageHe: 'לא בדיוק — נסה/י שוב.',
+  },
+  // Meridian 1.3 — Core Loop §04 collectibles. Fires once, only the first
+  // time each page is actually found (see GameApp.tsx's handleLessonResult).
+  {
+    id: 'archive-page-trade-count-found',
+    trigger: { event: 'ArchivePageFound', pageId: 'archive-page:trade-count' },
+    message: 'An old ledger, tucked behind the manifest. Worth keeping.',
+    messageHe: 'פנקס ישן, מוחבא מאחורי המניפסט. שווה לשמור אותו.',
+  },
+  {
+    id: 'archive-page-lost-and-found-found',
+    trigger: { event: 'ArchivePageFound', pageId: 'archive-page:lost-and-found' },
+    message: "A note about the board's own history. Worth keeping.",
+    messageHe: 'פתק על ההיסטוריה של הלוח עצמו. שווה לשמור אותו.',
+  },
+  {
+    id: 'archive-page-found-generic',
+    trigger: { event: 'ArchivePageFound' },
+    message: 'Something worth keeping.',
+    messageHe: 'משהו ששווה לשמור.',
+  },
+  // Meridian 1.3 — Core Loop §01: the counterpart to world-entered-greeting
+  // for a player who already onboarded — one welcome-back line per app
+  // mount. Deliberately a single authored line, not a randomized pool: Odin
+  // is documented as fully deterministic (see this file's own header
+  // comment), and true variety "keyed to how long since the last session"
+  // would need session-timestamp tracking this phase doesn't add yet —
+  // scoped down rather than breaking that contract for a minor flourish.
+  {
+    id: 'session-resumed',
+    trigger: { event: 'SessionResumed' },
+    message: 'Welcome back to Meridian. The city kept waiting.',
+    messageHe: 'ברוך שובך למרידיאן. העיר המשיכה לחכות.',
   },
 ]

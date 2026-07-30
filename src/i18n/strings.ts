@@ -35,8 +35,8 @@ export const he = {
   completed: 'הושלמה',
 
   // SQL terminal
-  sqlEditorLabel: 'מסוף SQL',
-  sqlEditorTitle: 'מסוף SQL',
+  sqlEditorLabel: 'שאילתה',
+  sqlEditorTitle: 'שאילתה',
   run: 'הרץ',
   sqlPlaceholder: '-- כתוב כאן את השאילתה שלך',
   databasePrepareErrorPrefix: 'שגיאה בהכנת מסד הנתונים: ',
@@ -74,8 +74,8 @@ export const he = {
 
   // World Scene prototype (Phase 1) — brand-new UI, safe to author directly
   // in Hebrew since nothing depended on English text for it before.
-  worldSceneToggle: 'תצוגת עולם',
-  dashboardToggle: 'לוח בקרה',
+  worldSceneToggle: 'חזרה לעולם',
+  dashboardToggle: 'תצוגה קלאסית',
   cityPlazaLabel: 'כיכר העיר מרידיאן',
   playerAvatarLabel: 'אתה',
   talkPrompt: 'לחץ לשיחה',
@@ -85,7 +85,7 @@ export const he = {
   districtStable: 'יציב',
   districtUnstable: 'לא יציב',
   dialogueCloseButton: 'סגור',
-  terminalTitle: 'מסוף הרשומות',
+  terminalTitle: 'הארכיון',
   returnToWorldButton: 'חזרה לעולם',
 
   // Living World Sprint, Batch 5 — minimum audio layer.
@@ -216,6 +216,32 @@ export const he = {
   bootLogConnectionEstablished: 'החיבור הושלם.',
   bootOdinIntro: 'שלום. אני אודין, ואלווה אותך במרידיאן. בוא נתחיל.',
   bootSkipAction: 'דלג',
+
+  // Meridian 1.2 — corner HUD shell, profile menu, and the Archive's
+  // narrative framing (see game-ui/SettingsMenu.tsx, auth/AuthButton.tsx,
+  // worldScene/components/ArchiveIntro.tsx).
+  settingsMenuLabel: 'הגדרות',
+  accountMenuLabel: 'תפריט חשבון',
+  archiveIntroEyebrow: 'לפני שמתחילים',
+
+  // Meridian 1.3 — Explorer Rank (Core Loop §04), one shared tier across every subject.
+  explorerRankNewcomer: 'מגיע/ה חדש/ה',
+  explorerRankHelper: 'עוזר/ת',
+  explorerRankTrusted: 'יד נאמנה',
+  explorerRankGuardian: 'שומר/ת האות',
+
+  // Meridian 1.3 — NPC familiarity tiers (Core Loop §06).
+  npcFamiliarityStranger: 'זר/ה',
+  npcFamiliarityAcquaintance: 'מכר/ה',
+  npcFamiliarityTrusted: 'בת/בן סמך',
+  npcFamiliarityFriend: 'חבר/ה',
+  npcFamiliarityLabel: 'קרבה: ',
+
+  // Meridian 1.3 — Archive Pages (Core Loop §04 collectibles).
+  archivePagesTitle: 'עמודי הארכיון',
+  archivePagesButtonLabel: 'ארכיון',
+  archivePagesEmpty: 'עדיין לא נמצאו עמודים.',
+  archivePageFoundToast: 'עמוד ארכיון נמצא: ',
 } as const
 
 export type HebrewStringKey = keyof typeof he

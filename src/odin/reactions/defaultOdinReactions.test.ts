@@ -201,4 +201,40 @@ describe('defaultOdinReactions', () => {
       }
     }
   })
+
+  it('reacts to each rewritten lesson with story-specific text, not the old generic "well done" (Meridian 1.3 — Narrative Backbone §07)', () => {
+    const mathReaction = find('lesson-math-completed')
+    expect(mathReaction.messageHe).not.toContain('סדר הפעולות פתר את התרגיל')
+    const englishReaction = find('lesson-english-completed')
+    expect(englishReaction.messageHe).not.toContain('כל המילים תורגמו נכון')
+  })
+
+  it('reacts to each Archive Page being found specifically, with a generic fallback for any other page (Meridian 1.3)', () => {
+    expect(find('archive-page-trade-count-found').trigger).toEqual({
+      event: 'ArchivePageFound',
+      pageId: 'archive-page:trade-count',
+    })
+    expect(find('archive-page-lost-and-found-found').trigger).toEqual({
+      event: 'ArchivePageFound',
+      pageId: 'archive-page:lost-and-found',
+    })
+    expect(find('archive-page-found-generic').trigger).toEqual({ event: 'ArchivePageFound' })
+
+    const matched = matchReaction(defaultOdinReactions, {
+      type: 'ArchivePageFound',
+      pageId: 'archive-page:trade-count',
+    })
+    expect(matched?.id).toBe('archive-page-trade-count-found')
+
+    const fallback = matchReaction(defaultOdinReactions, { type: 'ArchivePageFound', pageId: 'some-future-page' })
+    expect(fallback?.id).toBe('archive-page-found-generic')
+  })
+
+  it('reacts to a returning player with a one-time welcome-back line, distinct from WorldEntered (Meridian 1.3)', () => {
+    const reaction = find('session-resumed')
+    expect(reaction.trigger).toEqual({ event: 'SessionResumed' })
+    const matched = matchReaction(defaultOdinReactions, { type: 'SessionResumed' })
+    expect(matched?.id).toBe('session-resumed')
+    expect(reaction.messageHe).not.toBe(find('world-entered-greeting').messageHe)
+  })
 })

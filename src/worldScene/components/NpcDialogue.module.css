@@ -25,6 +25,25 @@
   font-weight: 600;
 }
 
+.familiarityBadge {
+  margin-inline-start: 8px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  font-weight: 500;
+  vertical-align: middle;
+}
+
+.friendBonusLine {
+  margin: 0 0 10px;
+  line-height: 1.5;
+  font-style: italic;
+  color: var(--text-muted);
+}
+
 .startLessonButton {
   display: inline-block;
   margin-inline-end: 8px;

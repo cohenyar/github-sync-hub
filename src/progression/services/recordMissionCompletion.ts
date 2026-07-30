@@ -27,6 +27,13 @@ export function recordMissionCompletion(
     .map((entry) => entry.missionId)
 
   return {
+    // Preserves every other field on progress (completedLessonIds,
+    // npcFamiliarity, collectedArchivePageIds, and anything added later) —
+    // this function only ever owns the four fields listed below. Without
+    // the spread, completing any mission would silently erase lesson
+    // progress, NPC familiarity, and collected Archive Pages, since this
+    // used to return a brand-new object literal instead.
+    ...progress,
     completedMissionIds,
     completions,
     unlockState: { unlockedMissionIds },

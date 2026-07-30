@@ -2,8 +2,9 @@ import { useEffect, useRef } from 'react'
 import { he } from '../../i18n'
 import { getLessonIdForNpc } from '../../learning'
 import type { NpcConfig } from '../../npcs'
-import { getNpcDialogue } from '../logic/dialogueContent'
+import { getFriendBonusLine, getNpcDialogue } from '../logic/dialogueContent'
 import { getNpcDialogueState, type NpcDialogueContext } from '../logic/npcDialogueState'
+import { getNpcFamiliarityLabel, type NpcFamiliarityTier } from '../../progression'
 import styles from './NpcDialogue.module.css'
 
 export interface NpcDialogueProps {
@@ -13,6 +14,8 @@ export interface NpcDialogueProps {
   onClose: () => void
   /** Batch 3A.3 — called with the NPC's linked lesson id (resolved from learningPathConfig) when "Start Lesson" is clicked. Never calls into the mission runtime itself; that stays the caller's decision. */
   onStartLesson?: (lessonId: string) => void
+  /** Meridian 1.3 — Core Loop §06. Optional so every existing caller/fixture omitting it still type-checks; a missing tier simply shows no badge and no bonus line. */
+  familiarityTier?: NpcFamiliarityTier
 }
 
 /**
@@ -25,10 +28,11 @@ export interface NpcDialogueProps {
  * caller uses it for a presentation-only audio cue (Batch 5); this
  * component has no idea audio exists.
  */
-export function NpcDialogue({ npc, context, onOpen, onClose, onStartLesson }: NpcDialogueProps) {
+export function NpcDialogue({ npc, context, onOpen, onClose, onStartLesson, familiarityTier }: NpcDialogueProps) {
   const dialogueState = getNpcDialogueState(npc, context)
   const dialogue = getNpcDialogue(npc.id, dialogueState)
   const linkedLessonId = getLessonIdForNpc(npc.id)
+  const friendBonusLine = familiarityTier === 'friend' ? getFriendBonusLine(npc.id) : undefined
   // Batch 3A.5 — the button stays offered either way (replay is supported
   // and idempotent); only its label changes.
   const isLessonCompleted = Boolean(linkedLessonId && (context.completedLessonIds ?? []).includes(linkedLessonId))
@@ -57,11 +61,23 @@ export function NpcDialogue({ npc, context, onOpen, onClose, onStartLesson }: Np
 
   return (
     <div className={styles.dialogue} data-testid="npc-dialogue" data-npc-id={npc.id} role="dialog">
-      <h3 className={styles.name}>{npc.name}</h3>
+      <h3 className={styles.name}>
+        {npc.name}
+        {familiarityTier && (
+          <span className={styles.familiarityBadge} data-testid="npc-familiarity-badge">
+            {getNpcFamiliarityLabel(familiarityTier)}
+          </span>
+        )}
+      </h3>
       <p className={styles.greeting}>{dialogue.greeting}</p>
       {dialogue.missionContext && (
         <p className={styles.missionContext} data-testid="npc-dialogue-mission-context">
           {dialogue.missionContext}
+        </p>
+      )}
+      {friendBonusLine && (
+        <p className={styles.friendBonusLine} data-testid="npc-dialogue-friend-bonus">
+          {friendBonusLine}
         </p>
       )}
       {linkedLessonId && onStartLesson && (

@@ -26,4 +26,13 @@ export interface PlayerProgress {
    * recordLessonCompletion / isLessonCompleted).
    */
   completedLessonIds?: readonly string[]
+  /**
+   * Meridian 1.3 — Core Loop §06: how many conversations the player has had
+   * with each NPC, keyed by npc id. Optional, same fallback-to-empty
+   * convention as completedLessonIds — every reader defaults a missing
+   * entry to 0 (see recordNpcConversation / getNpcFamiliarityTier).
+   */
+  npcFamiliarity?: Readonly<Record<string, number>>
+  /** Meridian 1.3 — Core Loop §04 collectibles. Optional, same empty-default convention as completedLessonIds. */
+  collectedArchivePageIds?: readonly string[]
 }

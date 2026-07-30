@@ -56,7 +56,7 @@ describe('ProtectedAdminRoute', () => {
     renderGuarded({
       ...BASE_AUTH,
       status: 'signed-in',
-      user: { id: 'u1', email: 'student@example.com', avatarUrl: null },
+      user: { id: 'u1', email: 'student@example.com', avatarUrl: null, displayName: null },
       role: 'student',
       isAdmin: false,
     })
@@ -68,7 +68,7 @@ describe('ProtectedAdminRoute', () => {
     renderGuarded({
       ...BASE_AUTH,
       status: 'signed-in',
-      user: { id: 'u1', email: 'student@example.com', avatarUrl: null },
+      user: { id: 'u1', email: 'student@example.com', avatarUrl: null, displayName: null },
       role: null,
       isAdmin: false,
       authError: 'profile lookup failed',
@@ -80,7 +80,7 @@ describe('ProtectedAdminRoute', () => {
     renderGuarded({
       ...BASE_AUTH,
       status: 'signed-in',
-      user: { id: 'admin-1', email: 'admin@example.com', avatarUrl: null },
+      user: { id: 'admin-1', email: 'admin@example.com', avatarUrl: null, displayName: null },
       role: 'admin',
       isAdmin: true,
     })

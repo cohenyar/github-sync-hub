@@ -10,13 +10,21 @@ export interface DistrictMarkerProps {
   onClick?: () => void
 }
 
+// Meridian 1.2 palette pass: nudged toward the brand's blue/violet/cyan
+// triad (thriving/stable) while keeping unstable's muted, unresolved grey —
+// the three states still need to read as distinct at a glance, not just
+// "on-brand."
 const STATUS_COLOR: Record<DistrictStatus, string> = {
-  thriving: '#33d6a6',
-  stable: '#5b8def',
+  thriving: '#43e5d6',
+  stable: '#5b8cff',
   unstable: '#8394ad',
 }
 
-const CORE_COLOR = '#f5b800'
+// Was amber/gold (#f5b800) — didn't match any part of the established
+// brand palette and read as a stray traffic-light color next to the
+// status-colored districts. Violet makes the Core read as "the landmark,"
+// distinct from every status color a district can have.
+const CORE_COLOR = '#9d7bff'
 
 const CORE_EMISSIVE_INTENSITY = 0.6
 const CORE_HIGHLIGHT_EMISSIVE_INTENSITY = 1.2

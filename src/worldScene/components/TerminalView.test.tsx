@@ -5,15 +5,24 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { CampaignSummary } from '../../campaign/types'
 import type { MissionStatus } from '../../missions/missionManager'
 import type { MissionConfig } from '../../missions/types'
+import type { NpcConfig } from '../../npcs/types'
 import { TerminalView, type TerminalViewProps } from './TerminalView'
 
 const mission: MissionConfig = {
   id: 'first-contact',
   title: 'First Contact',
   goal: 'Bring the Records Core online.',
-  prompt: 'Query the citizens registry.',
+  prompt: 'The Records Core is blind.\nQuery the citizens registry.',
   setupSql: '',
   referenceSql: 'SELECT * FROM citizens',
+}
+
+const npc: NpcConfig = {
+  id: 'archivist-mera',
+  name: 'Mera Solt',
+  districtId: 'core',
+  role: 'Archivist',
+  description: 'Tends the Records Core.',
 }
 
 const status: MissionStatus = { phase: 'active', mission, lastResult: null, error: null }
@@ -109,6 +118,26 @@ describe('TerminalView', () => {
     )
     expect(screen.getByTestId('terminal-destination-label')).toHaveTextContent('רובע היציבות')
     expect(screen.getByTestId('terminal-destination-label')).toHaveTextContent('1/1')
+  })
+
+  it('shows the quest title in the Archive intro, ahead of the reused mission panel', () => {
+    render(<TerminalView {...baseProps()} />)
+    expect(screen.getByTestId('archive-intro-quest-title')).toHaveTextContent('First Contact')
+  })
+
+  it('falls back to the mission\'s own opening line as the narrative when no companion NPC applies', () => {
+    render(<TerminalView {...baseProps()} />)
+    expect(screen.queryByTestId('archive-intro-npc')).not.toBeInTheDocument()
+    expect(screen.getByTestId('archive-intro-narrative')).toHaveTextContent('The Records Core is blind.')
+  })
+
+  it('shows the companion NPC\'s identity and their own authored line when one is unlocked for this mission', () => {
+    render(<TerminalView {...baseProps({ npc, npcMessage: 'Query the registry, and Meridian sees again.' })} />)
+    expect(screen.getByTestId('archive-intro-npc')).toHaveTextContent('Mera Solt')
+    expect(screen.getByTestId('archive-intro-npc')).toHaveTextContent('Archivist')
+    expect(screen.getByTestId('archive-intro-narrative')).toHaveTextContent(
+      'Query the registry, and Meridian sees again.',
+    )
   })
 })
 

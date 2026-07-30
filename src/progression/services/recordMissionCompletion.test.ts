@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import type { GameCampaign } from '../../campaign'
 import { createInitialPlayerProgress } from './createInitialPlayerProgress'
+import { recordArchivePageFound } from './recordArchivePageFound'
+import { recordLessonCompletion } from './recordLessonCompletion'
 import { recordMissionCompletion } from './recordMissionCompletion'
+import { recordNpcConversation } from './recordNpcConversation'
 
 const threeStageCampaign: GameCampaign = {
   id: 'test-campaign',
@@ -86,5 +89,31 @@ describe('recordMissionCompletion — completed campaign', () => {
     progress = recordMissionCompletion(progress, 'b', threeStageCampaign)
 
     expect(progress.campaignProgress.isComplete).toBe(false)
+  })
+})
+
+describe('recordMissionCompletion — preserves fields it does not own (Meridian 1.3 regression)', () => {
+  it('does not erase completedLessonIds recorded before this mission completed', () => {
+    let progress = createInitialPlayerProgress(threeStageCampaign)
+    progress = recordLessonCompletion(progress, 'lesson:math-001')
+    progress = recordMissionCompletion(progress, 'a', threeStageCampaign)
+
+    expect(progress.completedLessonIds).toEqual(['lesson:math-001'])
+  })
+
+  it('does not erase npcFamiliarity recorded before this mission completed', () => {
+    let progress = createInitialPlayerProgress(threeStageCampaign)
+    progress = recordNpcConversation(progress, 'archivist-mera')
+    progress = recordMissionCompletion(progress, 'a', threeStageCampaign)
+
+    expect(progress.npcFamiliarity).toEqual({ 'archivist-mera': 1 })
+  })
+
+  it('does not erase collectedArchivePageIds recorded before this mission completed', () => {
+    let progress = createInitialPlayerProgress(threeStageCampaign)
+    progress = recordArchivePageFound(progress, 'archive-page:trade-count')
+    progress = recordMissionCompletion(progress, 'a', threeStageCampaign)
+
+    expect(progress.collectedArchivePageIds).toEqual(['archive-page:trade-count'])
   })
 })

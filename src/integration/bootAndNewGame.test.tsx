@@ -19,10 +19,23 @@ vi.mock('../db/database', async () => {
 const SAVE_KEY = 'meridian:save'
 const ONE_MISSION_PERCENTAGE = Math.round(100 / missionRegistry.length)
 
+// Under Vitest's fireEvent.click (unlike a real browser click), MouseEvent's
+// detail is 0 — the same signal SettingsMenu already treats as
+// "keyboard-sourced" (see blurOnPointerActivation) — so the settings popover
+// never auto-closes here once opened. Checking first, rather than
+// unconditionally clicking the trigger, keeps this correct regardless of
+// whether an earlier action already opened it.
+function ensureSettingsMenuOpen() {
+  if (!screen.queryByRole('menu')) {
+    fireEvent.click(screen.getByTestId('settings-menu-button'))
+  }
+}
+
 async function readyRunButton() {
   // The World Scene (not the classic dashboard) is now the default view —
   // switch to the classic dashboard first if we're not there already.
   if (screen.queryByTestId('world-scene-3d')) {
+    ensureSettingsMenuOpen()
     fireEvent.click(screen.getByTestId('toggle-world-scene-button'))
   }
   const runButton = await screen.findByRole('button', { name: he.run })
@@ -40,6 +53,7 @@ function openDebugView() {
 // Selected by stable data-testid (the control bar's action labels are
 // Hebrew and free to change; the testids are the durable contract).
 function newGame() {
+  ensureSettingsMenuOpen()
   fireEvent.click(screen.getByTestId('new-game-button'))
   fireEvent.click(screen.getByTestId('confirm-reset-yes-button'))
 }
@@ -96,9 +110,12 @@ describe('Load-on-boot', () => {
 
     // First Contact is already completed per the save, so booting into it is
     // a revisit, not a fresh start (Step 1, v0.2) — Odin has nothing new to
-    // narrate, including no "mission started" greeting for a mission that
-    // isn't actually starting.
-    expect(screen.getByText(he.odinIdleMessage)).toBeInTheDocument()
+    // narrate about mission progress, including no "mission started" greeting
+    // for a mission that isn't actually starting. A returning player (this is
+    // one, per beforeEach's markOnboardingComplete) does get its own Meridian
+    // 1.3 welcome-back line (Core Loop §01) — that's the one narration entry
+    // expected here, not silence.
+    expect(screen.getByTestId('odin-latest-message')).toHaveTextContent('ברוך שובך למרידיאן')
     expect(screen.queryByText(/להתחקות אחר קשרי המחוז/)).not.toBeInTheDocument()
     expect(screen.queryByRole('list', { name: he.odinHistoryAriaLabel })).not.toBeInTheDocument()
   })
@@ -131,6 +148,7 @@ describe('New Game reset', () => {
     await screen.findByText(he.pass)
     await waitFor(() => expect(screen.getByText(`${he.progressLabelPrefix}${ONE_MISSION_PERCENTAGE}%`)).toBeInTheDocument())
 
+    ensureSettingsMenuOpen()
     fireEvent.click(screen.getByTestId('save-button'))
     newGame()
 
@@ -186,6 +204,7 @@ describe('New Game reset', () => {
     fireEvent.click(runButton)
     await screen.findByText(he.pass)
 
+    ensureSettingsMenuOpen()
     fireEvent.click(screen.getByTestId('save-button'))
     newGame()
     await waitFor(() => expect(screen.getByText(`${he.progressLabelPrefix}0%`)).toBeInTheDocument())
@@ -205,6 +224,7 @@ describe('New Game reset', () => {
     await screen.findByText(he.pass)
     await waitFor(() => expect(screen.getByText(`${he.progressLabelPrefix}${ONE_MISSION_PERCENTAGE}%`)).toBeInTheDocument())
 
+    ensureSettingsMenuOpen()
     fireEvent.click(screen.getByTestId('new-game-button'))
     expect(screen.getByTestId('reset-confirm-prompt')).toBeInTheDocument()
     // Progress is untouched while the confirmation is pending.

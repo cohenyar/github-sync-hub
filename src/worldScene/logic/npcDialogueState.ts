@@ -40,10 +40,12 @@ const NPC_LINKED_MISSION_ID: Readonly<Record<string, string>> = {
 
 /**
  * NPCs whose dialogue is a single static line rather than mission-, lesson-,
- * or district-status-driven — just Kestrel Vane (only ever appears after
- * the campaign is complete).
+ * or district-status-driven — Kestrel Vane (only ever appears after the
+ * campaign is complete) and, since Meridian 1.3, reunited-owner (only ever
+ * appears after lesson:english-001 completes, and has no district-status
+ * arc of her own — the same reason a single static line fits her).
  */
-const STATIC_DIALOGUE_NPC_IDS: ReadonlySet<string> = new Set(['city-voice'])
+const STATIC_DIALOGUE_NPC_IDS: ReadonlySet<string> = new Set(['city-voice', 'reunited-owner'])
 
 /**
  * Derives which authored dialogue bucket an NPC falls into right now, from

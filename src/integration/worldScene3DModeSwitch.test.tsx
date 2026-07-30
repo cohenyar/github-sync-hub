@@ -24,6 +24,18 @@ vi.mock('@react-three/drei', () => ({
   PerspectiveCamera: () => null,
 }))
 
+// Under Vitest's fireEvent.click (unlike a real browser click), MouseEvent's
+// detail is 0 — the same signal SettingsMenu already treats as
+// "keyboard-sourced" (see blurOnPointerActivation) — so the settings popover
+// never auto-closes here once opened. Checking first, rather than
+// unconditionally clicking the trigger, keeps this correct regardless of
+// whether an earlier action already opened it.
+function ensureSettingsMenuOpen() {
+  if (!screen.queryByRole('menu')) {
+    fireEvent.click(screen.getByTestId('settings-menu-button'))
+  }
+}
+
 describe('World Scene (Phase 2): mode-switch wiring', () => {
   it('shows the 3D scene container by default — the World Scene is the home view — without touching the classic dashboard', async () => {
     render(<GameApp />)
@@ -37,11 +49,13 @@ describe('World Scene (Phase 2): mode-switch wiring', () => {
     render(<GameApp />)
     await screen.findByTestId('world-scene-3d')
 
+    ensureSettingsMenuOpen()
     fireEvent.click(screen.getByTestId('toggle-world-scene-button'))
 
     expect(screen.queryByTestId('world-scene-3d')).not.toBeInTheDocument()
     expect(await screen.findByRole('button', { name: he.run })).toBeInTheDocument()
 
+    ensureSettingsMenuOpen()
     fireEvent.click(screen.getByTestId('toggle-world-scene-button'))
 
     expect(await screen.findByTestId('world-scene-3d')).toBeInTheDocument()

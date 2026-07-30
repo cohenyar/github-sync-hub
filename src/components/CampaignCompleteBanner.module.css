@@ -5,7 +5,11 @@
   -webkit-backdrop-filter: var(--ds-glass-blur);
   border-radius: var(--ds-radius-lg);
   padding: var(--ds-space-6);
-  margin: 0 var(--ds-space-6) var(--ds-space-4);
+  /* GameControlBar's HUD shell is position:fixed (Meridian 1.2) and no
+     longer reserves layout height — this banner (rendered as its very next
+     sibling) needs its own top clearance so it doesn't render underneath
+     the floating brand/settings/account corners. */
+  margin: 76px var(--ds-space-6) var(--ds-space-4);
   text-align: center;
   box-shadow: var(--ds-glow-accent);
   animation: reveal var(--ds-duration-slow) var(--ds-ease-out);

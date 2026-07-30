@@ -14,7 +14,7 @@ test.describe('Onboarding — first-time player', () => {
 
     await expect(page.getByTestId('boot-sequence')).toBeVisible()
     // No game chrome yet — the boot sequence fully owns the screen.
-    await expect(page.getByTestId('toggle-world-scene-button')).not.toBeVisible()
+    await expect(page.getByTestId('settings-menu-button')).not.toBeVisible()
 
     await page.getByTestId('boot-sequence-skip-button').click()
 
@@ -71,7 +71,10 @@ test.describe('Onboarding — returning player', () => {
 
     await expect(page.getByTestId('boot-sequence')).not.toBeVisible()
     await expect(page.getByTestId('world-scene-3d')).toBeVisible()
-    await expect(page.getByTestId('odin-presence')).not.toBeVisible()
+    // Meridian 1.3: a returning player is not silent — Odin gives a
+    // one-time welcome-back line (Core Loop §01), distinct from the
+    // first-time greeting above.
+    await expect(page.getByTestId('odin-presence')).toContainText('ברוך שובך למרידיאן')
   })
 })
 
@@ -86,7 +89,9 @@ test.describe('Onboarding — New Game brings the boot sequence back', () => {
     await page.reload()
     await expect(page.getByTestId('world-scene-3d')).toBeVisible()
 
+    await page.getByTestId('settings-menu-button').click()
     await page.getByTestId('toggle-world-scene-button').click()
+    await page.getByTestId('settings-menu-button').click()
     await page.getByTestId('new-game-button').click()
     await page.getByTestId('confirm-reset-yes-button').click()
 

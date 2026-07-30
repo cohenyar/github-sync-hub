@@ -1,28 +1,37 @@
-/* Game control bar. Glass topbar consistent with the platform AppShell,
- * but self-contained (the game lives inside /world, not the routed shell).
+/* Corner HUD shell (Meridian 1.2). Floats over the world/dashboard instead
+ * of occupying real layout height — the brand mark and the settings/account
+ * controls sit in their own top corners, each individually interactive,
+ * with the rest of the bar's footprint (this element itself) inert.
  * All values from --ds-* tokens. */
 
 .bar {
-  position: sticky;
+  position: fixed;
   inset-block-start: 0;
-  z-index: 20;
+  inset-inline: 0;
+  z-index: 30;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  flex-wrap: wrap;
   gap: var(--ds-space-3);
-  padding-inline: var(--ds-space-5);
-  padding-block: var(--ds-space-3);
-  background: rgba(5, 7, 13, 0.72);
-  backdrop-filter: var(--ds-glass-blur);
-  -webkit-backdrop-filter: var(--ds-glass-blur);
-  border-block-end: 1px solid var(--ds-border);
+  padding: var(--ds-space-4);
+  pointer-events: none;
 }
 
-.brand {
+.brandCorner,
+.actionsCorner {
+  pointer-events: auto;
   display: inline-flex;
   align-items: center;
   gap: var(--ds-space-3);
+}
+
+.brandCorner {
+  padding: 6px 14px 6px 6px;
+  border-radius: var(--ds-radius-pill);
+  background: rgba(5, 7, 13, 0.6);
+  backdrop-filter: var(--ds-glass-blur);
+  -webkit-backdrop-filter: var(--ds-glass-blur);
+  border: 1px solid var(--ds-border);
 }
 
 .brandMark {
@@ -36,60 +45,82 @@
 .brandName {
   font-family: var(--ds-font-display);
   font-weight: 700;
-  font-size: var(--ds-text-xl);
+  font-size: var(--ds-text-lg);
   letter-spacing: var(--ds-tracking-tight);
   color: var(--ds-text-strong);
 }
 
-.actions {
-  display: flex;
-  flex-wrap: wrap;
+/* Meridian 1.3 — Explorer Rank: always visible, never behind the settings
+   menu, giving the same "one more push" pull an XP bar gives without a
+   second HUD element competing for space. */
+.rankBadge {
+  padding-inline-start: var(--ds-space-2);
+  border-inline-start: 1px solid var(--ds-border);
+  font-size: var(--ds-text-xs);
+  color: var(--ds-text-muted);
+  white-space: nowrap;
+}
+
+@media (max-width: 479.98px) {
+  .rankBadge {
+    display: none;
+  }
+}
+
+/* Meridian 1.3 — Archive Pages toggle, sitting alongside settings/account. */
+.archiveButton {
+  position: relative;
+  display: inline-flex;
   align-items: center;
-  gap: var(--ds-space-2);
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--ds-radius-pill);
+  border: 1px solid var(--ds-border);
+  background: var(--ds-surface-muted);
+  color: var(--ds-text);
+  font-size: 18px;
+  cursor: pointer;
+  transition: border-color var(--ds-duration-base) var(--ds-ease-out), background var(--ds-duration-base) var(--ds-ease-out);
+}
+
+.archiveButton:hover,
+.archiveButton:focus-visible {
+  border-color: var(--ds-border-strong);
+  background: var(--ds-surface);
+}
+
+.archiveCount {
+  position: absolute;
+  top: -4px;
+  inset-inline-end: -4px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 3px;
+  border-radius: var(--ds-radius-pill);
+  background: var(--ds-gradient-brand);
+  color: var(--ds-on-accent);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
 }
 
 .savedConfirmation {
   align-self: center;
+  padding-inline: var(--ds-space-3);
+  padding-block: 6px;
+  border-radius: var(--ds-radius-pill);
+  background: rgba(52, 211, 153, 0.14);
   color: var(--ds-success);
   font-size: var(--ds-text-sm);
   font-weight: 600;
 }
 
-.confirmPrompt {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--ds-space-2);
-  padding-inline: var(--ds-space-3);
-  padding-block: var(--ds-space-1);
-  border-radius: var(--ds-radius-pill);
-  border: 1px solid rgba(248, 113, 113, 0.4);
-  background: rgba(248, 113, 113, 0.12);
-}
-
-.confirmPromptText {
-  color: var(--ds-text);
-  font-size: var(--ds-text-sm);
-  white-space: nowrap;
-}
-
-/* Danger action = the existing secondary Button, recolored by overriding
-   only its internal --_* hooks with the existing --ds-danger token. The
-   shared Button component itself is not modified. */
-.dangerAction {
-  --_bg: rgba(248, 113, 113, 0.14);
-  --_border: rgba(248, 113, 113, 0.4);
-  --_fg: var(--ds-danger);
-}
-
-/* Mobile: brand + wrapping actions, comfortable targets, nothing clipped. */
-@media (max-width: 899.98px) {
-  .bar {
-    padding-inline: var(--ds-space-4);
-  }
+/* Mobile: shrink the brand chip's label so it never crowds the settings/
+   account controls in the opposite corner. */
+@media (max-width: 479.98px) {
   .brandName {
-    font-size: var(--ds-text-lg);
-  }
-  .actions {
-    inline-size: 100%;
+    display: none;
   }
 }

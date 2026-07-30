@@ -27,8 +27,8 @@ export function getDistrictStatusLabel(status: DistrictStatus): string {
  * transition (see CoreTransitionOverlay).
  */
 const DISTRICT_STATUS_COLOR: Record<DistrictStatus, string> = {
-  thriving: '#33d6a6',
-  stable: '#5b8def',
+  thriving: '#43e5d6',
+  stable: '#5b8cff',
   unstable: '#8394ad',
 }
 

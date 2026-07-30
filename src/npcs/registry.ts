@@ -91,6 +91,21 @@ const npcs: NpcConfig[] = [
     roleHe: 'מורה לאנגלית',
     descriptionHe: 'מלמדת אוצר מילים וכישורי שפה במרכז השפה האנגלית.',
   },
+  // Meridian 1.3 — Narrative Backbone §07 (the consequence rule): "another
+  // citizen reacts" for lesson:english-001. Never visible before that
+  // lesson completes — she is already reunited with her dog by the time the
+  // player ever meets her, which is the point: proof the translated board
+  // already did its job, not a second request for help.
+  {
+    id: 'reunited-owner',
+    name: 'מיכל אורן',
+    districtId: 'core',
+    role: 'Meridian Resident',
+    description: 'Returned to the notice board after her dog was found, still thanking whoever helped translate it.',
+    unlockConditions: [{ kind: 'lessonCompleted', lessonId: 'lesson:english-001' }],
+    roleHe: 'תושבת מרידיאן',
+    descriptionHe: 'חזרה ללוח ההודעות אחרי שכלבה נמצא, ועדיין מודה לכל מי שעזר בתרגום.',
+  },
 ]
 
 /**

@@ -23,6 +23,7 @@ vi.mock('./db/database', async () => {
 function renderReturningPlayer() {
   markOnboardingComplete()
   render(<GameApp />)
+  fireEvent.click(screen.getByTestId('settings-menu-button'))
   fireEvent.click(screen.getByTestId('toggle-world-scene-button'))
 }
 

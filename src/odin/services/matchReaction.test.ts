@@ -43,6 +43,21 @@ const reactions: OdinReaction[] = [
     trigger: { event: 'LessonFailed' },
     message: 'a lesson attempt failed',
   },
+  {
+    id: 'archive-page-found-generic',
+    trigger: { event: 'ArchivePageFound' },
+    message: 'something worth keeping',
+  },
+  {
+    id: 'archive-page-trade-count-found',
+    trigger: { event: 'ArchivePageFound', pageId: 'archive-page:trade-count' },
+    message: 'the trade count page specifically',
+  },
+  {
+    id: 'session-resumed',
+    trigger: { event: 'SessionResumed' },
+    message: 'welcome back',
+  },
 ]
 
 describe('matchReaction — prefers specific triggers over generic ones', () => {
@@ -94,6 +109,21 @@ describe('matchReaction — prefers specific triggers over generic ones', () => 
   it('matches LessonFailed as its own event, never falling back to QueryFailed reactions', () => {
     const event: GameEvent = { type: 'LessonFailed', lessonId: 'lesson:math-001' }
     expect(matchReaction(reactions, event)?.id).toBe('lesson-failed-generic')
+  })
+
+  it('picks the page-specific ArchivePageFound reaction over the generic one (Meridian 1.3)', () => {
+    const event: GameEvent = { type: 'ArchivePageFound', pageId: 'archive-page:trade-count' }
+    expect(matchReaction(reactions, event)?.id).toBe('archive-page-trade-count-found')
+  })
+
+  it('falls back to the generic ArchivePageFound reaction for a different page id (Meridian 1.3)', () => {
+    const event: GameEvent = { type: 'ArchivePageFound', pageId: 'archive-page:lost-and-found' }
+    expect(matchReaction(reactions, event)?.id).toBe('archive-page-found-generic')
+  })
+
+  it('matches SessionResumed as its own event (Meridian 1.3)', () => {
+    const event: GameEvent = { type: 'SessionResumed' }
+    expect(matchReaction(reactions, event)?.id).toBe('session-resumed')
   })
 })
 

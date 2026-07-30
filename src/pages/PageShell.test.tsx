@@ -21,7 +21,7 @@ const STUDENT_AUTH: AuthContextValue = {
 const ADMIN_AUTH: AuthContextValue = {
   ...STUDENT_AUTH,
   status: 'signed-in',
-  user: { id: 'admin-1', email: 'admin@example.com', avatarUrl: null },
+  user: { id: 'admin-1', email: 'admin@example.com', avatarUrl: null, displayName: null },
   role: 'admin',
   isAdmin: true,
   configured: true,

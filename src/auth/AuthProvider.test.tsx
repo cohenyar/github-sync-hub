@@ -30,7 +30,7 @@ const FAKE_SESSION = {
   user: {
     id: 'user-123',
     email: 'student@example.com',
-    user_metadata: { avatar_url: 'https://example.com/avatar.png' },
+    user_metadata: { avatar_url: 'https://example.com/avatar.png', full_name: 'תלמיד לדוגמה' },
   },
 } as const
 
@@ -45,6 +45,7 @@ function Probe() {
       <span data-testid="status">{auth.status}</span>
       <span data-testid="role">{auth.role ?? ''}</span>
       <span data-testid="email">{auth.user?.email ?? ''}</span>
+      <span data-testid="display-name">{auth.user?.displayName ?? ''}</span>
       <span data-testid="error">{auth.authError ?? ''}</span>
       <button data-testid="sign-out" onClick={() => void auth.signOut()}>
         sign out
@@ -75,6 +76,7 @@ describe('AuthProvider — fail-closed role resolution', () => {
     await waitFor(() => expect(screen.getByTestId('status')).toHaveTextContent('signed-in'))
     expect(screen.getByTestId('role')).toHaveTextContent('admin')
     expect(screen.getByTestId('email')).toHaveTextContent('student@example.com')
+    expect(screen.getByTestId('display-name')).toHaveTextContent('תלמיד לדוגמה')
     expect(screen.getByTestId('error')).toHaveTextContent('')
   })
 

@@ -25,6 +25,7 @@ test.describe('Save/Load and load-on-boot persist world and progress across a re
     await expect(page.getByTestId('progress-badge')).toHaveAttribute('data-percentage', '17')
     await expect(page.getByText(/"signal": 100/)).toBeVisible()
 
+    await page.getByTestId('settings-menu-button').click()
     await page.getByTestId('save-button').click()
     await expect(page.getByTestId('saved-confirmation')).toBeVisible()
 
@@ -40,6 +41,7 @@ test.describe('Save/Load and load-on-boot persist world and progress across a re
     await expect(page.getByText(/"signal": 100/)).toBeVisible()
 
     // New Game requires an explicit confirmation step (Sprint 2 polish).
+    await page.getByTestId('settings-menu-button').click()
     await page.getByTestId('new-game-button').click()
     await expect(page.getByTestId('reset-confirm-prompt')).toBeVisible()
     await page.getByTestId('confirm-reset-yes-button').click()
@@ -65,6 +67,7 @@ test.describe('Save/Load and load-on-boot persist world and progress across a re
     await verdictIsPass(page)
     await expect(page.getByTestId('progress-badge')).toHaveAttribute('data-percentage', '17')
 
+    await page.getByTestId('settings-menu-button').click()
     await page.getByTestId('new-game-button').click()
     await expect(page.getByTestId('reset-confirm-prompt')).toBeVisible()
 

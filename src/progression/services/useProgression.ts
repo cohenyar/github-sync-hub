@@ -2,14 +2,20 @@ import { useState } from 'react'
 import { defaultCampaign, type GameCampaign } from '../../campaign'
 import type { PlayerProgress } from '../types'
 import { createInitialPlayerProgress } from './createInitialPlayerProgress'
+import { recordArchivePageFound as applyArchivePageFound } from './recordArchivePageFound'
 import { recordLessonCompletion as applyLessonCompletion } from './recordLessonCompletion'
 import { recordMissionCompletion } from './recordMissionCompletion'
+import { recordNpcConversation as applyNpcConversation } from './recordNpcConversation'
 
 export interface UseProgressionResult {
   progress: PlayerProgress
   recordCompletion: (missionId: string) => void
   /** Batch 3A.4B — the lesson-side counterpart to recordCompletion; never touches completedMissionIds/campaignProgress. */
   recordLessonCompletion: (lessonId: string) => void
+  /** Meridian 1.3 — one tick per NPC each time their dialogue opens; its own axis, independent of mission/lesson completion. */
+  recordNpcConversation: (npcId: string) => void
+  /** Meridian 1.3 — idempotent; finding an already-collected page again is a no-op. */
+  recordArchivePageFound: (pageId: string) => void
   restoreProgress: (progress: PlayerProgress) => void
 }
 
@@ -36,9 +42,24 @@ export function useProgression(
     setProgress((current) => applyLessonCompletion(current, lessonId))
   }
 
+  function recordNpcConversation(npcId: string) {
+    setProgress((current) => applyNpcConversation(current, npcId))
+  }
+
+  function recordArchivePageFound(pageId: string) {
+    setProgress((current) => applyArchivePageFound(current, pageId))
+  }
+
   function restoreProgress(next: PlayerProgress) {
     setProgress(next)
   }
 
-  return { progress, recordCompletion, recordLessonCompletion, restoreProgress }
+  return {
+    progress,
+    recordCompletion,
+    recordLessonCompletion,
+    recordNpcConversation,
+    recordArchivePageFound,
+    restoreProgress,
+  }
 }

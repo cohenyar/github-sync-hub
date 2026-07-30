@@ -8,6 +8,11 @@
   min-block-size: 0;
   isolation: isolate;
   color: var(--ds-text);
+  /* GameControlBar's HUD shell is position:fixed (Meridian 1.2) and no
+     longer reserves layout height of its own — this view still needs
+     clearance so its own header doesn't render underneath the floating
+     brand/settings/account corners. */
+  padding-block-start: 76px;
 }
 
 /* --- Background layers (decorative, non-interactive) ------------------ */

@@ -24,12 +24,12 @@ test.describe('Routing foundation', () => {
   test('browser back/forward navigates between routes', async ({ page }) => {
     await page.goto('/')
     await page.getByTestId('landing-enter-world-link').click()
-    await expect(page.getByTestId('toggle-world-scene-button')).toBeVisible()
+    await expect(page.getByTestId('settings-menu-button')).toBeVisible()
 
     await page.goBack()
     await expect(page.getByTestId('landing-enter-world-link')).toBeVisible()
 
     await page.goForward()
-    await expect(page.getByTestId('toggle-world-scene-button')).toBeVisible()
+    await expect(page.getByTestId('settings-menu-button')).toBeVisible()
   })
 })

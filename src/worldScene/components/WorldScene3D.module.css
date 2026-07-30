@@ -38,7 +38,11 @@
 
 .hud {
   position: absolute;
-  top: 12px;
+  /* GameControlBar's brand mark is now a fixed corner chip (Meridian 1.2)
+     floating over this same top-start corner of the viewport, since the
+     control bar no longer reserves layout height — push this district
+     readout down far enough to clear it. */
+  top: 76px;
   inset-inline-start: 12px;
   padding: 4px 12px;
   border-radius: 999px;

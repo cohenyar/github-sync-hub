@@ -1,4 +1,6 @@
 export * from './createInitialPlayerProgress'
 export * from './recordMissionCompletion'
 export * from './recordLessonCompletion'
+export * from './recordNpcConversation'
+export * from './recordArchivePageFound'
 export * from './useProgression'

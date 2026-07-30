@@ -16,6 +16,8 @@ export function evaluateCondition(
       return true
     case 'missionCompleted':
       return progress.completedMissionIds.includes(condition.missionId)
+    case 'lessonCompleted':
+      return (progress.completedLessonIds ?? []).includes(condition.lessonId)
     case 'campaignCompleted':
       return progress.campaignProgress.campaignId === condition.campaignId && progress.campaignProgress.isComplete
     case 'progressionPercentage':

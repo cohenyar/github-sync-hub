@@ -1,5 +1,6 @@
 .wrap {
-  display: flex;
+  position: relative;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
   margin-inline-start: auto;
@@ -10,28 +11,122 @@
   color: var(--text-muted);
 }
 
-.account {
+.trigger {
   display: flex;
   align-items: center;
   gap: 8px;
+  padding: 4px;
+  padding-inline-end: 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 150ms ease, background 150ms ease;
+}
+
+.trigger:hover,
+.trigger:focus-visible,
+.trigger[aria-expanded='true'] {
+  border-color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .avatar {
-  width: 24px;
-  height: 24px;
+  width: 30px;
+  height: 30px;
   border-radius: 999px;
   object-fit: cover;
+  flex-shrink: 0;
 }
 
-.email {
-  color: var(--text);
-  max-width: 180px;
+.avatarFallback {
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  color: var(--text-h);
+  font-weight: 700;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.name {
+  max-width: 140px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-weight: 600;
+}
+
+.menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  inset-inline-end: 0;
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--panel-bg);
+  box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.55);
+  z-index: 40;
+}
+
+.menuHeader {
+  display: flex;
+  flex-direction: column;
+  padding: 6px 8px 10px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.menuName {
+  font-weight: 700;
+  color: var(--text-h);
+  font-size: 0.9rem;
+}
+
+.menuEmail {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  margin-top: 2px;
+}
+
+.menuItem {
+  display: block;
+  width: 100%;
+  text-align: start;
+  padding: 8px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.menuItem:hover,
+.menuItem:focus-visible {
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .error {
   color: var(--danger);
-  max-width: 220px;
+  background: var(--danger-bg);
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 0.78rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trigger {
+    transition: none;
+  }
 }

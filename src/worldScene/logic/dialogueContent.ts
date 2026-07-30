@@ -61,6 +61,10 @@ const DISTRICT_DIALOGUE: Readonly<Record<string, Readonly<Record<DistrictStatus,
 
 const STATIC_DIALOGUE: Readonly<Record<string, NpcDialogueContent>> = {
   'city-voice': { greeting: 'אני קסטרל ויין. מרידיאן מדברת עכשיו בקול אחד, ואני כאן כדי לשאת אותו.' },
+  // Meridian 1.3 — the consequence rule in action: she's only ever visible
+  // after lesson:english-001 completes, already reunited by the time the
+  // player meets her.
+  'reunited-owner': { greeting: 'שלום, אני מיכל. הכלב שלי חזר הביתה בזכות מי שתרגם את הלוח. תודה.' },
 }
 
 /**
@@ -72,31 +76,53 @@ const STATIC_DIALOGUE: Readonly<Record<string, NpcDialogueContent>> = {
  * a linked lesson id exists) — completing a lesson again is an explicit,
  * supported, idempotent replay, not a locked-off state.
  */
+/**
+ * Meridian 1.3 — Narrative Backbone §06/§07: neither phase names the subject
+ * or calls this a lesson. "available" hands off a citizen's real problem;
+ * "completed" is the specific, persistent proof it was actually solved —
+ * not a generic "well done," so revisiting the teacher afterward still
+ * means something (the consequence rule).
+ */
 const LESSON_DIALOGUE: Readonly<Record<string, Readonly<Record<LessonDialoguePhase, NpcDialogueContent>>>> = {
   'math-teacher': {
     available: {
       greeting: 'שלום, אני נדב שטרן. אני מלמד מתמטיקה כאן באקדמיה.',
-      missionContext: 'יש לי שיעור קצר בחשבון בסיסי שמוכן בשבילך.',
+      missionContext: 'סוחר במזרח מתקשה לסגור את המניפסט לפני רדת החשיכה — אולי תוכל/י לעזור לו לספור.',
     },
     completed: {
       greeting: 'שלום, אני נדב שטרן.',
-      missionContext: 'כל הכבוד על סיום השיעור! אפשר לתרגל אותו שוב בכל עת.',
+      missionContext: 'המניפסט נסגר בזמן בזכותך. הסוחר עדיין מודה לך על זה.',
     },
   },
   'english-teacher': {
     available: {
       greeting: 'שלום, אני טליה ריבס. אני מלמדת אנגלית כאן במרכז השפה.',
-      missionContext: 'יש לי שיעור קצר באוצר מילים באנגלית שמוכן בשבילך.',
+      missionContext: 'מתנדבת שהגיעה לעזור באיתור חיות ודברים אבודים לא מצליחה לקרוא את הלוח שלנו. אולי תוכל/י לעזור לה.',
     },
     completed: {
       greeting: 'שלום, אני טליה ריבס.',
-      missionContext: 'כל הכבוד על סיום השיעור! אפשר לתרגל אותו שוב בכל עת.',
+      missionContext: 'הלוח מתורגם, והיא כבר עוזרת לתושבים בזכות זה. תודה לך.',
     },
   },
 }
 
 const FALLBACK_DIALOGUE: NpcDialogueContent = {
   greeting: 'שלום.',
+}
+
+/**
+ * Meridian 1.3 — Core Loop §06: an extra, personal line shown only once an
+ * NPC reaches the "friend" familiarity tier — layered on top of whatever
+ * getNpcDialogue already returns, not a replacement for it. Authoring one
+ * per NPC is content work; the mechanism itself (npcFamiliarity) already
+ * applies to all of them.
+ */
+const FRIEND_BONUS_LINE: Readonly<Record<string, string>> = {
+  'archivist-mera': 'אחרי כל הפעמים האלה, את/ה כבר מרגיש/ה כמו חלק מהמוקד הזה.',
+}
+
+export function getFriendBonusLine(npcId: string): string | undefined {
+  return FRIEND_BONUS_LINE[npcId]
 }
 
 export function getNpcDialogue(npcId: string, state: NpcDialogueState): NpcDialogueContent {

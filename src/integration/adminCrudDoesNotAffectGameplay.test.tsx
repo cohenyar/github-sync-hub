@@ -37,6 +37,7 @@ function renderGameWithAdmin() {
       <AdminPanel />
     </>,
   )
+  fireEvent.click(screen.getByTestId('settings-menu-button'))
   fireEvent.click(screen.getByTestId('toggle-world-scene-button'))
 }
 

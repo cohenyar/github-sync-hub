@@ -37,6 +37,10 @@ const NPC_POSITIONS: Record<string, Position2D> = {
   // fights with the building pushing the player back.
   'math-teacher': { x: -6, z: -4.9 },
   'english-teacher': { x: 6, z: -4.9 },
+  // Meridian 1.3 — stationed a clear step east of the English Center's own
+  // door position, close enough to read as "at the board" without
+  // overlapping the teacher or the building's collider.
+  'reunited-owner': { x: 8.5, z: -4.5 },
 }
 
 /** Falls back to its district's own center for any NPC not in the layout doc yet, rather than dropping it. */

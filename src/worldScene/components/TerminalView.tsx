@@ -3,9 +3,11 @@ import type { CampaignSummary } from '../../campaign/types'
 import { MissionPanel, SqlEditorPanel } from '../../components'
 import type { MissionPhase, MissionStatus } from '../../missions/missionManager'
 import type { MissionConfig } from '../../missions/types'
+import type { NpcConfig } from '../../npcs'
 import type { ContentStatus } from '../../unlocks'
 import { he } from '../../i18n'
 import type { DistrictStatus } from '../../worldState'
+import { ArchiveIntro } from './ArchiveIntro'
 import { getDistrictStatusColor, getDistrictStatusLabel } from '../logic/sceneSelectors'
 import styles from './TerminalView.module.css'
 
@@ -24,6 +26,10 @@ export interface TerminalViewProps {
   destinationProgress: { completed: number; total: number }
   onContinue: () => void
   onReturnToWorld: () => void
+  /** The mission's companion NPC, when one is unlocked for it — feeds the Archive's narrative intro. */
+  npc?: NpcConfig
+  /** The companion's own authored greeting/context line, reused as-is when present. */
+  npcMessage?: string
 }
 
 /** How long the completion beat plays — short enough to feel snappy, long enough to register as an event. */
@@ -88,6 +94,8 @@ export function TerminalView({
   destinationProgress,
   onContinue,
   onReturnToWorld,
+  npc,
+  npcMessage,
 }: TerminalViewProps) {
   const glowColor = getDistrictStatusColor(coreStatus)
   const isCelebrating = useCompletionCelebration(status.phase)
@@ -129,6 +137,7 @@ export function TerminalView({
           {destinationProgress.completed}/{destinationProgress.total}
         </span>
       </div>
+      <ArchiveIntro mission={mission} npc={npc} npcMessage={npcMessage} />
       <div className={styles.scrollArea}>
         <MissionPanel
           mission={mission}

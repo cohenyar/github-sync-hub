@@ -10,13 +10,16 @@ export function CoreArchiveBuilding() {
 
   return (
     <group position={[x, 0, z]}>
+      {/* Meridian 1.2 palette pass: nudged from #4a4358/#5f5570 toward the
+          brand's violet, matching DistrictMarker's Core landmark color —
+          both were already this hue family, just desaturated. */}
       <mesh position={[0, 0.9, 0]}>
         <cylinderGeometry args={[1.3, 1.4, 1.8, 12]} />
-        <meshStandardMaterial color="#4a4358" flatShading />
+        <meshStandardMaterial color="#584a72" flatShading />
       </mesh>
       <mesh position={[0, 2.15, 0]}>
         <coneGeometry args={[1.55, 0.9, 12]} />
-        <meshStandardMaterial color="#5f5570" flatShading />
+        <meshStandardMaterial color="#6f5f8a" flatShading />
       </mesh>
     </group>
   )

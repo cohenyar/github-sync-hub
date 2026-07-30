@@ -4,9 +4,15 @@ import { defaultCampaign } from '../../campaign'
 import { createInitialPlayerProgress } from '../services/createInitialPlayerProgress'
 import { recordLessonCompletion } from '../services/recordLessonCompletion'
 import { recordMissionCompletion } from '../services/recordMissionCompletion'
+import { recordNpcConversation } from '../services/recordNpcConversation'
 import {
   getCompletionPercentage,
   getCurrentMissionId,
+  getExplorerRank,
+  getExplorerRankLabel,
+  getNpcConversationCount,
+  getNpcFamiliarityLabel,
+  getNpcFamiliarityTier,
   getPlayerProgressSummary,
   getUnlockedMissionIds,
   isLessonCompleted,
@@ -147,5 +153,80 @@ describe('backward compatibility with the real campaign', () => {
     }
 
     expect(getPlayerProgressSummary(progress).isCampaignComplete).toBe(true)
+  })
+})
+
+describe('getExplorerRank (Meridian 1.3 — one shared rank across every subject)', () => {
+  it('starts at the newcomer tier with zero completions', () => {
+    const progress = createInitialPlayerProgress()
+    const rank = getExplorerRank(progress)
+    expect(rank.completions).toBe(0)
+    expect(rank.tier).toBe('newcomer')
+  })
+
+  it('counts a lesson completion toward the same rank as a mission completion', () => {
+    let progress = createInitialPlayerProgress()
+    progress = recordLessonCompletion(progress, 'lesson:math-001')
+    expect(getExplorerRank(progress).completions).toBe(1)
+    expect(getExplorerRank(progress).tier).toBe('helper')
+
+    progress = recordMissionCompletion(progress, 'first-contact', defaultCampaign)
+    expect(getExplorerRank(progress).completions).toBe(2)
+  })
+
+  it('advances through every tier as total completions (missions + lessons) rise', () => {
+    let progress = createInitialPlayerProgress()
+    progress = recordLessonCompletion(progress, 'lesson:math-001')
+    progress = recordLessonCompletion(progress, 'lesson:english-001')
+    progress = recordMissionCompletion(progress, 'first-contact', defaultCampaign)
+    progress = recordMissionCompletion(progress, 'district-ties', defaultCampaign)
+    expect(getExplorerRank(progress).tier).toBe('trusted')
+
+    progress = recordMissionCompletion(progress, 'south-stability', defaultCampaign)
+    progress = recordMissionCompletion(progress, 'full-signal', defaultCampaign)
+    progress = recordMissionCompletion(progress, 'linked-records', defaultCampaign)
+    expect(getExplorerRank(progress).tier).toBe('guardian')
+  })
+
+  it('reports the total content count as missions plus lessons together', () => {
+    const progress = createInitialPlayerProgress()
+    expect(getExplorerRank(progress).totalContent).toBe(defaultCampaign.missions.length + 2)
+  })
+
+  it('gives every tier a non-empty, distinct label', () => {
+    const tiers = ['newcomer', 'helper', 'trusted', 'guardian'] as const
+    const labels = tiers.map(getExplorerRankLabel)
+    for (const label of labels) expect(label.length).toBeGreaterThan(0)
+    expect(new Set(labels).size).toBe(tiers.length)
+  })
+})
+
+describe('NPC familiarity (Meridian 1.3)', () => {
+  it('starts a never-met NPC at zero conversations and the stranger tier', () => {
+    const progress = createInitialPlayerProgress()
+    expect(getNpcConversationCount(progress, 'archivist-mera')).toBe(0)
+    expect(getNpcFamiliarityTier(progress, 'archivist-mera')).toBe('stranger')
+  })
+
+  it('advances through every tier as conversation count rises, independent of other NPCs', () => {
+    let progress = createInitialPlayerProgress()
+    progress = recordNpcConversation(progress, 'archivist-mera')
+    expect(getNpcFamiliarityTier(progress, 'archivist-mera')).toBe('acquaintance')
+    expect(getNpcFamiliarityTier(progress, 'north-warden')).toBe('stranger')
+
+    for (let i = 0; i < 4; i += 1) progress = recordNpcConversation(progress, 'archivist-mera')
+    expect(getNpcConversationCount(progress, 'archivist-mera')).toBe(5)
+    expect(getNpcFamiliarityTier(progress, 'archivist-mera')).toBe('trusted')
+
+    for (let i = 0; i < 5; i += 1) progress = recordNpcConversation(progress, 'archivist-mera')
+    expect(getNpcConversationCount(progress, 'archivist-mera')).toBe(10)
+    expect(getNpcFamiliarityTier(progress, 'archivist-mera')).toBe('friend')
+  })
+
+  it('gives every tier a non-empty, distinct label', () => {
+    const tiers = ['stranger', 'acquaintance', 'trusted', 'friend'] as const
+    const labels = tiers.map(getNpcFamiliarityLabel)
+    for (const label of labels) expect(label.length).toBeGreaterThan(0)
+    expect(new Set(labels).size).toBe(tiers.length)
   })
 })

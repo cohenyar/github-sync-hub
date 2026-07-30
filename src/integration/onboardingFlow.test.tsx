@@ -12,6 +12,18 @@ vi.mock('../db/database', async () => {
 const LOG_LINE_MS = 1600
 const ODIN_LINE_MS = 3200
 
+// Under Vitest's fireEvent.click (unlike a real browser click), MouseEvent's
+// detail is 0 — the same signal SettingsMenu already treats as
+// "keyboard-sourced" (see blurOnPointerActivation) — so the settings popover
+// never auto-closes here once opened. Checking first, rather than
+// unconditionally clicking the trigger, keeps this correct regardless of
+// whether an earlier action already opened it.
+function ensureSettingsMenuOpen() {
+  if (!screen.queryByRole('menu')) {
+    fireEvent.click(screen.getByTestId('settings-menu-button'))
+  }
+}
+
 async function advanceOneLine(ms: number) {
   await act(async () => {
     await vi.advanceTimersByTimeAsync(ms)
@@ -77,8 +89,11 @@ describe('Onboarding: first-time player', () => {
 
     // Toggle back and forth several times — WorldEntered must never publish
     // again, so Odin's narration history never grows past its one entry.
+    ensureSettingsMenuOpen()
     fireEvent.click(screen.getByTestId('toggle-world-scene-button'))
+    ensureSettingsMenuOpen()
     fireEvent.click(screen.getByTestId('toggle-world-scene-button'))
+    ensureSettingsMenuOpen()
     fireEvent.click(screen.getByTestId('toggle-world-scene-button'))
 
     // The classic dashboard's OdinPanel only renders a "history" list once
@@ -88,18 +103,21 @@ describe('Onboarding: first-time player', () => {
     expect(screen.queryByTestId('odin-history')).not.toBeInTheDocument()
   })
 
-  it('does not survive React remounting the component fresh (a real unmount/remount, not just a toggle)', () => {
+  it('does not replay the first-time world-entry greeting after a real unmount/remount (Meridian 1.3: a welcome-back line plays instead)', () => {
     const first = render(<GameApp />)
     fireEvent.click(screen.getByTestId('boot-sequence-skip-button'))
     expect(hasCompletedOnboarding()).toBe(true)
     first.unmount()
 
     // A fresh mount now finds the flag already set (this is the returning-
-    // player path) and must not show the boot sequence or re-greet.
+    // player path) and must not show the boot sequence or replay the
+    // first-time greeting — but Meridian 1.3 gives a returning player its
+    // own one-time welcome-back line (Core Loop §01), so Odin is not silent.
     render(<GameApp />)
     expect(screen.queryByTestId('boot-sequence')).not.toBeInTheDocument()
     expect(screen.getByTestId('world-scene-3d')).toBeInTheDocument()
-    expect(screen.queryByTestId('odin-presence')).not.toBeInTheDocument()
+    expect(screen.getByTestId('odin-presence')).not.toHaveTextContent('ברוך הבא למרידיאן')
+    expect(screen.getByTestId('odin-presence')).toHaveTextContent('ברוך שובך למרידיאן')
   })
 })
 
@@ -115,10 +133,38 @@ describe('Onboarding: returning player', () => {
     expect(screen.getByTestId('world-scene-3d')).toBeInTheDocument()
   })
 
-  it('does not narrate the first-time world-entry greeting', () => {
+  it('does not narrate the first-time world-entry greeting, but does get a Meridian 1.3 welcome-back line instead', () => {
     render(<GameApp />)
 
-    expect(screen.queryByTestId('odin-presence')).not.toBeInTheDocument()
+    expect(screen.getByTestId('odin-presence')).not.toHaveTextContent('ברוך הבא למרידיאן')
+    expect(screen.getByTestId('odin-presence')).toHaveTextContent('ברוך שובך למרידיאן')
+  })
+})
+
+describe('Onboarding: SessionResumed (Meridian 1.3)', () => {
+  it('never fires for a first-time player — WorldEntered is their only greeting', () => {
+    render(<GameApp />)
+    // The boot sequence owns the screen; skip it to reach the World Scene.
+    fireEvent.click(screen.getByTestId('boot-sequence-skip-button'))
+
+    expect(screen.getByTestId('odin-presence')).toHaveTextContent('ברוך הבא למרידיאן')
+    expect(screen.getByTestId('odin-presence')).not.toHaveTextContent('ברוך שובך למרידיאן')
+  })
+
+  it('fires exactly once per mount for a returning player, not once per render', () => {
+    markOnboardingComplete()
+    render(<GameApp />)
+
+    // Switch to the classic dashboard (a re-render, not a remount) to read
+    // Odin's full narration history via OdinPanel.
+    ensureSettingsMenuOpen()
+    fireEvent.click(screen.getByTestId('toggle-world-scene-button'))
+
+    // OdinPanel only renders a "history" list once more than one narration
+    // entry exists — its absence here proves the welcome-back line is still
+    // the *only* entry Odin has ever narrated, even after re-rendering.
+    expect(screen.getByTestId('odin-latest-message')).toHaveTextContent('ברוך שובך למרידיאן')
+    expect(screen.queryByTestId('odin-history')).not.toBeInTheDocument()
   })
 })
 
@@ -128,7 +174,9 @@ describe('Onboarding: New Game reset', () => {
     render(<GameApp />)
     expect(screen.getByTestId('world-scene-3d')).toBeInTheDocument()
 
+    ensureSettingsMenuOpen()
     fireEvent.click(screen.getByTestId('toggle-world-scene-button'))
+    ensureSettingsMenuOpen()
     fireEvent.click(screen.getByTestId('new-game-button'))
     fireEvent.click(screen.getByTestId('confirm-reset-yes-button'))
 

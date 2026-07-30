@@ -85,6 +85,34 @@ describe('NpcDialogue', () => {
   })
 })
 
+describe('NpcDialogue — familiarity tier (Meridian 1.3)', () => {
+  it('shows no badge and no bonus line when no tier is given', () => {
+    render(<NpcDialogue npc={mera} context={context()} onClose={vi.fn()} />)
+    expect(screen.queryByTestId('npc-familiarity-badge')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('npc-dialogue-friend-bonus')).not.toBeInTheDocument()
+  })
+
+  it('shows the tier badge once a tier is given', () => {
+    render(<NpcDialogue npc={mera} context={context()} onClose={vi.fn()} familiarityTier="acquaintance" />)
+    expect(screen.getByTestId('npc-familiarity-badge')).toBeInTheDocument()
+  })
+
+  it("shows an NPC's friend-tier bonus line only at the friend tier", () => {
+    const { rerender } = render(
+      <NpcDialogue npc={mera} context={context()} onClose={vi.fn()} familiarityTier="trusted" />,
+    )
+    expect(screen.queryByTestId('npc-dialogue-friend-bonus')).not.toBeInTheDocument()
+
+    rerender(<NpcDialogue npc={mera} context={context()} onClose={vi.fn()} familiarityTier="friend" />)
+    expect(screen.getByTestId('npc-dialogue-friend-bonus')).toBeInTheDocument()
+  })
+
+  it('shows no bonus line at the friend tier for an NPC with no authored line yet', () => {
+    render(<NpcDialogue npc={devrin} context={context()} onClose={vi.fn()} familiarityTier="friend" />)
+    expect(screen.queryByTestId('npc-dialogue-friend-bonus')).not.toBeInTheDocument()
+  })
+})
+
 describe('NpcDialogue — Escape to close (Batch 3A.3)', () => {
   it('calls onClose when Escape is pressed', () => {
     const onClose = vi.fn()
