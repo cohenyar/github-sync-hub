@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { resetTouchInput, setTouchVector } from '../../logic/touchInput'
 import styles from './TouchJoystick.module.css'
 
