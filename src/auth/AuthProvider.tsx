@@ -1,10 +1,26 @@
 import type { Session } from '@supabase/supabase-js'
 import { createContext, useEffect, useState, type ReactNode } from 'react'
 import { he } from '../i18n'
+import { lovable } from '../integrations/lovable/index'
 import { isSupabaseConfigured, supabase } from './supabaseClient'
-import type { AuthContextValue, AuthStatus, AuthUser, Role } from './types'
+import type { AuthActionResult, AuthContextValue, AuthStatus, AuthUser, Role } from './types'
 
 const VALID_ROLES: readonly Role[] = ['student', 'admin']
+
+/**
+ * Local-only marker for "I chose to play without an account". Deliberately
+ * separate from `meridian:save` (game progress) and from the Cloud account —
+ * clearing it never touches progress, and signing out never clears progress.
+ */
+const GUEST_KEY = 'meridian:guest'
+
+function readGuestFlag(): boolean {
+  try {
+    return localStorage.getItem(GUEST_KEY) === 'true'
+  } catch {
+    return false
+  }
+}
 
 function isValidRole(value: unknown): value is Role {
   return typeof value === 'string' && (VALID_ROLES as readonly string[]).includes(value)
@@ -35,18 +51,20 @@ function toAuthUser(session: Session): AuthUser {
 export const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 
 /**
- * Owns the entire Supabase session lifecycle. Deliberately independent of
- * the existing localStorage save system (src/persistence) — this never
- * reads or writes `meridian:save`; signing in or out only ever touches
- * Supabase's own session storage.
+ * The ONE auth provider in the app: it owns the entire Cloud session
+ * lifecycle (Google, email/password, reset) and the local guest flag.
+ * Deliberately independent of the local save system (src/persistence) — it
+ * never reads or writes `meridian:save`; signing in or out only ever
+ * touches the Cloud session and the guest marker.
  */
 export function AuthProvider({ children }: { children: ReactNode }) {
-  // Skips 'loading' entirely when unconfigured, so a missing Supabase setup
+  // Skips 'loading' entirely when unconfigured, so a missing Cloud setup
   // resolves instantly to guest mode instead of hanging forever.
   const [status, setStatus] = useState<AuthStatus>(isSupabaseConfigured ? 'loading' : 'signed-out')
   const [user, setUser] = useState<AuthUser | null>(null)
   const [role, setRole] = useState<Role | null>(null)
   const [authError, setAuthError] = useState<string | null>(null)
+  const [isGuest, setIsGuest] = useState<boolean>(readGuestFlag)
 
   useEffect(() => {
     if (!isSupabaseConfigured || !supabase) return
@@ -100,23 +118,82 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  function continueAsGuest() {
+    try {
+      localStorage.setItem(GUEST_KEY, 'true')
+    } catch {
+      /* private mode — guest play still works, it just isn't remembered */
+    }
+    setIsGuest(true)
+  }
+
+  function clearGuest() {
+    try {
+      localStorage.removeItem(GUEST_KEY)
+    } catch {
+      /* ignore */
+    }
+    setIsGuest(false)
+  }
+
   async function signInWithGoogle() {
-    if (!supabase) return
+    if (!isSupabaseConfigured) return
     setAuthError(null)
-    // The full current URL (not just the origin), so signing in from /world
-    // or /dashboard returns there after the OAuth round trip, instead of
-    // always landing back on the root path.
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: window.location.href },
+    clearGuest()
+    // Managed Google sign-in through Lovable Cloud. The redirect target is
+    // the full current URL, so signing in from /world or /dashboard returns
+    // there after the OAuth round trip.
+    const result = await lovable.auth.signInWithOAuth('google', { redirect_uri: window.location.href })
+    if (result.error) setAuthError(result.error.message ?? he.authUnavailableMessage)
+  }
+
+  async function signUpWithEmail(email: string, password: string, displayName?: string): Promise<AuthActionResult> {
+    if (!supabase) return { error: he.authUnavailableMessage }
+    setAuthError(null)
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/`,
+        data: displayName ? { full_name: displayName } : undefined,
+      },
     })
-    if (error) setAuthError(error.message)
+    if (error) return { error: error.message }
+    clearGuest()
+    // With email confirmation on (the default), signUp returns no session:
+    // the user is NOT signed in until they click the link in their inbox.
+    return { error: null, needsEmailConfirmation: !data.session }
+  }
+
+  async function signInWithEmail(email: string, password: string): Promise<AuthActionResult> {
+    if (!supabase) return { error: he.authUnavailableMessage }
+    setAuthError(null)
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) return { error: error.message }
+    clearGuest()
+    return { error: null }
+  }
+
+  async function sendPasswordReset(email: string): Promise<AuthActionResult> {
+    if (!supabase) return { error: he.authUnavailableMessage }
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    })
+    if (error) return { error: error.message }
+    return { error: null, needsEmailConfirmation: true }
+  }
+
+  async function updatePassword(password: string): Promise<AuthActionResult> {
+    if (!supabase) return { error: he.authUnavailableMessage }
+    const { error } = await supabase.auth.updateUser({ password })
+    if (error) return { error: error.message }
+    return { error: null }
   }
 
   async function signOut() {
     if (!supabase) return
-    // Only ever clears Supabase's own session — never touches
-    // meridian:save/localStorage (see src/persistence).
+    // Only ever clears the Cloud session — never touches meridian:save or
+    // any other local progress (see src/persistence).
     await supabase.auth.signOut()
   }
 
@@ -127,7 +204,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isAdmin: role === 'admin',
     authError,
     configured: isSupabaseConfigured,
+    isGuest,
+    continueAsGuest,
     signInWithGoogle,
+    signUpWithEmail,
+    signInWithEmail,
+    sendPasswordReset,
+    updatePassword,
     signOut,
   }
 
