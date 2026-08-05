@@ -1,20 +1,31 @@
+import { lazy, Suspense } from 'react'
 import { BrowserRouter, Route, Routes, useSearchParams } from 'react-router-dom'
 import { AuthProvider, ProtectedAdminRoute } from './auth'
-import GameApp from './GameApp'
-import {
-  AdminPage,
-  AuthPage,
-  CourseDetail,
-  Courses,
-  Dashboard,
-  LandingPage,
-  NotFound,
-  Profile,
-  Progress,
-  ResetPasswordPage,
-  Tutor,
-} from './pages'
-import { DesignSystemPage } from './pages/DesignSystemPage'
+import { LandingPage, NotFound } from './pages'
+import { AppLoading } from './pages/AppLoading'
+
+/**
+ * Startup performance: only the landing page (the first thing anyone sees)
+ * and the tiny NotFound page are in the initial bundle. Everything heavy —
+ * the 3D world + SQL engine (GameApp), the admin surface, and the secondary
+ * platform pages — is code-split, so first paint no longer waits on a
+ * ~1.5 MB single bundle. Routing and behavior are otherwise unchanged.
+ */
+const GameApp = lazy(() => import('./GameApp'))
+const AdminPage = lazy(() => import('./pages/AdminPage').then((m) => ({ default: m.AdminPage })))
+const AuthPage = lazy(() => import('./pages/AuthPage').then((m) => ({ default: m.AuthPage })))
+const ResetPasswordPage = lazy(() =>
+  import('./pages/ResetPasswordPage').then((m) => ({ default: m.ResetPasswordPage })),
+)
+const Dashboard = lazy(() => import('./pages/Dashboard').then((m) => ({ default: m.Dashboard })))
+const Courses = lazy(() => import('./pages/Courses').then((m) => ({ default: m.Courses })))
+const CourseDetail = lazy(() => import('./pages/CourseDetail').then((m) => ({ default: m.CourseDetail })))
+const Tutor = lazy(() => import('./pages/Tutor').then((m) => ({ default: m.Tutor })))
+const Progress = lazy(() => import('./pages/Progress').then((m) => ({ default: m.Progress })))
+const Profile = lazy(() => import('./pages/Profile').then((m) => ({ default: m.Profile })))
+const DesignSystemPage = lazy(() =>
+  import('./pages/DesignSystemPage').then((m) => ({ default: m.DesignSystemPage })),
+)
 
 /**
  * Batch 3A.2: the only place that reads the Dashboard's `?path=` query
@@ -27,6 +38,7 @@ function WorldRoute() {
   const [searchParams] = useSearchParams()
   return <GameApp initialLearningPathId={searchParams.get('path')} />
 }
+
 
 /**
  * The route table itself, separated from the BrowserRouter wrapper below so
