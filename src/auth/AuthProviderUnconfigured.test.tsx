@@ -1,14 +1,22 @@
 // @vitest-environment jsdom
 //
-// Deliberately does NOT mock ./supabaseClient — every test run in this repo
-// has no VITE_SUPABASE_URL/VITE_SUPABASE_ANON_KEY set (no .env files exist),
-// so isSupabaseConfigured is genuinely false here, exactly as it would be
-// for a real deployment that hasn't configured Supabase yet.
+// Lovable Cloud auth pass — the generated client (src/integrations/supabase/
+// client.ts) now throws synchronously at import time if either env var is
+// missing, so a genuinely-absent-env-var run is no longer something this
+// suite can safely exercise unmocked (it would crash the whole test file,
+// not just this one). This mocks ./supabaseClient directly to reproduce the
+// same "Cloud not configured" state instead, preserving the one guarantee
+// this file exists to protect: the app must not crash, and must fall back to
+// guest mode with no admin access, when Cloud isn't configured.
 import { render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
-import { isSupabaseConfigured } from './supabaseClient'
+import { describe, expect, it, vi } from 'vitest'
 import { AuthProvider } from './AuthProvider'
 import { useAuth } from './useAuth'
+
+vi.mock('./supabaseClient', () => ({
+  isSupabaseConfigured: false,
+  supabase: null,
+}))
 
 function Probe() {
   const auth = useAuth()
@@ -23,8 +31,6 @@ function Probe() {
 
 describe('AuthProvider — missing Supabase configuration', () => {
   it('does not crash, and resolves straight to signed-out (guest) with no admin access', () => {
-    expect(isSupabaseConfigured).toBe(false)
-
     render(
       <AuthProvider>
         <Probe />

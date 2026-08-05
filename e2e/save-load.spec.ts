@@ -34,10 +34,14 @@ test.describe('Save/Load and load-on-boot persist world and progress across a re
     await openDebugView(page)
 
     // Step 23: a reload now boots straight into the saved game, no Load
-    // click needed.
+    // click needed. Progression fix: it resumes on the player's real
+    // current mission (District Ties, the one after the one just
+    // completed) directly, not the already-finished First Contact — so
+    // "next" is now South Stability, still locked.
     await expect(page.getByTestId('progress-badge')).toHaveAttribute('data-percentage', '17')
-    await expect(page.getByTestId('next-mission-label')).toHaveAttribute('data-mission-id', 'district-ties')
-    await expect(page.getByTestId('next-mission-label')).toHaveAttribute('data-status', 'available')
+    await expect(page.getByTestId('active-mission-title')).toHaveAttribute('data-mission-id', 'district-ties')
+    await expect(page.getByTestId('next-mission-label')).toHaveAttribute('data-mission-id', 'south-stability')
+    await expect(page.getByTestId('next-mission-label')).toHaveAttribute('data-status', 'locked')
     await expect(page.getByText(/"signal": 100/)).toBeVisible()
 
     // New Game requires an explicit confirmation step (Sprint 2 polish).

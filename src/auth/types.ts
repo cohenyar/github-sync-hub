@@ -10,10 +10,11 @@ export interface AuthUser {
 
 export type AuthStatus = 'loading' | 'signed-out' | 'signed-in'
 
-export interface EmailAuthResult {
-  /** A ready-to-display Hebrew message, or null on success. Scoped to the form that called it — never written into AuthContextValue.authError, which is for the ambient session-lifecycle error only. */
+/** Result shape shared by every email/password action — never throws at the call site. */
+export interface AuthActionResult {
+  /** A ready-to-display Hebrew message, or null on success. Scoped to the call that returned it — never written into AuthContextValue.authError, which is for the ambient session-lifecycle error only. */
   error: string | null
-  /** True only for a sign-up whose session isn't live yet — Supabase's own signal (a user row with no session) that email confirmation is required before sign-in works. */
+  /** True when the action succeeded but needs the user to check their inbox (sign-up confirmation, reset link). */
   needsEmailConfirmation?: boolean
 }
 
@@ -23,16 +24,20 @@ export interface AuthContextValue {
   role: Role | null
   isAdmin: boolean
   authError: string | null
-  /** False when VITE_SUPABASE_URL/VITE_SUPABASE_PUBLISHABLE_KEY are absent — sign-in shows a clear not-configured notice, guest play is unaffected. */
+  /** False when the Cloud env vars are absent — sign-in is hidden, guest play is unaffected. */
   configured: boolean
-  /** Lovable Cloud auth pass — true from the moment a password-reset link is followed until updatePassword succeeds. The email/password UI shows a "set new password" form instead of the normal sign-in/sign-up form while this is true. */
-  isPasswordRecovery: boolean
+  /**
+   * Local-only flag: the player explicitly chose to keep playing without a
+   * Cloud account. Never affects the local Meridian save — it only tells the
+   * UI to stop nudging toward sign-in.
+   */
+  isGuest: boolean
+  continueAsGuest: () => void
   signInWithGoogle: () => Promise<void>
-  signUpWithEmail: (email: string, password: string) => Promise<EmailAuthResult>
-  signInWithEmail: (email: string, password: string) => Promise<EmailAuthResult>
+  signUpWithEmail: (email: string, password: string, displayName?: string) => Promise<AuthActionResult>
+  signInWithEmail: (email: string, password: string) => Promise<AuthActionResult>
   /** Sends a password-reset email; does not touch the current session. */
-  resetPasswordForEmail: (email: string) => Promise<EmailAuthResult>
-  /** Only meaningful while isPasswordRecovery is true — sets the new password on the temporary recovery session and clears isPasswordRecovery on success. */
-  updatePassword: (newPassword: string) => Promise<EmailAuthResult>
+  sendPasswordReset: (email: string) => Promise<AuthActionResult>
+  updatePassword: (password: string) => Promise<AuthActionResult>
   signOut: () => Promise<void>
 }

@@ -135,26 +135,32 @@ test.describe('Onboarding — returning player', () => {
   })
 })
 
+// Lovable Cloud auth pass — Cloud is always configured now (see auth.spec.ts's
+// own note on the generated client requiring real-or-placeholder credentials
+// just to boot), so the Welcome Screen's real sign-in choice (Google/email or
+// Guest) is what's genuinely reachable end-to-end today. The not-configured
+// notice itself still exists in WelcomeScreen.tsx (see WelcomeScreen.test.tsx's
+// mocked-unconfigured coverage) as defensive UI, but is no longer e2e-visible.
 test.describe('Onboarding — Welcome Screen auth state (bug-fix pass)', () => {
-  test('shows a visible Guest label and an honest not-configured notice instead of silently hiding all sign-in UI', async ({
+  test('shows a visible Guest label alongside a real Google sign-in choice, instead of silently hiding all sign-in UI', async ({
     page,
   }) => {
     await page.goto('/world')
     await expect(page.getByTestId('welcome-screen')).toBeVisible()
     await expect(page.getByTestId('welcome-guest-label')).toBeVisible()
-    await expect(page.getByTestId('welcome-auth-not-configured')).toBeVisible()
+    await expect(page.getByTestId('welcome-google-signin-button')).toBeVisible()
     // The primary "Continue as Guest"-equivalent action still works
-    // regardless — the new notice is additive, never blocking.
+    // regardless — signing in is additive, never blocking.
     await expect(page.getByTestId('welcome-continue-button')).toBeEnabled()
   })
 
-  test('same Guest label and notice on a phone-sized viewport, without clipping', async ({ page }) => {
+  test('same Guest label and sign-in choice on a phone-sized viewport, without clipping', async ({ page }) => {
     await page.setViewportSize({ width: 412, height: 915 })
     await page.goto('/world')
     await expect(page.getByTestId('welcome-screen')).toBeVisible()
-    const notice = page.getByTestId('welcome-auth-not-configured')
-    await expect(notice).toBeVisible()
-    const box = (await notice.boundingBox())!
+    const signInButton = page.getByTestId('welcome-google-signin-button')
+    await expect(signInButton).toBeVisible()
+    const box = (await signInButton.boundingBox())!
     expect(box.x).toBeGreaterThanOrEqual(0)
     expect(box.x + box.width).toBeLessThanOrEqual(412)
   })

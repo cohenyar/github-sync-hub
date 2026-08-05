@@ -10,12 +10,17 @@ const mocks = vi.hoisted(() => ({
   getSession: vi.fn(),
   onAuthStateChange: vi.fn(() => ({ data: { subscription: { unsubscribe: vi.fn() } } })),
   signInWithOAuth: vi.fn(async () => ({ error: null })),
+  lovableSignInWithOAuth: vi.fn(async () => ({ error: null, redirected: true })),
   signUp: vi.fn(),
   signInWithPassword: vi.fn(),
   signOut: vi.fn(async (): Promise<{ error: { message: string; name: string; status: number } | null }> => ({
     error: null,
   })),
   from: vi.fn(),
+}))
+
+vi.mock('../integrations/lovable/index', () => ({
+  lovable: { auth: { signInWithOAuth: mocks.lovableSignInWithOAuth } },
 }))
 
 vi.mock('./supabaseClient', () => ({
@@ -236,10 +241,9 @@ describe('AuthProvider — fail-closed role resolution', () => {
 
     screen.getByTestId('sign-in').click()
 
-    await waitFor(() => expect(mocks.signInWithOAuth).toHaveBeenCalledTimes(1))
-    expect(mocks.signInWithOAuth).toHaveBeenCalledWith({
-      provider: 'google',
-      options: { redirectTo: window.location.href },
+    await waitFor(() => expect(mocks.lovableSignInWithOAuth).toHaveBeenCalledTimes(1))
+    expect(mocks.lovableSignInWithOAuth).toHaveBeenCalledWith('google', {
+      redirect_uri: window.location.href,
     })
   })
 
@@ -256,7 +260,13 @@ describe('AuthProvider — fail-closed role resolution', () => {
 
     screen.getByTestId('sign-up-email').click()
 
-    await waitFor(() => expect(mocks.signUp).toHaveBeenCalledWith({ email: 'new@user.com', password: 'hunter2' }))
+    await waitFor(() =>
+      expect(mocks.signUp).toHaveBeenCalledWith({
+        email: 'new@user.com',
+        password: 'hunter2',
+        options: { emailRedirectTo: `${window.location.origin}/`, data: undefined },
+      }),
+    )
     await waitFor(() => expect(screen.getByTestId('email-result-needs-confirmation')).toHaveTextContent('false'))
     expect(screen.getByTestId('email-result-error')).toHaveTextContent('')
   })

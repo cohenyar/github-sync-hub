@@ -1,0 +1,34 @@
+/*
+ * Deliberately physical (left/bottom), not logical (inset-inline-start) —
+ * the universal mobile-game convention for a movement stick's side is
+ * ergonomic, not reading-direction-based, even though the rest of this app
+ * is RTL.
+ */
+.base {
+  position: fixed;
+  left: 24px;
+  bottom: 24px;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  touch-action: none;
+  z-index: 30;
+}
+
+.base[data-active='true'] {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.thumb {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 40px;
+  height: 40px;
+  margin: -20px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.35);
+  pointer-events: none;
+}

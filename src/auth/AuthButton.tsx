@@ -146,6 +146,11 @@ export function AuthButton() {
       <Button variant="primary" size="md" data-testid="google-sign-in-button" onClick={() => void signInWithGoogle()}>
         {he.signInWithGoogle}
       </Button>
+      {/* Plain anchor, not <Link>: AuthButton is dropped into chrome that
+          isn't always inside a Router (GameControlBar in existing tests). */}
+      <a className={styles.authLink} href="/auth" data-testid="auth-page-link">
+        {he.authGoToSignIn}
+      </a>
       <button
         type="button"
         className={styles.emailToggle}

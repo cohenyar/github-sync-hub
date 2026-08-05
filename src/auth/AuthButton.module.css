@@ -204,3 +204,16 @@
     transform: none;
   }
 }
+
+.authLink {
+  font-size: 0.85rem;
+  color: inherit;
+  opacity: 0.85;
+  text-decoration: none;
+  padding-inline: 0.35rem;
+}
+
+.authLink:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
