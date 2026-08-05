@@ -30,6 +30,7 @@ import { SceneCamera } from './scene3d/SceneCamera'
 import { TeacherNpcAccents } from './scene3d/TeacherNpcAccents'
 import { TownProps } from './scene3d/TownProps'
 import { WebglErrorBoundary } from './scene3d/WebglErrorBoundary'
+import { TouchJoystick } from './scene3d/TouchJoystick'
 import { InteractionPrompt, type DestinationPromptInfo } from './InteractionPrompt'
 import styles from './WorldScene3D.module.css'
 
