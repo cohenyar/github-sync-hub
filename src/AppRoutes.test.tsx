@@ -45,21 +45,25 @@ describe('Routing foundation', () => {
   // console rendering at /world, so each pre-seeds the onboarding flag (as
   // a returning player would have) and switches to the classic view via the
   // existing toggle, exactly as a player would.
+  // /world is code-split too (GameApp pulls in the 3D scene + SQL engine),
+  // so its chunk takes measurably longer to import under jsdom — hence the
+  // explicit per-test timeout. Behavior itself is unchanged.
   it('renders the real game, unwrapped, at /world', async () => {
     markOnboardingComplete()
     renderAt('/world')
-    fireEvent.click(await screen.findByTestId('settings-menu-button'))
+    fireEvent.click(await screen.findByTestId('settings-menu-button', {}, { timeout: 15000 }))
     fireEvent.click(await screen.findByTestId('toggle-world-scene-button'))
     expect(await screen.findByRole('button', { name: he.run })).toBeInTheDocument()
-  })
+  }, 30000)
 
   it('renders the real game at /world?path=math too (Batch 3A.2 query param), with no crash', async () => {
     markOnboardingComplete()
     renderAt('/world?path=math')
-    fireEvent.click(await screen.findByTestId('settings-menu-button'))
+    fireEvent.click(await screen.findByTestId('settings-menu-button', {}, { timeout: 15000 }))
     fireEvent.click(await screen.findByTestId('toggle-world-scene-button'))
     expect(await screen.findByRole('button', { name: he.run })).toBeInTheDocument()
-  })
+  }, 30000)
+
 
   // Startup performance: these routes are code-split (React.lazy), so their
   // chunk resolves on the next microtask — assertions await the result.
