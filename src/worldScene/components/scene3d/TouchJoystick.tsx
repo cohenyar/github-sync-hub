@@ -18,6 +18,11 @@ export function TouchJoystick() {
   const [knob, setKnob] = useState({ x: 0, y: 0 })
   const [isActive, setIsActive] = useState(false)
 
+  // Never leave a direction stuck "held" if the joystick unmounts mid-drag
+  // (e.g. a dialogue opens while the player is moving).
+  useEffect(() => resetTouchInput, [])
+
+
   function updateFromEvent(event: React.PointerEvent<HTMLDivElement>) {
     const base = baseRef.current
     if (!base) return
