@@ -30,6 +30,7 @@ import { SceneCamera } from './scene3d/SceneCamera'
 import { TeacherNpcAccents } from './scene3d/TeacherNpcAccents'
 import { TownProps } from './scene3d/TownProps'
 import { WebglErrorBoundary } from './scene3d/WebglErrorBoundary'
+import { TouchJoystick } from './scene3d/TouchJoystick'
 import { InteractionPrompt, type DestinationPromptInfo } from './InteractionPrompt'
 import styles from './WorldScene3D.module.css'
 
@@ -305,6 +306,9 @@ export function WorldScene3D({
           onTalk={nearestInteractable?.kind === 'npc' ? handleInteract : undefined}
         />
       )}
+      {/* Touch-only movement control (CSS-gated to coarse pointers). Hidden
+          while movement is disabled, exactly like the interaction prompt. */}
+      {isMovementEnabled && <TouchJoystick />}
     </div>
   )
 }
