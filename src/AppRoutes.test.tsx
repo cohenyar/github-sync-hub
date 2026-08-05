@@ -61,27 +61,30 @@ describe('Routing foundation', () => {
     expect(await screen.findByRole('button', { name: he.run })).toBeInTheDocument()
   })
 
+  // Startup performance: these routes are code-split (React.lazy), so their
+  // chunk resolves on the next microtask — assertions await the result.
   it.each([
     ['/courses', he.navCoursesLabel],
     ['/tutor', he.navTutorLabel],
     ['/progress', he.navProgressLabel],
     ['/profile', he.navProfileLabel],
-  ])('renders the %s placeholder', (path, title) => {
+  ])('renders the %s placeholder', async (path, title) => {
     renderAt(path)
-    expect(screen.getByRole('heading', { name: title })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: title })).toBeInTheDocument()
   })
 
-  it('renders the subject-selection dashboard at /dashboard', () => {
+  it('renders the subject-selection dashboard at /dashboard', async () => {
     renderAt('/dashboard')
-    expect(screen.getByRole('heading', { name: he.dashboardHeading })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: he.dashboardHeading })).toBeInTheDocument()
     expect(screen.getByTestId('subject-card-math')).toBeInTheDocument()
     expect(screen.getByTestId('subject-card-english')).toBeInTheDocument()
   })
 
-  it('reads the :courseId param on /courses/:courseId', () => {
+  it('reads the :courseId param on /courses/:courseId', async () => {
     renderAt('/courses/sql-basics')
-    expect(screen.getByText(`${he.courseDetailPrefix}sql-basics`)).toBeInTheDocument()
+    expect(await screen.findByText(`${he.courseDetailPrefix}sql-basics`)).toBeInTheDocument()
   })
+
 
   it('renders NotFound for an unknown path, with a way back to the landing page', () => {
     renderAt('/this-route-does-not-exist')
