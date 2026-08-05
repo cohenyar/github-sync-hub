@@ -1,16 +1,22 @@
-import { createClient, type SupabaseClient } from '@supabase/supabase-js'
-
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+/**
+ * Single source of truth for the Supabase client.
+ *
+ * The client itself is the Lovable Cloud generated one
+ * (src/integrations/supabase/client.ts) — this module only re-exports it so
+ * every existing auth consumer (AuthProvider, tests that mock
+ * './supabaseClient') keeps its import path. There is exactly ONE Supabase
+ * client instance in the app; never call createClient anywhere else.
+ */
+import type { SupabaseClient } from '@supabase/supabase-js'
+import { supabase as cloudClient } from '../integrations/supabase/client'
 
 /**
- * False whenever the env vars aren't set (no Supabase project configured
- * yet, or a test/CI run with no .env.local). Every auth-facing consumer
- * checks this instead of assuming `supabase` is non-null, so a missing
- * configuration degrades to guest mode rather than crashing the app.
+ * Lovable Cloud is always provisioned for this project, so this is true in
+ * every real run. It is kept because the whole auth surface degrades to
+ * guest mode when it is false (and tests mock this module).
  */
-export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey)
+export const isSupabaseConfigured = Boolean(
+  import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+)
 
-export const supabase: SupabaseClient | null = isSupabaseConfigured
-  ? createClient(supabaseUrl as string, supabaseAnonKey as string)
-  : null
+export const supabase: SupabaseClient | null = isSupabaseConfigured ? (cloudClient as unknown as SupabaseClient) : null

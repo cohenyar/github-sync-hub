@@ -147,6 +147,12 @@ const BASE_AUTH: AuthContextValue = {
   isAdmin: false,
   authError: null,
   configured: true,
+  isGuest: false,
+  continueAsGuest: () => {},
+  signUpWithEmail: async () => ({ error: null }),
+  signInWithEmail: async () => ({ error: null }),
+  sendPasswordReset: async () => ({ error: null }),
+  updatePassword: async () => ({ error: null }),
   signInWithGoogle: vi.fn(async () => {}),
   signOut: vi.fn(async () => {}),
 }

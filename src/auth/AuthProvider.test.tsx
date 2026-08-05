@@ -9,8 +9,13 @@ const mocks = vi.hoisted(() => ({
   getSession: vi.fn(),
   onAuthStateChange: vi.fn(() => ({ data: { subscription: { unsubscribe: vi.fn() } } })),
   signInWithOAuth: vi.fn(async () => ({ error: null })),
+  lovableSignInWithOAuth: vi.fn(async () => ({ error: null, redirected: true })),
   signOut: vi.fn(async () => ({ error: null })),
   from: vi.fn(),
+}))
+
+vi.mock('../integrations/lovable/index', () => ({
+  lovable: { auth: { signInWithOAuth: mocks.lovableSignInWithOAuth } },
 }))
 
 vi.mock('./supabaseClient', () => ({
@@ -192,10 +197,9 @@ describe('AuthProvider — fail-closed role resolution', () => {
 
     screen.getByTestId('sign-in').click()
 
-    await waitFor(() => expect(mocks.signInWithOAuth).toHaveBeenCalledTimes(1))
-    expect(mocks.signInWithOAuth).toHaveBeenCalledWith({
-      provider: 'google',
-      options: { redirectTo: window.location.href },
+    await waitFor(() => expect(mocks.lovableSignInWithOAuth).toHaveBeenCalledTimes(1))
+    expect(mocks.lovableSignInWithOAuth).toHaveBeenCalledWith('google', {
+      redirect_uri: window.location.href,
     })
   })
 })

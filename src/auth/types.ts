@@ -10,14 +10,32 @@ export interface AuthUser {
 
 export type AuthStatus = 'loading' | 'signed-out' | 'signed-in'
 
+/** Result shape shared by every email/password action — never throws at the call site. */
+export interface AuthActionResult {
+  error: string | null
+  /** True when the action succeeded but needs the user to check their inbox (sign-up confirmation, reset link). */
+  needsEmailConfirmation?: boolean
+}
+
 export interface AuthContextValue {
   status: AuthStatus
   user: AuthUser | null
   role: Role | null
   isAdmin: boolean
   authError: string | null
-  /** False when VITE_SUPABASE_URL/VITE_SUPABASE_ANON_KEY are absent — sign-in is hidden, guest play is unaffected. */
+  /** False when the Cloud env vars are absent — sign-in is hidden, guest play is unaffected. */
   configured: boolean
+  /**
+   * Local-only flag: the player explicitly chose to keep playing without a
+   * Cloud account. Never affects the local Meridian save — it only tells the
+   * UI to stop nudging toward sign-in.
+   */
+  isGuest: boolean
+  continueAsGuest: () => void
   signInWithGoogle: () => Promise<void>
+  signUpWithEmail: (email: string, password: string, displayName?: string) => Promise<AuthActionResult>
+  signInWithEmail: (email: string, password: string) => Promise<AuthActionResult>
+  sendPasswordReset: (email: string) => Promise<AuthActionResult>
+  updatePassword: (password: string) => Promise<AuthActionResult>
   signOut: () => Promise<void>
 }

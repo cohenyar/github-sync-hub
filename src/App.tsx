@@ -1,7 +1,19 @@
 import { BrowserRouter, Route, Routes, useSearchParams } from 'react-router-dom'
 import { AuthProvider, ProtectedAdminRoute } from './auth'
 import GameApp from './GameApp'
-import { AdminPage, CourseDetail, Courses, Dashboard, LandingPage, NotFound, Profile, Progress, Tutor } from './pages'
+import {
+  AdminPage,
+  AuthPage,
+  CourseDetail,
+  Courses,
+  Dashboard,
+  LandingPage,
+  NotFound,
+  Profile,
+  Progress,
+  ResetPasswordPage,
+  Tutor,
+} from './pages'
 import { DesignSystemPage } from './pages/DesignSystemPage'
 
 /**
@@ -28,6 +40,8 @@ export function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
+      <Route path="/auth" element={<AuthPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/world" element={<WorldRoute />} />
       <Route path="/courses" element={<Courses />} />
