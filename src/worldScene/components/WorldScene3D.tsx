@@ -305,6 +305,9 @@ export function WorldScene3D({
           onTalk={nearestInteractable?.kind === 'npc' ? handleInteract : undefined}
         />
       )}
+      {/* Touch-only movement control (CSS-gated to coarse pointers). Hidden
+          while movement is disabled, exactly like the interaction prompt. */}
+      {isMovementEnabled && <TouchJoystick />}
     </div>
   )
 }
