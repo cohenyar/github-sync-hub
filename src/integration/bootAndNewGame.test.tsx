@@ -90,7 +90,7 @@ describe('Load-on-boot', () => {
     await waitFor(() => expect(screen.getByText('שאילתה חדשה ממתינה. אני מקשיב.')).toBeInTheDocument())
   })
 
-  it('boots straight into a previously saved game', async () => {
+  it('boots straight into a previously saved game, resuming on the actual current mission', async () => {
     const { world, playerProgress } = completedFirstContactSave()
     saveCurrentGame(world, playerProgress)
 
@@ -100,9 +100,36 @@ describe('Load-on-boot', () => {
 
     expect(screen.getByText(`${he.progressLabelPrefix}${ONE_MISSION_PERCENTAGE}%`)).toBeInTheDocument()
     expect(screen.getByText(/"signal": 100/)).toBeInTheDocument()
+    // Regression guard: the console must load the player's real frontier
+    // (District Ties, the mission after the one just completed) directly —
+    // not re-open the already-finished First Contact and make the player
+    // click "Continue" to get anywhere.
+    expect(screen.getByRole('heading', { name: 'קשרי מחוז' })).toBeInTheDocument()
     expect(
-      screen.getByText(new RegExp(`${he.nextLabelPrefix}קשרי מחוז \\(${he.available}\\)`)),
+      screen.getByText(new RegExp(`${he.nextLabelPrefix}יציבות הדרום \\(${he.locked}\\)`)),
     ).toBeInTheDocument()
+  })
+
+  it('resumes on the true current mission after multiple completions, not the first-ever mission', async () => {
+    // Regression guard: before the fix, activeMissionId's initial state
+    // always defaulted to the first-ever-registered mission ("First
+    // Contact") regardless of saved progress. A player who had already
+    // finished two missions would boot back into a mission they'd long
+    // completed instead of their real frontier, forcing them to click
+    // "Continue" through already-finished content one mission at a time
+    // before reaching anything new — read by the player as "the next
+    // challenge stays locked."
+    let progress = createInitialPlayerProgress(defaultCampaign)
+    progress = recordMissionCompletion(progress, 'first-contact', defaultCampaign)
+    progress = recordMissionCompletion(progress, 'district-ties', defaultCampaign)
+    saveCurrentGame(createWorldState(initialDistricts), progress)
+
+    renderGameApp()
+    await readyRunButton()
+
+    expect(screen.getByRole('heading', { name: 'יציבות הדרום' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'מגע ראשון' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'קשרי מחוז' })).not.toBeInTheDocument()
   })
 
   it('does not spuriously re-narrate content that was already unlocked in the save', async () => {
@@ -114,14 +141,25 @@ describe('Load-on-boot', () => {
 
     // First Contact is already completed per the save, so booting into it is
     // a revisit, not a fresh start (Step 1, v0.2) — Odin has nothing new to
-    // narrate about mission progress, including no "mission started" greeting
-    // for a mission that isn't actually starting. A returning player (this is
-    // one, per beforeEach's markOnboardingComplete) does get its own Meridian
-    // 1.3 welcome-back line (Core Loop §01) — that's the one narration entry
-    // expected here, not silence.
-    expect(screen.getByTestId('odin-latest-message')).toHaveTextContent('ברוך שובך למרידיאן')
+    // narrate about *unlock* progress: no re-announcement of District Ties
+    // becoming available, since that already happened in a prior session.
+    // District Ties itself, however, is the player's real current mission
+    // (the progression fix now correctly loads it, not the already-finished
+    // First Contact) and genuinely is starting for the first time this
+    // session, so its own "mission started" line is expected and becomes
+    // the latest message — with the Meridian 1.3 welcome-back line (Core
+    // Loop §01) preserved just behind it in history, not lost.
+    // MissionStarted publishes once District Ties's own database finishes
+    // preparing — a separate async chain from readyRunButton's own wait, so
+    // this needs its own waitFor rather than assuming it has already landed.
+    await waitFor(() =>
+      expect(screen.getByTestId('odin-latest-message')).toHaveTextContent('שאילתה חדשה ממתינה. אני מקשיב.'),
+    )
+    expect(screen.getByRole('list', { name: he.odinHistoryAriaLabel })).toHaveTextContent('ברוך שובך למרידיאן')
+    // The one thing this test actually guards: no spurious re-narration of
+    // content unlocked in a prior session (the ContentUnlocked reaction for
+    // District Ties becoming available must not fire again on this boot).
     expect(screen.queryByText(/להתחקות אחר קשרי המחוז/)).not.toBeInTheDocument()
-    expect(screen.queryByRole('list', { name: he.odinHistoryAriaLabel })).not.toBeInTheDocument()
   })
 
   it('falls back to a fresh game when the saved data is corrupted, without crashing', async () => {
@@ -215,6 +253,60 @@ describe('New Game reset', () => {
 
     expect(errorSpy).not.toHaveBeenCalled()
     errorSpy.mockRestore()
+  })
+
+  it('clears session-scoped UI state left over from before the reset (active mission, selected NPC)', async () => {
+    renderGameApp()
+    const runButton = await readyRunButton()
+
+    fireEvent.change(screen.getByPlaceholderText(he.sqlPlaceholder), {
+      target: { value: 'SELECT * FROM citizens;' },
+    })
+    fireEvent.click(runButton)
+    await screen.findByText(he.pass)
+
+    // Move off the first mission and open an NPC's bio — both are
+    // session-scoped state (activeMissionId, selectedNpcId), never part of
+    // SaveGame, so a plain world/progress replace does not touch them.
+    fireEvent.click(screen.getByRole('button', { name: `קשרי מחוז (${he.available})` }))
+    await readyRunButton()
+    fireEvent.click(document.querySelector('[data-npc-id="archivist-mera"]')!)
+    expect(screen.getByTestId('npc-bio-panel')).toBeInTheDocument()
+
+    newGame()
+
+    // Regression guard: before the fix, activeMissionId/selectedNpcId (and
+    // activeLessonId/sceneState) survived New Game entirely, so a mission
+    // loaded in the console or an open NPC bio could persist into the "new"
+    // game within the same mounted session.
+    expect(screen.getByRole('heading', { name: 'מגע ראשון' })).toBeInTheDocument()
+    expect(screen.queryByTestId('npc-bio-panel')).not.toBeInTheDocument()
+  })
+
+  it('resets Archive Pages and NPC familiarity, not just missions and world', async () => {
+    const progress = {
+      ...createInitialPlayerProgress(defaultCampaign),
+      collectedArchivePageIds: ['archive-page:trade-count'],
+      npcFamiliarity: { 'archivist-mera': 5 },
+    }
+    saveCurrentGame(createWorldState(initialDistricts), progress)
+
+    renderGameApp()
+    await readyRunButton()
+    expect(screen.getByTestId('quest-track-archive-pages-button')).toHaveTextContent(/1$/)
+
+    newGame()
+
+    expect(screen.getByTestId('quest-track-archive-pages-button')).toHaveTextContent(/0$/)
+
+    // Confirm the reset actually lands in a fresh save, not just this
+    // render — these are both optional PlayerProgress fields a partial
+    // reset could silently leave behind.
+    ensureSettingsMenuOpen()
+    fireEvent.click(screen.getByTestId('save-button'))
+    const saved = JSON.parse(window.localStorage.getItem(SAVE_KEY)!)
+    expect(saved.playerProgress.collectedArchivePageIds ?? []).toEqual([])
+    expect(saved.playerProgress.npcFamiliarity ?? {}).toEqual({})
   })
 
   it('does nothing until the reset is confirmed, and Cancel dismisses the prompt without resetting', async () => {

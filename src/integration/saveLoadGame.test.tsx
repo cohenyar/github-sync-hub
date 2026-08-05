@@ -78,8 +78,13 @@ describe('Save/Load restores world and progress across a simulated reload', () =
 
     expect(screen.getByText(`${he.progressLabelPrefix}${expectedPercentage}%`)).toBeInTheDocument()
     expect(screen.getByText(/"signal": 100/)).toBeInTheDocument()
+    // The new app instance must resume on the player's real current mission
+    // (District Ties, the one after the one just completed) directly — not
+    // reopen the already-finished First Contact and require a "Continue"
+    // click just to get back to where the player actually was.
+    expect(screen.getByRole('heading', { name: 'קשרי מחוז' })).toBeInTheDocument()
     expect(
-      screen.getByText(new RegExp(`${he.nextLabelPrefix}קשרי מחוז \\(${he.available}\\)`)),
+      screen.getByText(new RegExp(`${he.nextLabelPrefix}יציבות הדרום \\(${he.locked}\\)`)),
     ).toBeInTheDocument()
   })
 

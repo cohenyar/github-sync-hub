@@ -151,7 +151,16 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
   // before Step 28). useMissionManager already resets its own runtime and
   // reloads the mission database whenever the mission it's given changes,
   // so switching missions needed no changes there.
-  const [activeMissionId, setActiveMissionId] = useState(() => getDefaultMission().id)
+  //
+  // Seeded from the boot save's own currentMissionId (already correctly
+  // maintained by recordMissionCompletion as "the furthest incomplete
+  // mission") rather than always the first-ever-registered mission — a
+  // returning player who has completed several missions must land back on
+  // their real frontier, not be walked back through already-finished ones
+  // one Continue-click at a time.
+  const [activeMissionId, setActiveMissionId] = useState(
+    () => bootSave?.playerProgress.campaignProgress.currentMissionId ?? getDefaultMission().id,
+  )
   const activeMission = getMissionById(activeMissionId) ?? getDefaultMission()
   const {
     progress: playerProgress,
@@ -309,6 +318,10 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
     setWorld(saved.world)
     restoreProgress(saved.playerProgress)
     resetUnlockBaseline(saved.playerProgress)
+    // Same staleness fix as the boot-time initializer above: without this,
+    // Load silently reopens whatever mission happened to be in the console
+    // before, not the loaded save's own current mission.
+    setActiveMissionId(saved.playerProgress.campaignProgress.currentMissionId ?? getDefaultMission().id)
     bannerNonceRef.current += 1
     setEventBanner(loadBanner(bannerNonceRef.current))
   }
@@ -329,6 +342,15 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
     setWorld(initialWorldState)
     restoreProgress(freshProgress)
     resetUnlockBaseline(freshProgress)
+    // Session-scoped UI state is never part of SaveGame, so a full replace
+    // of world/playerProgress above doesn't touch any of it — without this,
+    // a mission loaded in the console, a selected NPC, an open lesson, or an
+    // in-progress dialogue/terminal mode would all survive "New Game"
+    // within this same mounted session.
+    setActiveMissionId(getDefaultMission().id)
+    setActiveLessonId(null)
+    setSelectedNpcId(null)
+    setSceneState(createInitialSceneState('north'))
     setConfirmingNewGame(false)
   }
 
