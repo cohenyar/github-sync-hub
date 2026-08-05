@@ -50,35 +50,38 @@ function WorldRoute() {
  */
 export function AppRoutes() {
   return (
-    <Routes>
-      <Route path="/" element={<LandingPage />} />
-      <Route path="/auth" element={<AuthPage />} />
-      <Route path="/reset-password" element={<ResetPasswordPage />} />
-      <Route path="/dashboard" element={<Dashboard />} />
-      <Route path="/world" element={<WorldRoute />} />
-      <Route path="/courses" element={<Courses />} />
-      <Route path="/courses/:courseId" element={<CourseDetail />} />
-      <Route path="/tutor" element={<Tutor />} />
-      <Route path="/progress" element={<Progress />} />
-      <Route path="/profile" element={<Profile />} />
-      <Route
-        path="/admin"
-        element={
-          <ProtectedAdminRoute>
-            <AdminPage />
-          </ProtectedAdminRoute>
-        }
-      />
-      {/* Dev-only QA route — not linked from any user-facing nav, and (as of
-          the Meridian 1.0 UI audit) not present at all in a production
-          build, since it still pitches retired AI-mentor messaging and its
-          own nav pattern was never adopted. Falls through to NotFound in
-          production, exactly like a URL that never existed. */}
-      {import.meta.env.DEV && <Route path="/dev/design-system" element={<DesignSystemPage />} />}
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+    <Suspense fallback={<AppLoading />}>
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/auth" element={<AuthPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/world" element={<WorldRoute />} />
+        <Route path="/courses" element={<Courses />} />
+        <Route path="/courses/:courseId" element={<CourseDetail />} />
+        <Route path="/tutor" element={<Tutor />} />
+        <Route path="/progress" element={<Progress />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route
+          path="/admin"
+          element={
+            <ProtectedAdminRoute>
+              <AdminPage />
+            </ProtectedAdminRoute>
+          }
+        />
+        {/* Dev-only QA route — not linked from any user-facing nav, and (as of
+            the Meridian 1.0 UI audit) not present at all in a production
+            build, since it still pitches retired AI-mentor messaging and its
+            own nav pattern was never adopted. Falls through to NotFound in
+            production, exactly like a URL that never existed. */}
+        {import.meta.env.DEV && <Route path="/dev/design-system" element={<DesignSystemPage />} />}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Suspense>
   )
 }
+
 
 /**
  * Routing foundation only. App.tsx is the top-level composition boundary —
