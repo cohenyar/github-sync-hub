@@ -89,6 +89,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setStatus('signed-in')
     }
 
+    // Timeout protection: if Cloud never answers, the app must not sit in
+    // 'loading' forever — it resolves to signed-out (guest still works) with
+    // a non-blocking warning. Only ever fires while still loading.
+    const timeoutId = window.setTimeout(() => {
+      if (cancelled) return
+      setStatus((current) => {
+        if (current !== 'loading') return current
+        setAuthError(he.authTimeoutMessage)
+        return 'signed-out'
+      })
+    }, 8000)
+
     supabase.auth
       .getSession()
       .then(({ data }) => resolveSession(data.session))
@@ -100,6 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setAuthError(he.authUnavailableMessage)
         }
       })
+
 
     const {
       data: { subscription },
@@ -114,6 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => {
       cancelled = true
+      window.clearTimeout(timeoutId)
       subscription.unsubscribe()
     }
   }, [])

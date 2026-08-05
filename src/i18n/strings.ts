@@ -204,6 +204,10 @@ export const he = {
   signInWithGoogle: 'התחברות עם Google',
   signOut: 'התנתקות',
   authLoadingMessage: 'בודק מצב התחברות…',
+  /** Branded fallback while a lazily-loaded route chunk downloads. */
+  appLoadingMessage: 'טוען את מרידיאן…',
+  /** Non-blocking warning when Cloud auth takes too long and we fall back to guest. */
+  authTimeoutMessage: 'החיבור לחשבון איטי — אפשר להמשיך כאורח.',
   authUnavailableMessage: 'לא ניתן להתחבר לשירות ההתחברות כרגע. אפשר להמשיך במצב אורח.',
   authProfileErrorMessage: 'לא ניתן היה לאמת הרשאות משתמש. מחוברים ללא הרשאות ניהול.',
   navAdminLabel: 'ניהול',
