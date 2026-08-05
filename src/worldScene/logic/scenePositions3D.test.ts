@@ -1,10 +1,18 @@
 import { describe, expect, it } from 'vitest'
+import { INTERACTION_RADIUS } from './proximity'
 import { MOVEMENT_BOUNDS } from './movement'
 import {
   CAMERA_FOV,
   CAMERA_LOOK_AT,
   CAMERA_POSITION,
+  computeDialogueCameraFraming,
+  CORE_ARCHIVE_COLLIDER,
+  CORE_ARCHIVE_COLLIDER_RADIUS,
   CORE_ARCHIVE_POSITION,
+  DIALOGUE_CAMERA_ZOOM,
+  DISTRICT_BUILDING_COLLIDERS,
+  EAST_BUILDING_COLLIDER,
+  EAST_BUILDING_COLLIDER_RADIUS,
   EAST_BUILDING_POSITION,
   ENGLISH_CENTER_POSITION,
   getAvatarRespawnPosition,
@@ -16,9 +24,13 @@ import {
   LEARNING_PLAZA_HOUSE_POSITIONS,
   LEARNING_PLAZA_TREE_POSITIONS,
   MATH_ACADEMY_POSITION,
+  NORTH_BUILDING_COLLIDER,
+  NORTH_BUILDING_COLLIDER_RADIUS,
   NORTH_BUILDING_POSITION,
   PLAYER_SPAWN_DISTRICT_ID,
   PLAYER_SPAWN_POSITION,
+  SOUTH_BUILDING_COLLIDER,
+  SOUTH_BUILDING_COLLIDER_RADIUS,
   SOUTH_BUILDING_POSITION,
 } from './scenePositions3D'
 
@@ -167,6 +179,63 @@ describe('Batch 3A.5 — new plaza props stay within bounds and clear of interac
   })
 })
 
+describe('Game Feel pass — building collider safety margins (all five upgraded buildings)', () => {
+  it('keeps south-organizer and south-engineer well clear of the Community Hall collider', () => {
+    const organizerDistance = distance(getNpcPosition3D('south-organizer', 'south'), SOUTH_BUILDING_POSITION)
+    const engineerDistance = distance(getNpcPosition3D('south-engineer', 'south'), SOUTH_BUILDING_POSITION)
+    expect(organizerDistance).toBeGreaterThan(SOUTH_BUILDING_COLLIDER_RADIUS)
+    expect(engineerDistance).toBeGreaterThan(SOUTH_BUILDING_COLLIDER_RADIUS)
+  })
+
+  it('keeps archivist-mera and city-voice well clear of the Core Archive collider', () => {
+    const meraDistance = distance(getNpcPosition3D('archivist-mera', 'core'), CORE_ARCHIVE_POSITION)
+    const cityVoiceDistance = distance(getNpcPosition3D('city-voice', 'core'), CORE_ARCHIVE_POSITION)
+    expect(meraDistance).toBeGreaterThan(CORE_ARCHIVE_COLLIDER_RADIUS)
+    expect(cityVoiceDistance).toBeGreaterThan(CORE_ARCHIVE_COLLIDER_RADIUS)
+  })
+
+  it('keeps north-warden and north-analyst well clear of the North Wardens Post collider', () => {
+    const wardenDistance = distance(getNpcPosition3D('north-warden', 'north'), NORTH_BUILDING_POSITION)
+    const analystDistance = distance(getNpcPosition3D('north-analyst', 'north'), NORTH_BUILDING_POSITION)
+    expect(wardenDistance).toBeGreaterThan(NORTH_BUILDING_COLLIDER_RADIUS)
+    expect(analystDistance).toBeGreaterThan(NORTH_BUILDING_COLLIDER_RADIUS)
+  })
+
+  it('keeps east-broker well clear of the East Trading Post collider', () => {
+    const brokerDistance = distance(getNpcPosition3D('east-broker', 'east'), EAST_BUILDING_POSITION)
+    expect(brokerDistance).toBeGreaterThan(EAST_BUILDING_COLLIDER_RADIUS)
+  })
+
+  it('is centered exactly on each building and scoped to exactly these four colliders', () => {
+    expect(SOUTH_BUILDING_COLLIDER).toEqual({
+      id: 'south-community-hall',
+      center: SOUTH_BUILDING_POSITION,
+      radius: SOUTH_BUILDING_COLLIDER_RADIUS,
+    })
+    expect(CORE_ARCHIVE_COLLIDER).toEqual({
+      id: 'core-archive',
+      center: CORE_ARCHIVE_POSITION,
+      radius: CORE_ARCHIVE_COLLIDER_RADIUS,
+    })
+    expect(NORTH_BUILDING_COLLIDER).toEqual({
+      id: 'north-wardens-post',
+      center: NORTH_BUILDING_POSITION,
+      radius: NORTH_BUILDING_COLLIDER_RADIUS,
+    })
+    expect(EAST_BUILDING_COLLIDER).toEqual({
+      id: 'east-trading-post',
+      center: EAST_BUILDING_POSITION,
+      radius: EAST_BUILDING_COLLIDER_RADIUS,
+    })
+    expect(DISTRICT_BUILDING_COLLIDERS).toEqual([
+      SOUTH_BUILDING_COLLIDER,
+      CORE_ARCHIVE_COLLIDER,
+      NORTH_BUILDING_COLLIDER,
+      EAST_BUILDING_COLLIDER,
+    ])
+  })
+})
+
 describe('spawn and camera constants', () => {
   it('spawns the player in North, per the Visual World Upgrade scale', () => {
     expect(PLAYER_SPAWN_DISTRICT_ID).toBe('north')
@@ -195,5 +264,51 @@ describe('getAvatarRespawnPosition', () => {
     expect(getAvatarRespawnPosition('core')).toEqual(getDistrictPosition3D('core'))
     expect(getAvatarRespawnPosition('south')).toEqual(getDistrictPosition3D('south'))
     expect(getAvatarRespawnPosition('east')).toEqual(getDistrictPosition3D('east'))
+  })
+})
+
+describe('computeDialogueCameraFraming', () => {
+  it('looks directly at the given focus point, at ground level', () => {
+    const { lookAt } = computeDialogueCameraFraming({ x: 3, z: -5 })
+    expect(lookAt).toEqual([3, 0, -5])
+  })
+
+  it('preserves the exact same viewing direction as the default framing (only distance changes)', () => {
+    const focus = { x: 2, z: 4 }
+    const { position } = computeDialogueCameraFraming(focus, DIALOGUE_CAMERA_ZOOM)
+    // The camera's X offset from its look-at point is always 0 in this
+    // scene (CAMERA_POSITION/CAMERA_LOOK_AT share the same X) — confirm
+    // that stays true rather than dividing by a zero denominator.
+    expect(position[0]).toBeCloseTo(focus.x, 10)
+
+    const defaultOffset = {
+      y: CAMERA_POSITION[1] - CAMERA_LOOK_AT[1],
+      z: CAMERA_POSITION[2] - CAMERA_LOOK_AT[2],
+    }
+    const dialogueOffset = { y: position[1], z: position[2] - focus.z }
+    // Same ratio on the two non-zero axes — a uniform scale of the same
+    // triangle, not a different angle.
+    expect(dialogueOffset.y / defaultOffset.y).toBeCloseTo(DIALOGUE_CAMERA_ZOOM, 5)
+    expect(dialogueOffset.z / defaultOffset.z).toBeCloseTo(DIALOGUE_CAMERA_ZOOM, 5)
+  })
+
+  it('is meaningfully closer than the default exploration distance', () => {
+    const focus = { x: 0, z: -9.75 } // near a real NPC position
+    const { position } = computeDialogueCameraFraming(focus)
+    const dialogueDistance = Math.hypot(position[0] - focus.x, position[1], position[2] - focus.z)
+    const defaultDistance = Math.hypot(...CAMERA_POSITION)
+    expect(dialogueDistance).toBeLessThan(defaultDistance * 0.6)
+  })
+
+  it('frames an area comfortably larger than the interaction radius, so neither conversation partner crowds the edge', () => {
+    // A rough half-height-at-focus-distance estimate — not pixel-exact (the
+    // real camera is oblique, not top-down), just confirms the chosen zoom
+    // isn't so tight it could clip a partner standing at the radius's edge.
+    const focus = { x: 0, z: 0 }
+    const { position } = computeDialogueCameraFraming(focus)
+    const distanceToFocus = Math.hypot(position[0] - focus.x, position[1], position[2] - focus.z)
+    const halfFovRadians = (CAMERA_FOV / 2) * (Math.PI / 180)
+    const halfVisibleHeight = distanceToFocus * Math.tan(halfFovRadians)
+    expect(halfVisibleHeight).toBeGreaterThan(INTERACTION_RADIUS)
   })
 })

@@ -85,8 +85,9 @@
 }
 
 .swatch {
-  inline-size: 40px;
-  block-size: 40px;
+  /* Mobile UX pass — 44px meets the standard minimum touch target (was 40px). */
+  inline-size: 44px;
+  block-size: 44px;
   border-radius: 50%;
   cursor: pointer;
   background: var(--swatch-body);
@@ -97,6 +98,20 @@
 
 .swatch:hover {
   transform: scale(1.08);
+}
+
+.swatch:active {
+  transform: scale(0.94);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .swatch {
+    transition: none;
+  }
+  .swatch:hover,
+  .swatch:active {
+    transform: none;
+  }
 }
 
 .swatch:focus-visible {

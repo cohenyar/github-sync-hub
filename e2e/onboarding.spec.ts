@@ -135,6 +135,31 @@ test.describe('Onboarding — returning player', () => {
   })
 })
 
+test.describe('Onboarding — Welcome Screen auth state (bug-fix pass)', () => {
+  test('shows a visible Guest label and an honest not-configured notice instead of silently hiding all sign-in UI', async ({
+    page,
+  }) => {
+    await page.goto('/world')
+    await expect(page.getByTestId('welcome-screen')).toBeVisible()
+    await expect(page.getByTestId('welcome-guest-label')).toBeVisible()
+    await expect(page.getByTestId('welcome-auth-not-configured')).toBeVisible()
+    // The primary "Continue as Guest"-equivalent action still works
+    // regardless — the new notice is additive, never blocking.
+    await expect(page.getByTestId('welcome-continue-button')).toBeEnabled()
+  })
+
+  test('same Guest label and notice on a phone-sized viewport, without clipping', async ({ page }) => {
+    await page.setViewportSize({ width: 412, height: 915 })
+    await page.goto('/world')
+    await expect(page.getByTestId('welcome-screen')).toBeVisible()
+    const notice = page.getByTestId('welcome-auth-not-configured')
+    await expect(notice).toBeVisible()
+    const box = (await notice.boundingBox())!
+    expect(box.x).toBeGreaterThanOrEqual(0)
+    expect(box.x + box.width).toBeLessThanOrEqual(412)
+  })
+})
+
 test.describe('Onboarding — New Game brings the boot sequence back', () => {
   test('New Game clears onboarding; the boot sequence reappears on the next fresh entry', async ({ page }) => {
     // addInitScript re-injects on every navigation, including the reload

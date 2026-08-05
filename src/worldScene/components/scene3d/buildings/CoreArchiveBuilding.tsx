@@ -1,9 +1,18 @@
 import { CORE_ARCHIVE_POSITION } from '../../../logic/scenePositions3D'
+import { Door } from './parts/Door'
+import { SignPost } from './parts/SignPost'
+import { WindowFrame } from './parts/WindowFrame'
 
 /**
  * A small archive structure behind Mera Solt (and, later, Kestrel Vane) —
- * purely decorative scenery, no interaction, no unlock gating. Two
- * primitives: a squat cylinder body and a shallow cone cap.
+ * purely decorative scenery, no interaction, no unlock gating. The body and
+ * cap (a squat cylinder + a shallow cone) are untouched; Game Feel pass
+ * adds a real door, two windows, and a sign on the -Z face (facing Mera/
+ * city-voice, both stationed north of here), giving it the same façade
+ * treatment every other named building now has. Windows glow a cool
+ * violet-white rather than the warm amber every other building uses,
+ * matching DistrictMarker's own Core palette — this building visually
+ * belongs to the Core, not to any one district.
  */
 export function CoreArchiveBuilding() {
   const { x, z } = CORE_ARCHIVE_POSITION
@@ -21,6 +30,10 @@ export function CoreArchiveBuilding() {
         <coneGeometry args={[1.55, 0.9, 12]} />
         <meshStandardMaterial color="#6f5f8a" flatShading />
       </mesh>
+      <Door width={0.55} height={0.9} position={[0, 0.5, -1.4]} color="#232833" />
+      <WindowFrame width={0.32} height={0.42} position={[-0.55, 1.15, -1.34]} glowColor="#d8c9ff" />
+      <WindowFrame width={0.32} height={0.42} position={[0.55, 1.15, -1.34]} glowColor="#d8c9ff" />
+      <SignPost postHeight={0} position={[0, 1.85, -1.32]} tiltX={-0.3} boardWidth={0.55} boardHeight={0.3} boardColor="#9d7bff" />
     </group>
   )
 }

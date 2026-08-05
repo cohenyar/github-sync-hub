@@ -1,5 +1,7 @@
+import * as Sentry from '@sentry/react'
 import { BrowserRouter, Route, Routes, useSearchParams } from 'react-router-dom'
 import { AuthProvider, ProtectedAdminRoute } from './auth'
+import { AppErrorFallback } from './errorReporting/AppErrorFallback'
 import GameApp from './GameApp'
 import { AdminPage, CourseDetail, Courses, Dashboard, LandingPage, NotFound, Profile, Progress, Tutor } from './pages'
 import { DesignSystemPage } from './pages/DesignSystemPage'
@@ -56,18 +58,26 @@ export function AppRoutes() {
 
 /**
  * Routing foundation only. App.tsx is the top-level composition boundary —
- * it hosts the router and the auth session provider, and nothing else.
- * AuthProvider sits inside BrowserRouter (ProtectedAdminRoute needs
- * react-router-dom's <Navigate>) but outside AppRoutes, so every route
- * shares the one auth session.
+ * it hosts the router, the auth session provider, and (Game Feel pass) a
+ * whole-app Sentry error boundary, and nothing else. AuthProvider sits
+ * inside BrowserRouter (ProtectedAdminRoute needs react-router-dom's
+ * <Navigate>) but outside AppRoutes, so every route shares the one auth
+ * session. Sentry.ErrorBoundary wraps everything else — it degrades safely
+ * (still catches and shows the fallback locally) even when Sentry.init was
+ * never called, i.e. in dev/test or with no DSN configured (see
+ * errorReporting/sentryClient.ts). Distinct from and not a replacement for
+ * WorldScene3D's own WebglErrorBoundary, which handles WebGL context loss
+ * specifically, one level deeper.
  */
 function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
-    </BrowserRouter>
+    <Sentry.ErrorBoundary fallback={<AppErrorFallback />}>
+      <BrowserRouter>
+        <AuthProvider>
+          <AppRoutes />
+        </AuthProvider>
+      </BrowserRouter>
+    </Sentry.ErrorBoundary>
   )
 }
 

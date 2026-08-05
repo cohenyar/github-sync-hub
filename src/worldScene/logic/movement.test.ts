@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { computeFacingAngle, computeNextPosition, MOVEMENT_BOUNDS, type MovementInput } from './movement'
+import { computeFacingAngle, computeNextPosition, mergeMovementInput, MOVEMENT_BOUNDS, type MovementInput } from './movement'
 
 const NO_INPUT: MovementInput = { forward: false, backward: false, left: false, right: false }
 
@@ -79,5 +79,28 @@ describe('computeFacingAngle', () => {
   it('holds the previous angle when opposite keys cancel out', () => {
     const input: MovementInput = { forward: true, backward: true, left: false, right: false }
     expect(computeFacingAngle(input, 0.5)).toBe(0.5)
+  })
+})
+
+describe('mergeMovementInput', () => {
+  it('returns the primary input unchanged when no secondary is given', () => {
+    const primary: MovementInput = { ...NO_INPUT, forward: true }
+    expect(mergeMovementInput(primary)).toEqual(primary)
+    expect(mergeMovementInput(primary, null)).toEqual(primary)
+  })
+
+  it('is true on any axis where either source is true (OR, not AND)', () => {
+    const primary: MovementInput = { forward: true, backward: false, left: false, right: false }
+    const secondary: MovementInput = { forward: false, backward: false, left: true, right: false }
+    expect(mergeMovementInput(primary, secondary)).toEqual({
+      forward: true,
+      backward: false,
+      left: true,
+      right: false,
+    })
+  })
+
+  it('stays false on an axis only when both sources are false', () => {
+    expect(mergeMovementInput(NO_INPUT, NO_INPUT)).toEqual(NO_INPUT)
   })
 })

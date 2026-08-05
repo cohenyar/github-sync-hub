@@ -6,19 +6,8 @@ import { AuthContext } from './AuthProvider'
 import { ProtectedAdminRoute } from './ProtectedAdminRoute'
 import type { AuthContextValue } from './types'
 
-const BASE_AUTH: AuthContextValue = {
-  status: 'signed-out',
-  user: null,
-  role: null,
-  isAdmin: false,
-  authError: null,
-  configured: true,
-  signInWithGoogle: async () => {},
-  signOut: async () => {},
-}
-
-function renderGuarded(authValue: AuthContextValue) {
-  return render(
+function Guarded({ authValue }: { authValue: AuthContextValue }) {
+  return (
     <MemoryRouter initialEntries={['/admin']}>
       <AuthContext.Provider value={authValue}>
         <Routes>
@@ -35,8 +24,28 @@ function renderGuarded(authValue: AuthContextValue) {
           <Route path="/" element={<div>public home</div>} />
         </Routes>
       </AuthContext.Provider>
-    </MemoryRouter>,
+    </MemoryRouter>
   )
+}
+
+const BASE_AUTH: AuthContextValue = {
+  status: 'signed-out',
+  user: null,
+  role: null,
+  isAdmin: false,
+  authError: null,
+  configured: true,
+  isPasswordRecovery: false,
+  signInWithGoogle: async () => {},
+  signUpWithEmail: async () => ({ error: null }),
+  signInWithEmail: async () => ({ error: null }),
+  resetPasswordForEmail: async () => ({ error: null }),
+  updatePassword: async () => ({ error: null }),
+  signOut: async () => {},
+}
+
+function renderGuarded(authValue: AuthContextValue) {
+  return render(<Guarded authValue={authValue} />)
 }
 
 describe('ProtectedAdminRoute', () => {
@@ -85,5 +94,24 @@ describe('ProtectedAdminRoute', () => {
       isAdmin: true,
     })
     expect(screen.getByRole('region', { name: 'Admin Area' })).toBeInTheDocument()
+  })
+
+  it('removes admin access immediately after sign-out, in the same session (not just on a fresh render)', () => {
+    const adminAuth: AuthContextValue = {
+      ...BASE_AUTH,
+      status: 'signed-in',
+      user: { id: 'admin-1', email: 'admin@example.com', avatarUrl: null, displayName: null },
+      role: 'admin',
+      isAdmin: true,
+    }
+    const { rerender } = render(<Guarded authValue={adminAuth} />)
+    expect(screen.getByRole('region', { name: 'Admin Area' })).toBeInTheDocument()
+
+    // The exact transition AuthProvider's own onAuthStateChange produces on
+    // sign-out: role/isAdmin clear and status returns to signed-out.
+    rerender(<Guarded authValue={{ ...BASE_AUTH, status: 'signed-out', role: null, isAdmin: false }} />)
+
+    expect(screen.queryByRole('region', { name: 'Admin Area' })).not.toBeInTheDocument()
+    expect(screen.getByText('public home')).toBeInTheDocument()
   })
 })

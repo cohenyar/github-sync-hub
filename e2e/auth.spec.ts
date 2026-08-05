@@ -29,31 +29,48 @@ test.describe('Auth Phase 1 — protected /admin route', () => {
 })
 
 // Auth-access-in-main-flow: same environment limitation as above — no real
-// Supabase project exists here, so AuthButton correctly renders nothing at
-// all (configured === false) in every real-browser run. That's exactly the
-// "don't show a broken control when unconfigured" requirement, and it's
-// what's genuinely verifiable today. The signed-out/signed-in/logout/
-// redirect-back *behaviors* themselves are covered at the component level
-// (GameControlBar.test.tsx, AuthProvider.test.tsx) with a mocked Supabase
+// Supabase project exists here, so Google/email sign-in never renders
+// (configured === false) in every real-browser run here. Bug-fix pass: this
+// used to mean AuthButton rendered *nothing at all*, indistinguishable from
+// a broken build — it now shows a visible, honest not-configured notice
+// instead, which is what these specs check for. The signed-out/signed-in/
+// logout/redirect-back *behaviors* themselves are covered at the component
+// level (AuthButton.test.tsx, AuthProvider.test.tsx) with a mocked Supabase
 // client, since driving Google's real OAuth screen isn't possible in
 // Playwright regardless of configuration.
 test.describe('Auth access in the main flow', () => {
-  test('no broken auth control appears in /world while Supabase is unconfigured; the classic dashboard toggle still reaches the console normally', async ({
+  test('a visible not-configured notice (not nothing) appears in /world while Supabase is unconfigured; the classic dashboard toggle still reaches the console normally', async ({
     page,
   }) => {
     await page.goto('/world')
     await expect(page.getByTestId('settings-menu-button')).toBeVisible()
     await expect(page.getByTestId('google-sign-in-button')).toHaveCount(0)
     await expect(page.getByTestId('auth-account')).toHaveCount(0)
+    await expect(page.getByTestId('auth-not-configured')).toBeVisible()
+    await expect(page.getByTestId('guest-mode-badge')).toBeVisible()
 
     await page.getByTestId('settings-menu-button').click()
     await page.getByTestId('toggle-world-scene-button').click()
     await expect(page.getByRole('button', { name: 'הרץ' })).toBeVisible()
   })
 
-  test('no broken auth control appears on the shared page nav either', async ({ page }) => {
+  test('the same visible not-configured notice appears on the shared page nav', async ({ page }) => {
     await page.goto('/dashboard')
     await expect(page.getByTestId('google-sign-in-button')).toHaveCount(0)
     await expect(page.getByTestId('auth-account')).toHaveCount(0)
+    await expect(page.getByTestId('auth-not-configured')).toBeVisible()
+  })
+
+  test('the not-configured notice and Guest badge are also visible on a phone-sized viewport, without overlapping the HUD', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 412, height: 915 })
+    await page.goto('/world')
+    await expect(page.getByTestId('auth-not-configured')).toBeVisible()
+    await expect(page.getByTestId('guest-mode-badge')).toBeVisible()
+
+    const notConfiguredBox = (await page.getByTestId('auth-not-configured').boundingBox())!
+    expect(notConfiguredBox.y).toBeGreaterThanOrEqual(0)
+    expect(notConfiguredBox.x + notConfiguredBox.width).toBeLessThanOrEqual(412)
   })
 })

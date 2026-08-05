@@ -1,4 +1,8 @@
 import { ENGLISH_CENTER_POSITION, LEARNING_BUILDING_SCALE } from '../../../logic/scenePositions3D'
+import { DomedRoof } from './parts/DomedRoof'
+import { Door } from './parts/Door'
+import { SignPost } from './parts/SignPost'
+import { WindowFrame } from './parts/WindowFrame'
 
 export interface EnglishCenterProps {
   /** Brightens the roof accent when this building is the player's chosen learning path (Batch 3A.2). */
@@ -39,26 +43,22 @@ export function EnglishCenter({ isHighlighted = false, isCompleted = false }: En
         <cylinderGeometry args={[1.3, 1.4, 2.0, 16]} />
         <meshStandardMaterial color={WALL_COLOR} flatShading />
       </mesh>
-      <mesh position={[0, 2.0, 0]}>
-        <sphereGeometry args={[1.35, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2]} />
-        <meshStandardMaterial
-          color={ROOF_COLOR}
-          emissive={isHighlighted ? ACCENT_COLOR : undefined}
-          emissiveIntensity={isHighlighted ? 0.6 : 0}
-          flatShading
-        />
-      </mesh>
-      <mesh position={[0, 0.5, -1.32]}>
-        <boxGeometry args={[0.65, 1.0, 0.05]} />
-        <meshStandardMaterial color={DOOR_COLOR} flatShading />
-      </mesh>
+      <DomedRoof
+        radius={1.35}
+        position={[0, 2.0, 0]}
+        color={ROOF_COLOR}
+        emissive={isHighlighted ? ACCENT_COLOR : undefined}
+        emissiveIntensity={isHighlighted ? 0.6 : 0}
+      />
+      <Door width={0.65} height={1.0} position={[0, 0.5, -1.32]} color={DOOR_COLOR} />
+      {/* Game Feel pass — two real window openings, mirroring MathAcademy's
+          own facade upgrade so neither building "opts out" of the kit. */}
+      <WindowFrame width={0.35} height={0.45} position={[-0.85, 0.85, -1.33]} />
+      <WindowFrame width={0.35} height={0.45} position={[0.85, 0.85, -1.33]} />
       {/* Sign: enlarged slightly and tilted toward the fixed elevated
           camera (rotation.x) so its face reads more directly instead of
           nearly edge-on. */}
-      <mesh position={[0, 1.95, -1.42]} rotation={[-0.3, 0, 0]}>
-        <boxGeometry args={[1.2, 0.42, 0.05]} />
-        <meshStandardMaterial color={ACCENT_COLOR} flatShading />
-      </mesh>
+      <SignPost postHeight={0} position={[0, 1.95, -1.42]} tiltX={-0.3} boardWidth={1.2} boardHeight={0.42} boardColor={ACCENT_COLOR} />
       {/* A small warm lantern beside the door — a subtle emissive accent
           rather than a new dynamic light source, matching LampPost's own
           glowing-sphere language. */}

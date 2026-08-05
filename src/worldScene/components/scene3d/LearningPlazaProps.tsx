@@ -5,6 +5,8 @@ import {
   MATH_ACADEMY_POSITION,
 } from '../../logic/scenePositions3D'
 import { Bench } from './props/Bench'
+import { Bush } from './props/Bush'
+import { Flowerbed } from './props/Flowerbed'
 import { House } from './props/House'
 import { LampPost } from './props/LampPost'
 import { Planter } from './props/Planter'
@@ -19,6 +21,11 @@ import { Tree } from './props/Tree'
  * TownProps.tsx already established, and a few houses to reduce emptiness.
  * Purely decorative — no interaction, no collision (collision is scoped to
  * the two building colliders only, see collision.ts and PlayerAvatar.tsx).
+ *
+ * World Polish pass — one bush and one flowerbed, kept modest (this is
+ * already the densest area of the world): "balanced greenery, clear paths
+ * toward both learning buildings," offset off the x=0 spawn-to-Core
+ * corridor so neither sits on the main walking line.
  */
 export function LearningPlazaProps() {
   return (
@@ -37,6 +44,9 @@ export function LearningPlazaProps() {
 
       <Planter position={{ x: -7.4, z: -3.6 }} />
       <Planter position={{ x: 7.4, z: -3.6 }} />
+
+      <Bush position={{ x: -1.2, z: -5.5 }} />
+      <Flowerbed position={{ x: 1.2, z: -0.8 }} />
 
       {/* Batch 3A.5 — flanking each connector path, to strengthen the
           visual link between the plaza and each learning building. */}

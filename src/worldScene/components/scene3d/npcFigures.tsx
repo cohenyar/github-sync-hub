@@ -1,4 +1,7 @@
-import type { ReactElement } from 'react'
+import { useFrame } from '@react-three/fiber'
+import { useRef, type ReactElement } from 'react'
+import type { Mesh } from 'three'
+import { advanceBlink, computeBlinkAmount, createInitialBlinkState } from '../../logic/animationMotion'
 import type { NpcAppearance } from '../../logic/npcAppearance'
 
 export interface NpcFigureProps {
@@ -7,23 +10,41 @@ export interface NpcFigureProps {
 }
 
 const EYE_COLOR = '#1a1a22'
+/** However close to fully closed a blink gets, never let the eye mesh flatten to nothing. */
+const MIN_EYE_OPEN_SCALE = 0.05
 
 /**
  * Two small flattened dots on the front (-Z) of a head sphere — the single
  * highest-leverage move for turning a plain sphere into "a face." Scales
  * with the head's own radius so every figure's eyes stay proportional.
+ *
+ * Game Feel pass — each pair blinks on its own self-contained, randomized
+ * schedule (a tiny internal useFrame), so every NPC figure and
+ * PlayerCharacter blink for free with no signature or call-site change:
+ * blinking lives entirely inside this one shared component.
  */
 export function Eyes({ headRadius, color = EYE_COLOR }: { headRadius: number; color?: string }) {
   const eyeRadius = headRadius * 0.16
   const eyeX = headRadius * 0.38
   const eyeZ = -headRadius * 0.85
+  const leftRef = useRef<Mesh>(null)
+  const rightRef = useRef<Mesh>(null)
+  const blinkStateRef = useRef(createInitialBlinkState())
+
+  useFrame((_state, delta) => {
+    blinkStateRef.current = advanceBlink(blinkStateRef.current, delta)
+    const scaleY = Math.max(MIN_EYE_OPEN_SCALE, 1 - computeBlinkAmount(blinkStateRef.current))
+    leftRef.current?.scale.setY(scaleY)
+    rightRef.current?.scale.setY(scaleY)
+  })
+
   return (
     <>
-      <mesh position={[-eyeX, headRadius * 0.05, eyeZ]} scale={[1, 1, 0.4]}>
+      <mesh ref={leftRef} position={[-eyeX, headRadius * 0.05, eyeZ]} scale={[1, 1, 0.4]}>
         <sphereGeometry args={[eyeRadius, 8, 8]} />
         <meshStandardMaterial color={color} flatShading />
       </mesh>
-      <mesh position={[eyeX, headRadius * 0.05, eyeZ]} scale={[1, 1, 0.4]}>
+      <mesh ref={rightRef} position={[eyeX, headRadius * 0.05, eyeZ]} scale={[1, 1, 0.4]}>
         <sphereGeometry args={[eyeRadius, 8, 8]} />
         <meshStandardMaterial color={color} flatShading />
       </mesh>

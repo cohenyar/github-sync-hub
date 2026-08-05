@@ -1,0 +1,154 @@
+import { useRef, type RefObject } from 'react'
+import type { Group } from 'three'
+import type { PlayerAvatarPreset } from '../../logic/playerAppearance'
+import { Eyebrows, Hair } from './characterParts'
+import { Eyes } from './npcFigures'
+
+/** Where the pelvis (the rig's root joint) sits above the ground — PlayerAvatar writes the live y (bob + breathe) here every frame; this is only the first-paint default. */
+export const PLAYER_PELVIS_HEIGHT = 0.85
+
+export interface PlayerJointRefs {
+  pelvis: RefObject<Group | null>
+  hipL: RefObject<Group | null>
+  hipR: RefObject<Group | null>
+  kneeL: RefObject<Group | null>
+  kneeR: RefObject<Group | null>
+  shoulderL: RefObject<Group | null>
+  shoulderR: RefObject<Group | null>
+  elbowL: RefObject<Group | null>
+  elbowR: RefObject<Group | null>
+  neck: RefObject<Group | null>
+}
+
+/** One useRef per joint — a stable identity across re-renders, written into by PlayerAvatar's useFrame. */
+export function usePlayerJointRefs(): PlayerJointRefs {
+  return {
+    pelvis: useRef<Group>(null),
+    hipL: useRef<Group>(null),
+    hipR: useRef<Group>(null),
+    kneeL: useRef<Group>(null),
+    kneeR: useRef<Group>(null),
+    shoulderL: useRef<Group>(null),
+    shoulderR: useRef<Group>(null),
+    elbowL: useRef<Group>(null),
+    elbowR: useRef<Group>(null),
+    neck: useRef<Group>(null),
+  }
+}
+
+export interface PlayerCharacterProps {
+  appearance: PlayerAvatarPreset
+  jointRefs: PlayerJointRefs
+}
+
+/**
+ * A real jointed figure — head, torso, two arms (upper+lower), two legs
+ * (upper+lower), hands, feet, hair, eyes, eyebrows, shirt/pants/shoes as
+ * distinct primitives — replacing the old single capsule+collar+sphere.
+ * Stateless and holds no useFrame of its own: PlayerAvatar owns the one
+ * game-loop tick and writes every joint's rotation/position directly onto
+ * the refs below, so game-loop ownership stays singular. A future pass
+ * swapping in a real CC0 rig would only need to replace this file's
+ * internals — the joint-ref contract (and PlayerAvatar's usage of it) can
+ * stay the same.
+ */
+export function PlayerCharacter({ appearance, jointRefs }: PlayerCharacterProps) {
+  const { bodyColor, skinTone, hairColor, eyebrowColor, pantsColor, shoeColor } = appearance
+  const headRadius = 0.3
+
+  return (
+    <group ref={jointRefs.pelvis} position={[0, PLAYER_PELVIS_HEIGHT, 0]}>
+      <mesh position={[0, 0.26, 0]}>
+        <cylinderGeometry args={[0.26, 0.3, 0.52, 10]} />
+        <meshStandardMaterial color={bodyColor} flatShading />
+      </mesh>
+
+      <group ref={jointRefs.hipL} position={[-0.16, -0.02, 0]}>
+        <mesh position={[0, -0.2, 0]}>
+          <cylinderGeometry args={[0.1, 0.12, 0.4, 8]} />
+          <meshStandardMaterial color={pantsColor} flatShading />
+        </mesh>
+        <group ref={jointRefs.kneeL} position={[0, -0.4, 0]}>
+          <mesh position={[0, -0.18, 0]}>
+            <cylinderGeometry args={[0.085, 0.1, 0.36, 8]} />
+            <meshStandardMaterial color={pantsColor} flatShading />
+          </mesh>
+          <mesh position={[0, -0.4, -0.04]}>
+            <boxGeometry args={[0.15, 0.08, 0.24]} />
+            <meshStandardMaterial color={shoeColor} flatShading />
+          </mesh>
+        </group>
+      </group>
+
+      <group ref={jointRefs.hipR} position={[0.16, -0.02, 0]}>
+        <mesh position={[0, -0.2, 0]}>
+          <cylinderGeometry args={[0.1, 0.12, 0.4, 8]} />
+          <meshStandardMaterial color={pantsColor} flatShading />
+        </mesh>
+        <group ref={jointRefs.kneeR} position={[0, -0.4, 0]}>
+          <mesh position={[0, -0.18, 0]}>
+            <cylinderGeometry args={[0.085, 0.1, 0.36, 8]} />
+            <meshStandardMaterial color={pantsColor} flatShading />
+          </mesh>
+          <mesh position={[0, -0.4, -0.04]}>
+            <boxGeometry args={[0.15, 0.08, 0.24]} />
+            <meshStandardMaterial color={shoeColor} flatShading />
+          </mesh>
+        </group>
+      </group>
+
+      <group ref={jointRefs.shoulderL} position={[-0.34, 0.48, 0]}>
+        <mesh position={[0, -0.15, 0]}>
+          <cylinderGeometry args={[0.08, 0.09, 0.3, 8]} />
+          <meshStandardMaterial color={skinTone} flatShading />
+        </mesh>
+        <group ref={jointRefs.elbowL} position={[0, -0.3, 0]}>
+          <mesh position={[0, -0.14, 0]}>
+            <cylinderGeometry args={[0.065, 0.08, 0.28, 8]} />
+            <meshStandardMaterial color={skinTone} flatShading />
+          </mesh>
+          <mesh position={[0, -0.3, 0]}>
+            <sphereGeometry args={[0.085, 8, 8]} />
+            <meshStandardMaterial color={skinTone} flatShading />
+          </mesh>
+        </group>
+      </group>
+
+      <group ref={jointRefs.shoulderR} position={[0.34, 0.48, 0]}>
+        <mesh position={[0, -0.15, 0]}>
+          <cylinderGeometry args={[0.08, 0.09, 0.3, 8]} />
+          <meshStandardMaterial color={skinTone} flatShading />
+        </mesh>
+        <group ref={jointRefs.elbowR} position={[0, -0.3, 0]}>
+          <mesh position={[0, -0.14, 0]}>
+            <cylinderGeometry args={[0.065, 0.08, 0.28, 8]} />
+            <meshStandardMaterial color={skinTone} flatShading />
+          </mesh>
+          <mesh position={[0, -0.3, 0]}>
+            <sphereGeometry args={[0.085, 8, 8]} />
+            <meshStandardMaterial color={skinTone} flatShading />
+          </mesh>
+        </group>
+      </group>
+
+      <group ref={jointRefs.neck} position={[0, 0.56, 0]}>
+        {/*
+         * Head, eyes, eyebrows, and hair all live in one group centered on
+         * the head itself (not the neck) — Eyes/Eyebrows/Hair's own offsets
+         * are all relative to a head at local [0,0,0], so nesting them here
+         * (rather than as siblings positioned only by the neck's origin) is
+         * what keeps them landing on the face instead of floating below it.
+         */}
+        <group position={[0, 0.22, 0]}>
+          <mesh>
+            <sphereGeometry args={[headRadius, 16, 16]} />
+            <meshStandardMaterial color={skinTone} flatShading />
+          </mesh>
+          <Eyes headRadius={headRadius} />
+          <Eyebrows headRadius={headRadius} color={eyebrowColor} />
+          <Hair headRadius={headRadius} color={hairColor} />
+        </group>
+      </group>
+    </group>
+  )
+}

@@ -28,6 +28,21 @@ describe('PLAYER_AVATAR_PRESETS', () => {
     }
   })
 
+  it('gives every preset a full character recipe (Game Feel pass — no more capsule-only colors)', () => {
+    for (const preset of PLAYER_AVATAR_PRESETS) {
+      expect(preset.skinTone).toMatch(HEX_COLOR)
+      expect(preset.hairColor).toMatch(HEX_COLOR)
+      expect(preset.eyebrowColor).toMatch(HEX_COLOR)
+      expect(preset.pantsColor).toMatch(HEX_COLOR)
+      expect(preset.shoeColor).toMatch(HEX_COLOR)
+    }
+  })
+
+  it("derives pants/shoes from each preset's own bodyColor, so they differ across presets", () => {
+    const pantsColors = new Set(PLAYER_AVATAR_PRESETS.map((preset) => preset.pantsColor))
+    expect(pantsColors.size).toBe(PLAYER_AVATAR_PRESETS.length)
+  })
+
   it('gives every preset a unique id and a unique body color', () => {
     const ids = PLAYER_AVATAR_PRESETS.map((preset) => preset.id)
     const colors = PLAYER_AVATAR_PRESETS.map((preset) => preset.bodyColor.toLowerCase())

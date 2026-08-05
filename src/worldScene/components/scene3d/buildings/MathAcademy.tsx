@@ -1,4 +1,7 @@
 import { LEARNING_BUILDING_SCALE, MATH_ACADEMY_POSITION } from '../../../logic/scenePositions3D'
+import { Door } from './parts/Door'
+import { SignPost } from './parts/SignPost'
+import { WindowFrame } from './parts/WindowFrame'
 
 export interface MathAcademyProps {
   /** Brightens the roof accent when this building is the player's chosen learning path (Batch 3A.2). */
@@ -50,17 +53,16 @@ export function MathAcademy({ isHighlighted = false, isCompleted = false }: Math
           flatShading
         />
       </mesh>
-      <mesh position={[0, 0.55, -1.11]}>
-        <boxGeometry args={[0.7, 1.1, 0.05]} />
-        <meshStandardMaterial color={DOOR_COLOR} flatShading />
-      </mesh>
+      <Door width={0.7} height={1.1} position={[0, 0.55, -1.11]} color={DOOR_COLOR} />
+      {/* Game Feel pass — two real window openings flanking the existing
+          lantern, giving the wall actual façade detail instead of a bare
+          panel. Kept clear of the lantern (x=0.55) and the sign above. */}
+      <WindowFrame width={0.4} height={0.5} position={[-1.0, 0.85, -1.11]} />
+      <WindowFrame width={0.4} height={0.5} position={[1.0, 0.85, -1.11]} />
       {/* Sign: enlarged slightly and tilted toward the fixed elevated
           camera (rotation.x) so its face reads more directly instead of
           nearly edge-on. */}
-      <mesh position={[0, 2.05, -1.16]} rotation={[-0.3, 0, 0]}>
-        <boxGeometry args={[1.3, 0.45, 0.05]} />
-        <meshStandardMaterial color={ACCENT_COLOR} flatShading />
-      </mesh>
+      <SignPost postHeight={0} position={[0, 2.05, -1.16]} tiltX={-0.3} boardWidth={1.3} boardHeight={0.45} boardColor={ACCENT_COLOR} />
       {/* A small warm lantern beside the door — a subtle emissive accent
           rather than a new dynamic light source, matching LampPost's own
           glowing-sphere language. */}

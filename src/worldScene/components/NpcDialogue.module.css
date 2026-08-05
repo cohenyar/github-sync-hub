@@ -1,23 +1,143 @@
+/*
+ * Bug-fix pass: this used to be a plain block element in normal document
+ * flow, rendered as WorldScene3D's *next sibling* — meaning it sat below
+ * WorldScene3D's own 600-720px-tall canvas box, easily pushing the page's
+ * total height past the viewport on anything shorter than a large desktop
+ * monitor (confirmed by reproduction: on a 1366x768 laptop, the Start
+ * Lesson/Close buttons rendered below the fold, requiring a page scroll
+ * that every other HUD element in this app never needs). Every other
+ * floating panel here (InteractionPrompt, OdinPresence, the district HUD)
+ * already uses position:fixed/absolute to float over the canvas instead of
+ * pushing it — this brings NpcDialogue onto that same convention, anchored
+ * bottom-center exactly like OdinPresence/InteractionPrompt, so it also
+ * keeps spatial continuity with wherever the interaction prompt (and the
+ * NPC) just was on screen.
+ *
+ * Presentation pass: paired with SceneCamera's own dialogue framing (which
+ * now zooms toward the conversation instead of leaving the wide
+ * exploration view running), the card itself is now smaller ("a more
+ * compact dialogue card") and carries a speech-bubble "tail" (::before)
+ * pointing up at the now-prominent NPC/player above it — a cheap, robust
+ * way to read as "belonging to" whatever's directly above, without
+ * needing to dynamically aim at a moving screen position.
+ */
 .dialogue {
-  max-width: 420px;
-  margin: 16px auto 0;
-  padding: 16px;
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translate(-50%, 0);
+  z-index: 40;
+  width: min(360px, calc(100vw - 32px));
+  /* Clears the fixed corner HUD's own 76px height + a 16px gap below it +
+     this panel's own 16px bottom offset — the same 76px clearance value
+     TerminalView/CampaignCompleteBanner/WorldScene3D's own .hud already
+     use, so the dialogue can never render underneath it. Overflow-y is a
+     safety net for unusually long content on a very short viewport — it
+     scrolls the panel itself, never the page. */
+  max-height: calc(100vh - 108px);
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: 14px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 10px;
   background: var(--panel-bg);
   color: var(--text);
   text-align: start;
+  box-shadow: 0 10px 28px -10px rgba(0, 0, 0, 0.5);
+  animation: dialogueEnter 260ms ease-out;
+}
+
+@keyframes dialogueEnter {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 14px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+/* The speech-bubble tail — a small rotated square straddling the card's
+   top edge, same border/background as the card so it reads as one shape. */
+.dialogue::before {
+  content: '';
+  position: absolute;
+  top: -7px;
+  left: 50%;
+  width: 14px;
+  height: 14px;
+  background: var(--panel-bg);
+  border-inline-start: 1px solid var(--border);
+  border-block-start: 1px solid var(--border);
+  transform: translateX(-50%) rotate(45deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dialogue {
+    animation: none;
+  }
+}
+
+/* Mobile — a real bottom sheet: capped well under half the viewport height
+   so the zoomed-in NPC/player scene above stays clearly visible, not just
+   technically un-clipped. */
+@media (max-width: 480px) {
+  .dialogue {
+    width: calc(100vw - 24px);
+    max-height: min(42vh, calc(100vh - 108px));
+    bottom: 12px;
+    padding: 12px;
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.npcIdentity {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.npcSwatch {
+  inline-size: 20px;
+  block-size: 20px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Same swatch convention as SettingsMenu/WelcomeScreen's own player
+   identity chips — a filled circle with a contrasting accent ring — so the
+   player's side of the header reads as "the same identity" everywhere it
+   appears, not a one-off shape invented just for this panel. */
+.playerSwatch {
+  inline-size: 22px;
+  block-size: 22px;
+  border-radius: 50%;
+  background: var(--swatch-body);
+  border: 2px solid var(--swatch-accent);
+  flex-shrink: 0;
 }
 
 .name {
-  margin: 0 0 8px;
+  margin: 0;
   color: var(--text-h);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .greeting,
 .missionContext {
-  margin: 0 0 10px;
-  line-height: 1.5;
+  margin: 0 0 8px;
+  line-height: 1.45;
 }
 
 .missionContext {
@@ -38,8 +158,8 @@
 }
 
 .friendBonusLine {
-  margin: 0 0 10px;
-  line-height: 1.5;
+  margin: 0 0 8px;
+  line-height: 1.45;
   font-style: italic;
   color: var(--text-muted);
 }

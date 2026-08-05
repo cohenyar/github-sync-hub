@@ -15,5 +15,11 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
     timeout: 30_000,
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  projects: [
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    // Mobile UX pass — touch gestures (drag, tap) need hasTouch/isMobile,
+    // which the desktop project above doesn't set. Scoped to the one spec
+    // that needs it so the other ~10 desktop specs never run twice.
+    { name: 'mobile-chromium', testMatch: /touch-controls\.spec\.ts/, use: { ...devices['Pixel 7'] } },
+  ],
 })

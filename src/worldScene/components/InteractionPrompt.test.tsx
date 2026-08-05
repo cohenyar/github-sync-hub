@@ -95,7 +95,7 @@ describe('InteractionPrompt — NPC name and Talk button (Batch 3A.3)', () => {
     expect(screen.getByTestId('interaction-prompt')).toHaveTextContent('לחץ לשיחה')
   })
 
-  it('renders no Talk button when onTalk is not provided', () => {
+  it('renders no Talk button when onInteract is not provided', () => {
     render(
       <InteractionPrompt
         interactable={{ id: 'math-teacher', kind: 'npc', position: { x: 0, z: 0 } }}
@@ -105,29 +105,71 @@ describe('InteractionPrompt — NPC name and Talk button (Batch 3A.3)', () => {
     expect(screen.queryByTestId('npc-talk-button')).not.toBeInTheDocument()
   })
 
-  it('renders a clickable Talk button for an NPC when onTalk is provided, and calls it on click', () => {
-    const onTalk = vi.fn()
+  it('renders a clickable Talk button for an NPC when onInteract is provided, and calls it on click', () => {
+    const onInteract = vi.fn()
     render(
       <InteractionPrompt
         interactable={{ id: 'math-teacher', kind: 'npc', position: { x: 0, z: 0 } }}
         destinationInfoById={{}}
-        onTalk={onTalk}
+        onInteract={onInteract}
       />,
     )
 
     fireEvent.click(screen.getByTestId('npc-talk-button'))
 
-    expect(onTalk).toHaveBeenCalledTimes(1)
+    expect(onInteract).toHaveBeenCalledTimes(1)
   })
+})
 
-  it('never renders a Talk button for a district-kind interactable, even when onTalk is provided', () => {
+describe('InteractionPrompt — destination Enter button (Game Feel pass, touch interaction button)', () => {
+  it('renders a distinct Enter button (not the NPC Talk button) for an available district when onInteract is provided, and calls it on click', () => {
+    const onInteract = vi.fn()
     render(
       <InteractionPrompt
         interactable={{ id: 'east', kind: 'district', position: { x: 0, z: 0 } }}
         destinationInfoById={{ east: AVAILABLE }}
-        onTalk={vi.fn()}
+        onInteract={onInteract}
       />,
     )
+
     expect(screen.queryByTestId('npc-talk-button')).not.toBeInTheDocument()
+    const enterButton = screen.getByTestId('destination-enter-button')
+    fireEvent.click(enterButton)
+    expect(onInteract).toHaveBeenCalledTimes(1)
+  })
+
+  it('renders no Enter button for a district when onInteract is not provided', () => {
+    render(
+      <InteractionPrompt
+        interactable={{ id: 'east', kind: 'district', position: { x: 0, z: 0 } }}
+        destinationInfoById={{ east: AVAILABLE }}
+      />,
+    )
+    expect(screen.queryByTestId('destination-enter-button')).not.toBeInTheDocument()
+  })
+
+  it('never renders an Enter button for a locked destination, even when onInteract is provided — nothing useful to do yet', () => {
+    render(
+      <InteractionPrompt
+        interactable={{ id: 'south', kind: 'district', position: { x: 0, z: 0 } }}
+        destinationInfoById={{ south: LOCKED }}
+        onInteract={vi.fn()}
+      />,
+    )
+    expect(screen.queryByTestId('destination-enter-button')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('npc-talk-button')).not.toBeInTheDocument()
+  })
+
+  it('renders an Enter button for the generic fallback case (unknown district id) when onInteract is provided', () => {
+    const onInteract = vi.fn()
+    render(
+      <InteractionPrompt
+        interactable={{ id: 'mystery', kind: 'district', position: { x: 0, z: 0 } }}
+        destinationInfoById={{}}
+        onInteract={onInteract}
+      />,
+    )
+    fireEvent.click(screen.getByTestId('destination-enter-button'))
+    expect(onInteract).toHaveBeenCalledTimes(1)
   })
 })

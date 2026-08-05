@@ -17,12 +17,18 @@
   gap: 8px;
   padding: 4px;
   padding-inline-end: 12px;
+  /* Mobile UX pass — meets the 44px minimum touch target (was ~38px tall). */
+  min-height: 44px;
   border-radius: 999px;
   border: 1px solid var(--border);
   background: rgba(255, 255, 255, 0.04);
   color: var(--text);
   cursor: pointer;
-  transition: border-color 150ms ease, background 150ms ease;
+  transition: border-color 150ms ease, background 150ms ease, transform 100ms ease;
+}
+
+.trigger:active {
+  transform: scale(0.97);
 }
 
 .trigger:hover,
@@ -100,21 +106,44 @@
 }
 
 .menuItem {
-  display: block;
+  display: flex;
+  align-items: center;
   width: 100%;
   text-align: start;
   padding: 8px;
+  /* Mobile UX pass — meets the 44px minimum touch target (was ~32px tall). */
+  min-height: 44px;
   border: none;
   border-radius: 8px;
   background: transparent;
   color: var(--text);
   font-size: 0.85rem;
   cursor: pointer;
+  transition: background 150ms ease, transform 100ms ease;
 }
 
 .menuItem:hover,
 .menuItem:focus-visible {
   background: rgba(255, 255, 255, 0.08);
+}
+
+.menuItem:active {
+  transform: scale(0.98);
+}
+
+.emailToggle {
+  display: inline-flex;
+  align-items: center;
+  /* Mobile UX pass — grows the tap area to 44px without growing the visible
+     link text (padding is invisible on this transparent-background control). */
+  min-height: 44px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 .error {
@@ -123,6 +152,36 @@
   border-radius: 8px;
   padding: 6px 8px;
   font-size: 0.78rem;
+}
+
+/* Bug-fix pass: "playing without an account" is the same real state
+   whether Supabase is configured or not, so this badge shows in both the
+   not-configured notice and the normal signed-out sign-in row. */
+.guestBadge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* An honest, dev-facing explanation instead of silently rendering nothing
+   when VITE_SUPABASE_URL/VITE_SUPABASE_PUBLISHABLE_KEY (Lovable Cloud's own
+   env var names) are unset — the full explanation is in the title tooltip,
+   this stays short enough for the corner HUD. */
+.notConfiguredNotice {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(245, 200, 92, 0.12);
+  border: 1px solid rgba(245, 200, 92, 0.35);
+  color: #f5c85c;
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: help;
 }
 
 /* Meridian 1.4 — Auth UX clarity pass: the account and the local save are
@@ -136,7 +195,12 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .trigger {
+  .trigger,
+  .menuItem {
     transition: none;
+  }
+  .trigger:active,
+  .menuItem:active {
+    transform: none;
   }
 }

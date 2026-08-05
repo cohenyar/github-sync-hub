@@ -14,7 +14,12 @@ function baseAuth(): AuthContextValue {
     isAdmin: false,
     authError: null,
     configured: true,
+    isPasswordRecovery: false,
     signInWithGoogle: vi.fn(async () => {}),
+    signUpWithEmail: vi.fn(async () => ({ error: null })),
+    signInWithEmail: vi.fn(async () => ({ error: null })),
+    resetPasswordForEmail: vi.fn(async () => ({ error: null })),
+    updatePassword: vi.fn(async () => ({ error: null })),
     signOut: vi.fn(async () => {}),
   }
 }
@@ -77,20 +82,23 @@ describe('WelcomeScreen — current player profile', () => {
 })
 
 describe('WelcomeScreen — auth (no AuthProvider ancestor, e.g. every existing <GameApp/> test)', () => {
-  it('renders no auth UI at all, only the primary action', () => {
+  it('renders no sign-in UI, but still shows the Guest label (no account either way)', () => {
     renderScreen()
     expect(screen.queryByTestId('welcome-google-signin-button')).not.toBeInTheDocument()
     expect(screen.queryByTestId('welcome-guest-button')).not.toBeInTheDocument()
     expect(screen.queryByTestId('welcome-account-row')).not.toBeInTheDocument()
+    expect(screen.getByTestId('welcome-guest-label')).toBeInTheDocument()
   })
 })
 
 describe('WelcomeScreen — auth unconfigured (Supabase env vars absent, the real deployment today)', () => {
-  it('renders no sign-in/guest choice and no account row', () => {
+  it('renders no sign-in/guest choice and no account row, but shows a visible Guest label and a config notice instead of nothing', () => {
     renderScreen({}, { configured: false })
     expect(screen.queryByTestId('welcome-google-signin-button')).not.toBeInTheDocument()
     expect(screen.queryByTestId('welcome-guest-button')).not.toBeInTheDocument()
     expect(screen.queryByTestId('welcome-account-row')).not.toBeInTheDocument()
+    expect(screen.getByTestId('welcome-guest-label')).toHaveTextContent(he.guestModeLabel)
+    expect(screen.getByTestId('welcome-auth-not-configured')).toHaveTextContent(he.authNotConfiguredMessage)
   })
 })
 
@@ -107,6 +115,12 @@ describe('WelcomeScreen — auth configured, signed out', () => {
     renderScreen({}, { status: 'signed-out', signInWithGoogle: onSignIn })
     fireEvent.click(screen.getByTestId('welcome-google-signin-button'))
     expect(onSignIn).toHaveBeenCalledTimes(1)
+  })
+
+  it('shows the Guest label but no config notice (Supabase is configured)', () => {
+    renderScreen({}, { status: 'signed-out' })
+    expect(screen.getByTestId('welcome-guest-label')).toBeInTheDocument()
+    expect(screen.queryByTestId('welcome-auth-not-configured')).not.toBeInTheDocument()
   })
 })
 
@@ -134,6 +148,11 @@ describe('WelcomeScreen — auth configured, signed in', () => {
     renderScreen({}, { status: 'signed-in' })
     expect(screen.queryByTestId('welcome-google-signin-button')).not.toBeInTheDocument()
     expect(screen.queryByTestId('welcome-guest-button')).not.toBeInTheDocument()
+  })
+
+  it('does not show the Guest label once actually signed in', () => {
+    renderScreen({}, { status: 'signed-in' })
+    expect(screen.queryByTestId('welcome-guest-label')).not.toBeInTheDocument()
   })
 })
 

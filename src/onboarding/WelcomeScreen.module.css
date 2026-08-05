@@ -129,6 +129,8 @@
 
 .editLink {
   appearance: none;
+  display: inline-flex;
+  align-items: center;
   border: none;
   background: transparent;
   color: var(--ds-accent-strong);
@@ -136,11 +138,38 @@
   font-weight: 600;
   cursor: pointer;
   padding: var(--ds-space-1) var(--ds-space-2);
+  /* Mobile UX pass — meets the 44px minimum touch target. */
+  min-height: 44px;
 }
 
 .editLink:hover,
 .editLink:focus-visible {
   text-decoration: underline;
+}
+
+.editLink,
+.settingsTrigger,
+.emailAuthToggle {
+  transition: transform 100ms ease;
+}
+
+.editLink:active,
+.settingsTrigger:active,
+.emailAuthToggle:active {
+  transform: scale(0.96);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .editLink,
+  .settingsTrigger,
+  .emailAuthToggle {
+    transition: none;
+  }
+  .editLink:active,
+  .settingsTrigger:active,
+  .emailAuthToggle:active {
+    transform: none;
+  }
 }
 
 .actions {
@@ -204,6 +233,8 @@
   color: var(--ds-text-muted);
   font-size: var(--ds-text-xs);
   padding: var(--ds-space-2) var(--ds-space-4);
+  /* Mobile UX pass — meets the 44px minimum touch target. */
+  min-height: 44px;
   cursor: pointer;
 }
 
@@ -235,6 +266,70 @@
   border: 1px solid var(--ds-border);
   box-shadow: var(--ds-shadow-lg);
   z-index: 2;
+}
+
+/* Bug-fix pass — a persistent label for "no account yet," shown whenever
+   the player isn't signed in, whether or not Supabase is configured. */
+.guestLabel {
+  margin: 0;
+  color: var(--ds-text-muted);
+  font-size: var(--ds-text-xs);
+  text-align: center;
+}
+
+/* An honest, dev-facing explanation instead of silently rendering no
+   sign-in options at all when VITE_SUPABASE_URL/VITE_SUPABASE_PUBLISHABLE_KEY
+   (Lovable Cloud's own env var names) are unset. */
+.authNotConfiguredNotice {
+  margin: 0;
+  max-width: min(360px, 100%);
+  padding: var(--ds-space-2) var(--ds-space-4);
+  border-radius: var(--ds-radius-md);
+  background: rgba(245, 200, 92, 0.1);
+  border: 1px solid rgba(245, 200, 92, 0.3);
+  color: #f5c85c;
+  font-size: var(--ds-text-xs);
+  line-height: var(--ds-leading-normal);
+  text-align: center;
+}
+
+.emailAuthSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--ds-space-2);
+  width: min(320px, 100%);
+}
+
+.emailAuthToggle {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  border: none;
+  background: none;
+  color: var(--ds-text-muted);
+  font-size: var(--ds-text-xs);
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+  /* Mobile UX pass — grows the tap area to 44px without growing the visible
+     link text (padding is invisible on this transparent-background control). */
+  min-height: 44px;
+}
+
+.emailAuthPanel {
+  width: 100%;
+  padding: var(--ds-space-4);
+  border-radius: var(--ds-radius-md);
+  background: var(--ds-surface-strong);
+  border: 1px solid var(--ds-border);
+}
+
+.guestProgressNote {
+  margin: 0;
+  color: var(--ds-text-subtle);
+  font-size: var(--ds-text-2xs);
+  line-height: var(--ds-leading-normal);
 }
 
 .confirmPrompt {

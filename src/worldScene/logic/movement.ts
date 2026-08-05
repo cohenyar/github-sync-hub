@@ -59,6 +59,22 @@ export function computeNextPosition(
 }
 
 /**
+ * OR-combines two input sources so either one moving the player is
+ * sufficient — neither source needs to know the other exists. Used to
+ * merge keyboard and a touch virtual joystick: a desktop user who also
+ * happens to have a touchscreen still gets both working at once.
+ */
+export function mergeMovementInput(primary: MovementInput, secondary?: MovementInput | null): MovementInput {
+  if (!secondary) return primary
+  return {
+    forward: primary.forward || secondary.forward,
+    backward: primary.backward || secondary.backward,
+    left: primary.left || secondary.left,
+    right: primary.right || secondary.right,
+  }
+}
+
+/**
  * The Y rotation (radians) that makes a "forward is -Z" avatar face the
  * held movement direction. Holds the previous angle when no keys are held,
  * so the avatar keeps facing its last heading instead of snapping to 0.

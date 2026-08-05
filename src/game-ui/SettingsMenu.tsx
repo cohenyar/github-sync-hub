@@ -140,7 +140,7 @@ export function SettingsMenu({
           )}
           <Button
             variant="ghost"
-            size="sm"
+            size="md"
             data-testid="save-button"
             onClick={runAndClose(onSave)}
             leadingIcon={<span aria-hidden>💾</span>}
@@ -149,7 +149,7 @@ export function SettingsMenu({
           </Button>
           <Button
             variant="ghost"
-            size="sm"
+            size="md"
             data-testid="load-button"
             onClick={runAndClose(onLoad)}
             leadingIcon={<span aria-hidden>📂</span>}
@@ -162,7 +162,7 @@ export function SettingsMenu({
               <span className={styles.confirmPromptText}>{he.resetConfirmTitle}</span>
               <Button
                 variant="secondary"
-                size="sm"
+                size="md"
                 className={styles.dangerAction}
                 data-testid="confirm-reset-yes-button"
                 onClick={runAndClose(onConfirmNewGame)}
@@ -171,7 +171,7 @@ export function SettingsMenu({
               </Button>
               <Button
                 variant="ghost"
-                size="sm"
+                size="md"
                 data-testid="confirm-reset-cancel-button"
                 onClick={runAndClose(onCancelNewGame)}
               >
@@ -181,7 +181,7 @@ export function SettingsMenu({
           ) : (
             <Button
               variant="secondary"
-              size="sm"
+              size="md"
               className={styles.dangerAction}
               data-testid="new-game-button"
               onClick={blurOnPointerActivation(onRequestNewGame)}
@@ -193,7 +193,7 @@ export function SettingsMenu({
 
           <Button
             variant="secondary"
-            size="sm"
+            size="md"
             data-testid="toggle-world-scene-button"
             onClick={runAndClose(onToggleWorldScene)}
             leadingIcon={<span aria-hidden>{showWorldScene ? '🗺️' : '🌐'}</span>}
@@ -202,7 +202,7 @@ export function SettingsMenu({
           </Button>
           <Button
             variant="ghost"
-            size="sm"
+            size="md"
             data-testid="mute-toggle-button"
             aria-pressed={!isMuted}
             onClick={blurOnPointerActivation(onToggleMuted)}

@@ -177,6 +177,10 @@ export const he = {
 
   // Phase 3A.3 — NPC interaction repair + lesson-start handoff.
   talkButtonLabel: 'שיחה',
+  // Game Feel pass — the district-kind counterpart of talkButtonLabel, for
+  // InteractionPrompt's new destination-enter-button (touch's equivalent
+  // of pressing E/Enter on an available district).
+  enterButtonLabel: 'כניסה',
   startLessonAction: 'התחל שיעור',
   // Phase 3A.5 — shown instead of startLessonAction once the linked lesson is already completed.
   replayLessonAction: 'תרגל שוב',
@@ -200,6 +204,10 @@ export const he = {
   // create a WebGL context, instead of a blank screen.
   worldSceneErrorMessage: 'לא ניתן לטעון את העולם התלת־ממדי בדפדפן זה. אפשר להמשיך להשתמש בשאר האפליקציה.',
 
+  // Game Feel pass — whole-app crash fallback (see errorReporting/AppErrorFallback.tsx).
+  appErrorFallbackMessage: 'משהו השתבש. אפשר לרענן את הדף ולנסות שוב.',
+  reloadPageCta: 'רענון הדף',
+
   // Auth Phase 1 — Google sign-in, sign-out, and the protected /admin route.
   signInWithGoogle: 'התחברות עם Google',
   signOut: 'התנתקות',
@@ -207,6 +215,40 @@ export const he = {
   authUnavailableMessage: 'לא ניתן להתחבר לשירות ההתחברות כרגע. אפשר להמשיך במצב אורח.',
   authProfileErrorMessage: 'לא ניתן היה לאמת הרשאות משתמש. מחוברים ללא הרשאות ניהול.',
   navAdminLabel: 'ניהול',
+
+  // Game Feel pass — email/password sign-in alongside the existing Google
+  // option (see auth/EmailPasswordForm.tsx).
+  emailAuthToggleLabel: 'התחברות עם אימייל',
+  emailLabel: 'אימייל',
+  passwordLabel: 'סיסמה',
+  emailSignInSubmitCta: 'התחברות',
+  emailSignUpSubmitCta: 'יצירת חשבון',
+  switchToSignUpPrompt: 'אין לך חשבון? יצירת חשבון',
+  switchToSignInPrompt: 'יש לך כבר חשבון? התחברות',
+  checkYourEmailTitle: 'בדיקת אימייל',
+  checkYourEmailBody: 'שלחנו קישור אישור לכתובת האימייל שלך. יש לאשר אותו כדי להשלים את ההתחברות.',
+  authErrorInvalidCredentials: 'אימייל או סיסמה שגויים.',
+  authErrorUserExists: 'כבר קיים חשבון עם כתובת האימייל הזו.',
+  authErrorEmailNotConfirmed: 'יש לאשר את כתובת האימייל לפני ההתחברות.',
+  authErrorRateLimited: 'יותר מדי ניסיונות. אפשר לנסות שוב בעוד כמה דקות.',
+  authErrorWeakPassword: 'הסיסמה חלשה מדי. יש לבחור סיסמה ארוכה יותר.',
+  authErrorGeneric: 'משהו השתבש. אפשר לנסות שוב.',
+
+  // Guest → Account migration messaging — reassurance only, no new
+  // persistence: the local save was never touched by auth to begin with
+  // (see AuthProvider.tsx), this just says so out loud.
+  guestProgressCarriesOverMessage: 'ההתקדמות השמורה במכשיר הזה תישאר זמינה גם אחרי ההתחברות.',
+
+  // Auth UX bug-fix pass — a missing Supabase configuration used to hide
+  // every sign-in control with no explanation at all (see AuthButton.tsx/
+  // WelcomeScreen.tsx). These replace that silence with an honest message,
+  // and give the signed-out/no-account state its own persistent label
+  // instead of only ever showing as an absence of UI.
+  guestModeLabel: 'מצב אורח',
+  authNotConfiguredShortLabel: 'התחברות לא הוגדרה',
+  authNotConfiguredMessage:
+    'התחברות עדיין לא הוגדרה בסביבה הזו — חסרים משתני הסביבה VITE_SUPABASE_URL ו-VITE_SUPABASE_PUBLISHABLE_KEY. אפשר להמשיך לשחק במצב אורח בינתיים.',
+  signOutErrorMessage: 'ההתנתקות נכשלה. אפשר לנסות שוב.',
 
   // Onboarding — first-time boot sequence (see src/onboarding/BootSequence.tsx).
   bootLogInitializing: 'מאתחל את מרידיאן…',

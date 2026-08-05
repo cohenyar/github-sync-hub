@@ -127,6 +127,51 @@ export const LEARNING_BUILDING_COLLIDERS: readonly CircleCollider[] = [
 ]
 
 /**
+ * Game Feel pass — every named building now has a real façade (doors,
+ * windows, signs — see each building's own file) instead of 2-3 bare
+ * primitives, and a façade you can walk straight through looks broken, so
+ * each gets a matching collider. Radii are each chosen strictly less than
+ * that building's own nearest-NPC distance, so no NPC ever becomes
+ * unreachable — see the safety-margin tests below for the exact numbers.
+ */
+export const SOUTH_BUILDING_COLLIDER_RADIUS = 2.0
+export const CORE_ARCHIVE_COLLIDER_RADIUS = 1.5
+export const NORTH_BUILDING_COLLIDER_RADIUS = 1.5
+export const EAST_BUILDING_COLLIDER_RADIUS = 1.5
+
+export const SOUTH_BUILDING_COLLIDER: CircleCollider = {
+  id: 'south-community-hall',
+  center: SOUTH_BUILDING_POSITION,
+  radius: SOUTH_BUILDING_COLLIDER_RADIUS,
+}
+
+export const CORE_ARCHIVE_COLLIDER: CircleCollider = {
+  id: 'core-archive',
+  center: CORE_ARCHIVE_POSITION,
+  radius: CORE_ARCHIVE_COLLIDER_RADIUS,
+}
+
+export const NORTH_BUILDING_COLLIDER: CircleCollider = {
+  id: 'north-wardens-post',
+  center: NORTH_BUILDING_POSITION,
+  radius: NORTH_BUILDING_COLLIDER_RADIUS,
+}
+
+export const EAST_BUILDING_COLLIDER: CircleCollider = {
+  id: 'east-trading-post',
+  center: EAST_BUILDING_POSITION,
+  radius: EAST_BUILDING_COLLIDER_RADIUS,
+}
+
+/** Every building collider added this pass, for WorldScene3D to spread alongside LEARNING_BUILDING_COLLIDERS. */
+export const DISTRICT_BUILDING_COLLIDERS: readonly CircleCollider[] = [
+  SOUTH_BUILDING_COLLIDER,
+  CORE_ARCHIVE_COLLIDER,
+  NORTH_BUILDING_COLLIDER,
+  EAST_BUILDING_COLLIDER,
+]
+
+/**
  * Where the avatar reappears when the 3D scene (re)mounts. The scene
  * unmounts entirely while the Terminal is open, which resets any position
  * held in a ref — but sceneState.playerDistrictId survives (it lives in
@@ -150,3 +195,38 @@ export function getAvatarRespawnPosition(currentDistrictId: EntityId): Position2
 export const CAMERA_POSITION: readonly [number, number, number] = [0, 27, 32]
 export const CAMERA_LOOK_AT: readonly [number, number, number] = [0, 0, 0]
 export const CAMERA_FOV = 45
+
+/**
+ * Dialogue presentation pass — a conversation only ever involves two
+ * figures within INTERACTION_RADIUS (4.5 units) of each other, framed
+ * against the *entire* ~28-unit plaza the exploration camera is tuned for.
+ * Rather than a second camera or any rotation, this scales the exact same
+ * fixed offset/angle down toward the conversation's own midpoint — the
+ * viewing direction never changes, only the distance, so a player's sense
+ * of orientation carries over automatically. 0.45 keeps the frame
+ * (~15-19 units across at that distance) comfortably larger than the
+ * interaction radius while making both figures roughly twice as prominent
+ * on screen. SceneCamera.tsx is the only caller; kept here (not there)
+ * because it's plain-number math, same convention as every other camera
+ * constant in this file.
+ */
+export const DIALOGUE_CAMERA_ZOOM = 0.45
+
+export interface CameraFraming {
+  position: readonly [number, number, number]
+  lookAt: readonly [number, number, number]
+}
+
+/** The default (exploration) framing, unscaled — SceneCamera's target whenever no dialogue is open. */
+export const DEFAULT_CAMERA_FRAMING: CameraFraming = { position: CAMERA_POSITION, lookAt: CAMERA_LOOK_AT }
+
+export function computeDialogueCameraFraming(focus: Position2D, zoom: number = DIALOGUE_CAMERA_ZOOM): CameraFraming {
+  return {
+    position: [
+      focus.x + (CAMERA_POSITION[0] - CAMERA_LOOK_AT[0]) * zoom,
+      CAMERA_LOOK_AT[1] + (CAMERA_POSITION[1] - CAMERA_LOOK_AT[1]) * zoom,
+      focus.z + (CAMERA_POSITION[2] - CAMERA_LOOK_AT[2]) * zoom,
+    ],
+    lookAt: [focus.x, 0, focus.z],
+  }
+}

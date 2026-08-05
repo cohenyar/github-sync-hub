@@ -73,21 +73,36 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  /* Mobile UX pass — 44px meets the standard minimum touch target (was 40px). */
+  width: 44px;
+  height: 44px;
   border-radius: var(--ds-radius-pill);
   border: 1px solid var(--ds-border);
   background: var(--ds-surface-muted);
   color: var(--ds-text);
   font-size: 18px;
   cursor: pointer;
-  transition: border-color var(--ds-duration-base) var(--ds-ease-out), background var(--ds-duration-base) var(--ds-ease-out);
+  transition: border-color var(--ds-duration-base) var(--ds-ease-out), background var(--ds-duration-base) var(--ds-ease-out),
+    transform 100ms ease;
 }
 
 .archiveButton:hover,
 .archiveButton:focus-visible {
   border-color: var(--ds-border-strong);
   background: var(--ds-surface);
+}
+
+.archiveButton:active {
+  transform: scale(0.94);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .archiveButton {
+    transition: none;
+  }
+  .archiveButton:active {
+    transform: none;
+  }
 }
 
 .archiveCount {

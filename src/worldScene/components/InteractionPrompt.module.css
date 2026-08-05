@@ -20,7 +20,8 @@
   pointer-events: none;
 }
 
-.talkButton {
+.talkButton,
+.enterButton {
   /* Re-enables pointer events for just this button. Mobile-safe: meets the
      44px minimum touch target regardless of viewport width (Batch 3A.3). */
   pointer-events: auto;
@@ -34,4 +35,23 @@
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
+  transition: transform 100ms ease;
+}
+
+/* Game Feel pass — touch feedback: a quick, visible press response on any
+   pointer device, not just a :hover state that touch can't produce. */
+.talkButton:active,
+.enterButton:active {
+  transform: scale(0.94);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .talkButton,
+  .enterButton {
+    transition: none;
+  }
+  .talkButton:active,
+  .enterButton:active {
+    transform: none;
+  }
 }

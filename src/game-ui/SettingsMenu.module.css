@@ -7,8 +7,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  /* Mobile UX pass — 44px meets the standard minimum touch target (was 40px). */
+  width: 44px;
+  height: 44px;
   border-radius: var(--ds-radius-pill);
   border: 1px solid var(--ds-border);
   background: var(--ds-surface-muted);
@@ -16,7 +17,8 @@
   font-size: 18px;
   line-height: 1;
   cursor: pointer;
-  transition: border-color var(--ds-duration-base) var(--ds-ease-out), background var(--ds-duration-base) var(--ds-ease-out);
+  transition: border-color var(--ds-duration-base) var(--ds-ease-out), background var(--ds-duration-base) var(--ds-ease-out),
+    transform 100ms ease;
 }
 
 .trigger:hover,
@@ -24,6 +26,10 @@
 .trigger[aria-expanded='true'] {
   border-color: var(--ds-border-strong);
   background: var(--ds-surface);
+}
+
+.trigger:active {
+  transform: scale(0.94);
 }
 
 .menu {
@@ -54,16 +60,23 @@
   align-items: center;
   gap: var(--ds-space-2);
   padding: var(--ds-space-2) var(--ds-space-3);
+  /* Mobile UX pass — meets the 44px minimum touch target (was ~36px tall). */
+  min-height: 44px;
   border: 1px solid var(--ds-border);
   border-radius: var(--ds-radius-sm);
   background: var(--ds-surface-muted);
   cursor: pointer;
   text-align: start;
+  transition: transform 100ms ease;
 }
 
 .profileRow:hover,
 .profileRow:focus-visible {
   border-color: var(--ds-border-strong);
+}
+
+.profileRow:active {
+  transform: scale(0.98);
 }
 
 .profileSwatch {
@@ -114,7 +127,12 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .trigger {
+  .trigger,
+  .profileRow {
     transition: none;
+  }
+  .trigger:active,
+  .profileRow:active {
+    transform: none;
   }
 }

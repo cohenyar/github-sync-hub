@@ -14,8 +14,16 @@ export interface InteractionPromptProps {
   destinationInfoById: Readonly<Record<string, DestinationPromptInfo>>
   /** Batch 3A.3 — resolves an npc-kind interactable's id to its display name. Optional so every existing caller/test without it is unaffected (falls back to the plain talk prompt). */
   npcNameById?: Readonly<Record<string, string>>
-  /** Batch 3A.3 — a visible, clickable alternative to pressing E/Enter, for mouse and touch users. Only rendered for an npc-kind interactable when provided. */
-  onTalk?: () => void
+  /**
+   * Game Feel pass — renamed from onTalk: a visible, clickable alternative
+   * to pressing E/Enter, for mouse and touch users, now for BOTH an
+   * npc-kind interactable (unchanged — still the `npc-talk-button`) and an
+   * available (non-locked) district-kind one (new — `destination-enter-
+   * button`). A touch player has no keyboard equivalent for E/Enter at
+   * all, so districts need a button just as much as NPCs do. Never shown
+   * for a locked destination — there is nothing useful to do yet.
+   */
+  onInteract?: () => void
 }
 
 /**
@@ -27,7 +35,7 @@ export interface InteractionPromptProps {
  * so "can I go there" is answered before any interaction is attempted,
  * never as a silent failure afterward.
  */
-export function InteractionPrompt({ interactable, destinationInfoById, npcNameById, onTalk }: InteractionPromptProps) {
+export function InteractionPrompt({ interactable, destinationInfoById, npcNameById, onInteract }: InteractionPromptProps) {
   if (!interactable) return null
 
   if (interactable.kind === 'npc') {
@@ -36,8 +44,8 @@ export function InteractionPrompt({ interactable, destinationInfoById, npcNameBy
     return (
       <div className={styles.prompt} data-testid="interaction-prompt" data-interactable-id={interactable.id}>
         <span>{label}</span>
-        {onTalk && (
-          <button type="button" className={styles.talkButton} data-testid="npc-talk-button" onClick={onTalk}>
+        {onInteract && (
+          <button type="button" className={styles.talkButton} data-testid="npc-talk-button" onClick={onInteract}>
             {he.talkButtonLabel}
           </button>
         )}
@@ -49,7 +57,12 @@ export function InteractionPrompt({ interactable, destinationInfoById, npcNameBy
   if (!info) {
     return (
       <div className={styles.prompt} data-testid="interaction-prompt" data-interactable-id={interactable.id}>
-        {he.enterPrompt}
+        <span>{he.enterPrompt}</span>
+        {onInteract && (
+          <button type="button" className={styles.enterButton} data-testid="destination-enter-button" onClick={onInteract}>
+            {he.enterButtonLabel}
+          </button>
+        )}
       </div>
     )
   }
@@ -66,7 +79,12 @@ export function InteractionPrompt({ interactable, destinationInfoById, npcNameBy
       data-interactable-id={interactable.id}
       data-locked={isLocked}
     >
-      {label}
+      <span>{label}</span>
+      {onInteract && !isLocked && (
+        <button type="button" className={styles.enterButton} data-testid="destination-enter-button" onClick={onInteract}>
+          {he.talkButtonLabel}
+        </button>
+      )}
     </div>
   )
 }

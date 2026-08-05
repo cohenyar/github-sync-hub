@@ -2,12 +2,11 @@ import { useEffect, useRef, useState } from 'react'
 import { he } from '../i18n'
 import { Button } from '../platform/ui'
 import styles from './AuthButton.module.css'
+import { EmailPasswordForm } from './EmailPasswordForm'
 import { useOptionalAuth } from './useAuth'
 
 /**
- * Google sign-in / account chrome. Renders nothing when Supabase isn't
- * configured (no VITE_SUPABASE_URL/VITE_SUPABASE_ANON_KEY) — guest play
- * never shows a broken sign-in control. Also renders nothing if dropped in
+ * Google sign-in / account chrome. Also renders nothing if dropped in
  * somewhere with no AuthProvider ancestor (useOptionalAuth, not the
  * strict/throwing useAuth) — this is what makes it safe to reuse in both
  * PageShell's nav and GameControlBar without every caller (including the
@@ -17,6 +16,15 @@ import { useOptionalAuth } from './useAuth'
  * Meridian 1.2: signed-in state is now a trigger (avatar + name) that opens
  * a small account menu holding Sign out — a corner HUD profile control,
  * not a persistently-open row of text and buttons.
+ *
+ * Bug-fix pass: an unconfigured Lovable Cloud project (no VITE_SUPABASE_URL/
+ * VITE_SUPABASE_PUBLISHABLE_KEY — the actual state of this environment
+ * today) used to make this component return null outright, so a real player would
+ * see no sign-in control and no explanation at all — indistinguishable
+ * from a broken build. It now renders a small, honest "not configured"
+ * notice instead, and every signed-out state (configured or not) carries a
+ * persistent Guest badge, since "playing without an account" is the same
+ * state either way.
  */
 export function AuthButton() {
   const auth = useOptionalAuth()
@@ -46,7 +54,22 @@ export function AuthButton() {
   if (!auth) return null
   const { status, user, authError, configured, signInWithGoogle, signOut } = auth
 
-  if (!configured) return null
+  if (!configured) {
+    return (
+      <span className={styles.wrap}>
+        <span className={styles.guestBadge} data-testid="guest-mode-badge">
+          {he.guestModeLabel}
+        </span>
+        <span
+          className={styles.notConfiguredNotice}
+          data-testid="auth-not-configured"
+          title={he.authNotConfiguredMessage}
+        >
+          {he.authNotConfiguredShortLabel}
+        </span>
+      </span>
+    )
+  }
 
   if (status === 'loading') {
     return (
@@ -116,14 +139,32 @@ export function AuthButton() {
   }
 
   return (
-    <span className={styles.wrap}>
-      <Button variant="primary" size="sm" data-testid="google-sign-in-button" onClick={() => void signInWithGoogle()}>
+    <span className={styles.wrap} ref={containerRef}>
+      <span className={styles.guestBadge} data-testid="guest-mode-badge">
+        {he.guestModeLabel}
+      </span>
+      <Button variant="primary" size="md" data-testid="google-sign-in-button" onClick={() => void signInWithGoogle()}>
         {he.signInWithGoogle}
       </Button>
+      <button
+        type="button"
+        className={styles.emailToggle}
+        data-testid="email-auth-toggle-button"
+        aria-haspopup="menu"
+        aria-expanded={isMenuOpen}
+        onClick={() => setIsMenuOpen((open) => !open)}
+      >
+        {he.emailAuthToggleLabel}
+      </button>
       {authError && (
         <span role="alert" className={styles.error} data-testid="auth-error">
           {authError}
         </span>
+      )}
+      {isMenuOpen && (
+        <div className={styles.menu} role="menu" aria-label={he.emailAuthToggleLabel}>
+          <EmailPasswordForm onSuccess={() => setIsMenuOpen(false)} />
+        </div>
       )}
     </span>
   )

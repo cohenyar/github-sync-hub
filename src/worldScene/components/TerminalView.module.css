@@ -1,6 +1,14 @@
 .terminal {
   max-width: 480px;
-  margin: 0 auto;
+  /* Mobile UX pass — GameControlBar's HUD shell is position:fixed (Meridian
+     1.2) and no longer reserves layout height. This is TerminalView's own
+     outermost element (rendered as GameControlBar's next sibling, same as
+     CampaignCompleteBanner/GameDashboardShell), so it needs the same 76px
+     top clearance those already use — without it, the header's own
+     return-to-world-button lands directly underneath the fixed corner HUD
+     on narrower/shorter viewports, where a real tap on it is intercepted by
+     the HUD instead (confirmed via a touch-emulated e2e run). */
+  margin: 76px auto 0;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -144,12 +152,27 @@
 
 .returnButton {
   padding: 6px 14px;
+  /* Mobile UX pass — meets the 44px minimum touch target. */
+  min-height: 44px;
   border-radius: 6px;
   border: 1px solid var(--border);
   background: transparent;
   color: var(--text);
   cursor: pointer;
-  transition: border-color 200ms ease, box-shadow 200ms ease;
+  transition: border-color 200ms ease, box-shadow 200ms ease, transform 100ms ease;
+}
+
+.returnButton:active {
+  transform: scale(0.96);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .returnButton {
+    transition: none;
+  }
+  .returnButton:active {
+    transform: none;
+  }
 }
 
 /* A quiet, static invitation to go see the change outside — no motion of

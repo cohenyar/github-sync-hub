@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties, type MouseEvent } from 'react'
-import { useOptionalAuth } from '../auth'
+import { EmailPasswordForm, useOptionalAuth } from '../auth'
 import { he } from '../i18n'
 import { Button } from '../platform/ui'
 import { getPlayerAvatarPreset } from '../worldScene/logic/playerAppearance'
@@ -54,6 +54,7 @@ export function WelcomeScreen({
 }: WelcomeScreenProps) {
   const auth = useOptionalAuth()
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [showEmailForm, setShowEmailForm] = useState(false)
   const settingsRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -82,6 +83,12 @@ export function WelcomeScreen({
   // sign-in path at all, so "Continue as Guest" would just be a second
   // button doing exactly what the primary CTA already does.
   const showSignedOutChoice = configured && status === 'signed-out'
+  // Bug-fix pass: "no account" is the same real state whether Supabase is
+  // configured or not — this label used to only ever show as an absence
+  // of UI (he.welcomeNoAccountYet was defined but never rendered anywhere).
+  // Excludes 'loading' so it doesn't flash on for the instant before a
+  // real session resolves.
+  const isGuestState = status !== 'signed-in' && status !== 'loading'
 
   return (
     <div className={styles.screen} data-testid="welcome-screen">
@@ -150,6 +157,40 @@ export function WelcomeScreen({
           )}
         </div>
 
+        {isGuestState && (
+          <p className={styles.guestLabel} data-testid="welcome-guest-label">
+            {he.guestModeLabel} — {he.welcomeNoAccountYet}
+          </p>
+        )}
+
+        {!configured && isGuestState && (
+          <p className={styles.authNotConfiguredNotice} data-testid="welcome-auth-not-configured">
+            {he.authNotConfiguredMessage}
+          </p>
+        )}
+
+        {showSignedOutChoice && (
+          <div className={styles.emailAuthSection}>
+            <button
+              type="button"
+              className={styles.emailAuthToggle}
+              data-testid="welcome-email-auth-toggle-button"
+              aria-expanded={showEmailForm}
+              onClick={() => setShowEmailForm((open) => !open)}
+            >
+              {he.emailAuthToggleLabel}
+            </button>
+            {showEmailForm && (
+              <div className={styles.emailAuthPanel}>
+                <EmailPasswordForm onSuccess={() => setShowEmailForm(false)} />
+              </div>
+            )}
+            <p className={styles.guestProgressNote} data-testid="welcome-guest-progress-note">
+              {he.guestProgressCarriesOverMessage}
+            </p>
+          </div>
+        )}
+
         {configured && (
           <div className={styles.accountRow} data-testid="welcome-account-row">
             {status === 'loading' && <span className={styles.accountStatus}>{he.authLoadingMessage}</span>}
@@ -198,7 +239,7 @@ export function WelcomeScreen({
             <div className={styles.settingsPanel} role="menu" data-testid="welcome-settings-panel">
               <Button
                 variant="ghost"
-                size="sm"
+                size="md"
                 data-testid="welcome-mute-toggle-button"
                 aria-pressed={!isMuted}
                 onClick={blurOnPointerActivation(onToggleMuted)}
@@ -212,7 +253,7 @@ export function WelcomeScreen({
                   <span className={styles.confirmPromptText}>{he.resetConfirmTitle}</span>
                   <Button
                     variant="secondary"
-                    size="sm"
+                    size="md"
                     data-testid="welcome-confirm-reset-yes-button"
                     onClick={blurOnPointerActivation(() => {
                       onConfirmNewGame()
@@ -223,7 +264,7 @@ export function WelcomeScreen({
                   </Button>
                   <Button
                     variant="ghost"
-                    size="sm"
+                    size="md"
                     data-testid="welcome-confirm-reset-cancel-button"
                     onClick={blurOnPointerActivation(onCancelNewGame)}
                   >
@@ -233,7 +274,7 @@ export function WelcomeScreen({
               ) : (
                 <Button
                   variant="secondary"
-                  size="sm"
+                  size="md"
                   data-testid="welcome-new-game-button"
                   onClick={blurOnPointerActivation(onRequestNewGame)}
                   leadingIcon={<span aria-hidden>↻</span>}

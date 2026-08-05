@@ -85,6 +85,41 @@ describe('NpcDialogue', () => {
   })
 })
 
+describe('NpcDialogue — conversation identity (presentation pass)', () => {
+  it('shows a player identity swatch even when playerAvatarId is omitted (falls back to the default preset)', () => {
+    render(<NpcDialogue npc={devrin} context={context()} onClose={vi.fn()} />)
+    expect(screen.getByTestId('npc-dialogue-player-swatch')).toBeInTheDocument()
+  })
+
+  it('reflects the chosen avatar preset colors on the player swatch', () => {
+    render(<NpcDialogue npc={devrin} context={context()} onClose={vi.fn()} playerAvatarId="azure" />)
+    const swatch = screen.getByTestId('npc-dialogue-player-swatch')
+    // jsdom normalizes custom-property values on the style attribute string, not via getPropertyValue reliably — check the raw attribute instead.
+    expect(swatch.getAttribute('style')).toContain('#3d9dff')
+  })
+
+  it('gives the same NPC the same identity color across renders (stable, not random)', () => {
+    const { unmount } = render(<NpcDialogue npc={mera} context={context()} onClose={vi.fn()} />)
+    const firstStyle = screen.getByTestId('npc-dialogue-npc-swatch').getAttribute('style')
+    unmount()
+
+    render(<NpcDialogue npc={mera} context={context()} onClose={vi.fn()} />)
+    const secondStyle = screen.getByTestId('npc-dialogue-npc-swatch').getAttribute('style')
+    expect(firstStyle).toBe(secondStyle)
+  })
+
+  it('gives different NPCs a different identity color (no accidental collision for this cast)', () => {
+    const { unmount } = render(<NpcDialogue npc={devrin} context={context()} onClose={vi.fn()} />)
+    const devrinSwatchStyle = screen.getByTestId('npc-dialogue-npc-swatch').getAttribute('style')
+    unmount()
+
+    render(<NpcDialogue npc={mera} context={context()} onClose={vi.fn()} />)
+    const meraSwatchStyle = screen.getByTestId('npc-dialogue-npc-swatch').getAttribute('style')
+
+    expect(devrinSwatchStyle).not.toBe(meraSwatchStyle)
+  })
+})
+
 describe('NpcDialogue — familiarity tier (Meridian 1.3)', () => {
   it('shows no badge and no bonus line when no tier is given', () => {
     render(<NpcDialogue npc={mera} context={context()} onClose={vi.fn()} />)

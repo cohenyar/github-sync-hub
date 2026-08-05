@@ -721,6 +721,7 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
                       onClose={() => setSceneState(closeDialogue)}
                       onStartLesson={handleStartLesson}
                       familiarityTier={getNpcFamiliarityTier(playerProgress, dialogueNpc.id)}
+                      playerAvatarId={playerProgress.playerAvatarId}
                     />
                   ) : null
                 })()}

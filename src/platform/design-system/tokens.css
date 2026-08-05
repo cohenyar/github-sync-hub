@@ -109,6 +109,11 @@
   --ds-container-narrow: 880px;
   --ds-bottom-tab-h: 64px;
   --ds-safe-bottom: env(safe-area-inset-bottom, 0px);
+  /* Game Feel pass — for the two fixed touch controls (VirtualJoystick,
+     the touch interact button), which deliberately anchor to physical
+     corners rather than logical ones (see VirtualJoystick.module.css). */
+  --ds-safe-left: env(safe-area-inset-left, 0px);
+  --ds-safe-right: env(safe-area-inset-right, 0px);
 }
 
 @media (prefers-reduced-motion: reduce) {

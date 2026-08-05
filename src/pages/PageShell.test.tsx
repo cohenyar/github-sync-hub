@@ -14,7 +14,12 @@ const STUDENT_AUTH: AuthContextValue = {
   isAdmin: false,
   authError: null,
   configured: false,
+  isPasswordRecovery: false,
   signInWithGoogle: async () => {},
+  signUpWithEmail: async () => ({ error: null }),
+  signInWithEmail: async () => ({ error: null }),
+  resetPasswordForEmail: async () => ({ error: null }),
+  updatePassword: async () => ({ error: null }),
   signOut: async () => {},
 }
 

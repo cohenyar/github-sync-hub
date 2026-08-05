@@ -1,10 +1,11 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, type CSSProperties } from 'react'
 import { he } from '../../i18n'
 import { getLessonIdForNpc } from '../../learning'
 import type { NpcConfig } from '../../npcs'
 import { getFriendBonusLine, getNpcDialogue } from '../logic/dialogueContent'
 import { getNpcDialogueState, type NpcDialogueContext } from '../logic/npcDialogueState'
 import { getNpcFamiliarityLabel, type NpcFamiliarityTier } from '../../progression'
+import { getPlayerAvatarPreset } from '../logic/playerAppearance'
 import styles from './NpcDialogue.module.css'
 
 export interface NpcDialogueProps {
@@ -16,6 +17,23 @@ export interface NpcDialogueProps {
   onStartLesson?: (lessonId: string) => void
   /** Meridian 1.3 — Core Loop §06. Optional so every existing caller/fixture omitting it still type-checks; a missing tier simply shows no badge and no bonus line. */
   familiarityTier?: NpcFamiliarityTier
+  /** Dialogue presentation pass — the local profile's chosen avatar preset id, shown as a small identity swatch on the opposite side of the header from the NPC's own. Optional/undefined simply omits it (e.g. no local profile yet). */
+  playerAvatarId?: string
+}
+
+/**
+ * A deterministic, decorative hue per NPC id — not tied to any stored
+ * appearance data (NPCs have none), just a stable color so the same NPC's
+ * dialogue always carries the same identity accent. Same hashing shape as
+ * animationMotion.ts's hashIdToPhaseSeed, mapped to degrees instead of
+ * radians; kept local since nothing else needs it.
+ */
+function npcIdToHue(id: string): number {
+  let hash = 0
+  for (let index = 0; index < id.length; index += 1) {
+    hash = (hash * 31 + id.charCodeAt(index)) % 360
+  }
+  return hash
 }
 
 /**
@@ -28,7 +46,15 @@ export interface NpcDialogueProps {
  * caller uses it for a presentation-only audio cue (Batch 5); this
  * component has no idea audio exists.
  */
-export function NpcDialogue({ npc, context, onOpen, onClose, onStartLesson, familiarityTier }: NpcDialogueProps) {
+export function NpcDialogue({
+  npc,
+  context,
+  onOpen,
+  onClose,
+  onStartLesson,
+  familiarityTier,
+  playerAvatarId,
+}: NpcDialogueProps) {
   const dialogueState = getNpcDialogueState(npc, context)
   const dialogue = getNpcDialogue(npc.id, dialogueState)
   const linkedLessonId = getLessonIdForNpc(npc.id)
@@ -36,6 +62,8 @@ export function NpcDialogue({ npc, context, onOpen, onClose, onStartLesson, fami
   // Batch 3A.5 — the button stays offered either way (replay is supported
   // and idempotent); only its label changes.
   const isLessonCompleted = Boolean(linkedLessonId && (context.completedLessonIds ?? []).includes(linkedLessonId))
+  const npcHue = npcIdToHue(npc.id)
+  const playerPreset = getPlayerAvatarPreset(playerAvatarId)
 
   useEffect(() => {
     onOpen?.()
@@ -61,14 +89,30 @@ export function NpcDialogue({ npc, context, onOpen, onClose, onStartLesson, fami
 
   return (
     <div className={styles.dialogue} data-testid="npc-dialogue" data-npc-id={npc.id} role="dialog">
-      <h3 className={styles.name}>
-        {npc.name}
-        {familiarityTier && (
-          <span className={styles.familiarityBadge} data-testid="npc-familiarity-badge">
-            {getNpcFamiliarityLabel(familiarityTier)}
-          </span>
-        )}
-      </h3>
+      <div className={styles.header}>
+        <span className={styles.npcIdentity}>
+          <span
+            className={styles.npcSwatch}
+            data-testid="npc-dialogue-npc-swatch"
+            aria-hidden="true"
+            style={{ background: `hsl(${npcHue}, 55%, 55%)` }}
+          />
+          <h3 className={styles.name}>
+            {npc.name}
+            {familiarityTier && (
+              <span className={styles.familiarityBadge} data-testid="npc-familiarity-badge">
+                {getNpcFamiliarityLabel(familiarityTier)}
+              </span>
+            )}
+          </h3>
+        </span>
+        <span
+          className={styles.playerSwatch}
+          data-testid="npc-dialogue-player-swatch"
+          aria-hidden="true"
+          style={{ '--swatch-body': playerPreset.bodyColor, '--swatch-accent': playerPreset.accentColor } as CSSProperties}
+        />
+      </div>
       <p className={styles.greeting}>{dialogue.greeting}</p>
       {dialogue.missionContext && (
         <p className={styles.missionContext} data-testid="npc-dialogue-mission-context">

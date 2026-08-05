@@ -42,7 +42,15 @@
 }
 
 .button:active:not(:disabled) {
-  transform: translateY(0);
+  /* Mobile UX pass — scale gives visible feedback on tap too, not just the
+     hover-lift's mouse-only translateY reset. */
+  transform: translateY(0) scale(0.97);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button:active:not(:disabled) {
+    transform: translateY(0);
+  }
 }
 
 .button:focus-visible {

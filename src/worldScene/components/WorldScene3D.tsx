@@ -1,14 +1,17 @@
 import { Canvas } from '@react-three/fiber'
 import { useEffect, useRef, useState } from 'react'
+import { useIsTouchDevice } from '../../platform/hooks/useIsTouchDevice'
 import { getLessonIdForBuilding, getLessonIdForNpc } from '../../learning'
 import { getDistrictStatus, type WorldState } from '../../worldState'
 import { getDistrictStatusLabel, getVisibleNpcs } from '../logic/sceneSelectors'
 import {
+  DISTRICT_BUILDING_COLLIDERS,
   getAvatarRespawnPosition,
   getDistrictPosition3D,
   getNpcPosition3D,
   LEARNING_BUILDING_COLLIDERS,
 } from '../logic/scenePositions3D'
+import type { Position2D } from '../logic/movement'
 import type { DistrictPoint, Interactable } from '../logic/proximity'
 import type { SceneState } from '../logic/sceneState'
 import { CoreArchiveBuilding } from './scene3d/buildings/CoreArchiveBuilding'
@@ -29,8 +32,10 @@ import { PlayerAvatar } from './scene3d/PlayerAvatar'
 import { SceneCamera } from './scene3d/SceneCamera'
 import { TeacherNpcAccents } from './scene3d/TeacherNpcAccents'
 import { TownProps } from './scene3d/TownProps'
+import { useTouchMovementInput } from './scene3d/useTouchMovementInput'
 import { WebglErrorBoundary } from './scene3d/WebglErrorBoundary'
 import { InteractionPrompt, type DestinationPromptInfo } from './InteractionPrompt'
+import { VirtualJoystick } from './VirtualJoystick'
 import styles from './WorldScene3D.module.css'
 
 const TEACHER_NPC_IDS = new Set(['math-teacher', 'english-teacher'])
@@ -77,6 +82,14 @@ export function WorldScene3D({
 }: WorldScene3DProps) {
   const [nearestInteractable, setNearestInteractable] = useState<Interactable | null>(null)
   const [inRangeIds, setInRangeIds] = useState<ReadonlySet<string>>(new Set())
+  const [interactionPulseToken, setInteractionPulseToken] = useState(0)
+
+  // Mobile UX pass — the virtual joystick only ever renders on a touch-
+  // primary device (see useIsTouchDevice); keyboard input keeps working
+  // identically either way, and the two sources merge inside PlayerAvatar
+  // (mergeMovementInput) so a touchscreen laptop gets both at once.
+  const isTouchDevice = useIsTouchDevice()
+  const { inputRef: touchInputRef, setJoystickVector } = useTouchMovementInput()
 
   // Batch 3A.5 — resolved once per render from the same namespaced lesson
   // ids GameApp already tracks; never touches missionRegistry/completedMissionIds.
@@ -125,6 +138,23 @@ export function WorldScene3D({
   // was, not always back at the original spawn point.
   const avatarSpawnPosition = getAvatarRespawnPosition(sceneState.playerDistrictId)
 
+  // Game Feel pass — a continuous, non-React-state read of the player's
+  // live position, for NPC notice-turn (NpcMarker3D): written every frame
+  // by PlayerAvatar, read every frame by each visible NpcMarker3D, and
+  // never itself causes a re-render. Re-created on every mount, matching
+  // avatarSpawnPosition's own "the whole scene remounts, so start fresh
+  // from wherever the player actually is" reasoning above.
+  const playerPositionRef = useRef<Position2D>(avatarSpawnPosition)
+
+  // Dialogue presentation pass — resolved from data already computed above
+  // (sceneState.mode, visibleNpcs), so the camera can frame the
+  // conversation without any new lookup or state. Extracting npcId before
+  // the .find() callback keeps TypeScript's discriminated-union narrowing
+  // unambiguous inside the closure.
+  const dialogueNpcId = sceneState.mode.kind === 'dialogue' ? sceneState.mode.npcId : null
+  const dialogueNpc = dialogueNpcId ? visibleNpcs.find((npc) => npc.id === dialogueNpcId) : undefined
+  const dialogueNpcPosition = dialogueNpc ? getNpcPosition3D(dialogueNpc.id, dialogueNpc.districtId) : null
+
   function triggerInteractable(interactable: Interactable) {
     if (interactable.kind === 'district') {
       onEnterDestination(interactable.id)
@@ -147,7 +177,10 @@ export function WorldScene3D({
   // reliability bug the original diagnosis flagged.
   function handleInteract() {
     if (!isMovementEnabled) return
-    if (nearestInteractable) triggerInteractable(nearestInteractable)
+    if (nearestInteractable) {
+      triggerInteractable(nearestInteractable)
+      setInteractionPulseToken((token) => token + 1)
+    }
   }
 
   // A direct click on a specific mesh wins over "nearest interactable" as
@@ -191,7 +224,7 @@ export function WorldScene3D({
     <div className={styles.scene} data-testid="world-scene-3d">
       <WebglErrorBoundary>
       <Canvas dpr={[1, 2]}>
-        <SceneCamera />
+        <SceneCamera dialogueNpcPosition={dialogueNpcPosition} playerPositionRef={playerPositionRef} />
         {/*
          * A small lighting mood, not just illumination: a cool blue-toned
          * ambient fill (the night itself), a warm key light raking down
@@ -255,6 +288,8 @@ export function WorldScene3D({
             npcId={npc.id}
             districtId={npc.districtId}
             isHighlighted={nearestInteractable?.id === npc.id}
+            isTalking={sceneState.mode.kind === 'dialogue' && sceneState.mode.npcId === npc.id}
+            playerPositionRef={playerPositionRef}
             onClick={() => handleMeshClick(npc.id)}
           />
         ))}
@@ -289,8 +324,12 @@ export function WorldScene3D({
           onDistrictChange={onMoveToDistrict}
           onNearestInteractableChange={setNearestInteractable}
           onInRangeIdsChange={(ids) => setInRangeIds(new Set(ids))}
-          colliders={LEARNING_BUILDING_COLLIDERS}
+          colliders={[...LEARNING_BUILDING_COLLIDERS, ...DISTRICT_BUILDING_COLLIDERS]}
           avatarId={playerAvatarId}
+          externalPositionRef={playerPositionRef}
+          isTalking={sceneState.mode.kind === 'dialogue'}
+          interactionPulseToken={interactionPulseToken}
+          touchInputRef={touchInputRef}
         />
       </Canvas>
       </WebglErrorBoundary>
@@ -300,15 +339,23 @@ export function WorldScene3D({
       </div>
       {/* Batch 3A.3: hidden entirely while a dialogue is already open —
           fixes the overlap the original diagnosis flagged, rather than
-          just visually layering a second prompt under the open dialogue. */}
+          just visually layering a second prompt under the open dialogue.
+          Game Feel pass: onInteract is now unconditional — InteractionPrompt
+          itself decides whether to show a button (NPC vs. an available
+          district vs. a locked one), so this component no longer needs to
+          know which kind is nearest just to wire the callback. */}
       {isMovementEnabled && (
         <InteractionPrompt
           interactable={nearestInteractable}
           destinationInfoById={destinationInfoById}
           npcNameById={npcNameById}
-          onTalk={nearestInteractable?.kind === 'npc' ? handleInteract : undefined}
+          onInteract={handleInteract}
         />
       )}
+      {/* Mobile UX pass — the movement stick, shown only on a touch-primary
+          device and only while movement itself is enabled (hidden during
+          dialogue/terminal, matching InteractionPrompt's own gating). */}
+      {isTouchDevice && isMovementEnabled && <VirtualJoystick onChange={setJoystickVector} />}
     </div>
   )
 }

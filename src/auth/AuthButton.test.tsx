@@ -13,7 +13,12 @@ const BASE_AUTH: AuthContextValue = {
   isAdmin: false,
   authError: null,
   configured: true,
+  isPasswordRecovery: false,
   signInWithGoogle: vi.fn(async () => {}),
+  signUpWithEmail: vi.fn(async () => ({ error: null })),
+  signInWithEmail: vi.fn(async () => ({ error: null })),
+  resetPasswordForEmail: vi.fn(async () => ({ error: null })),
+  updatePassword: vi.fn(async () => ({ error: null })),
   signOut: vi.fn(async () => {}),
 }
 
@@ -28,13 +33,21 @@ function renderButton(authValue: Partial<AuthContextValue> = {}) {
 }
 
 describe('AuthButton', () => {
-  it('renders nothing when Supabase is not configured', () => {
-    const { container } = render(
+  it('shows a visible, honest not-configured notice instead of rendering nothing when Supabase is not configured', () => {
+    render(
       <AuthContext.Provider value={{ ...BASE_AUTH, configured: false }}>
         <AuthButton />
       </AuthContext.Provider>,
     )
-    expect(container).toBeEmptyDOMElement()
+    expect(screen.getByTestId('auth-not-configured')).toHaveTextContent(he.authNotConfiguredShortLabel)
+    expect(screen.getByTestId('auth-not-configured')).toHaveAttribute('title', he.authNotConfiguredMessage)
+    expect(screen.getByTestId('guest-mode-badge')).toHaveTextContent(he.guestModeLabel)
+  })
+
+  it('still shows the Guest badge alongside the normal sign-in controls once Supabase is configured', () => {
+    renderButton({ status: 'signed-out' })
+    expect(screen.getByTestId('guest-mode-badge')).toHaveTextContent(he.guestModeLabel)
+    expect(screen.getByTestId('google-sign-in-button')).toBeInTheDocument()
   })
 
   it('shows a loading state while the session resolves', () => {
@@ -101,6 +114,34 @@ describe('AuthButton', () => {
 
     expect(value.signOut).toHaveBeenCalledTimes(1)
     expect(screen.queryByRole('menu')).not.toBeInTheDocument()
+  })
+
+  it('immediately shows Guest state after sign-out, with no stale name/email/avatar left over (desktop and mobile render the same component tree)', () => {
+    const signedIn: AuthContextValue = {
+      ...BASE_AUTH,
+      status: 'signed-in',
+      user: { id: 'u1', email: 'student@example.com', avatarUrl: null, displayName: 'תלמיד לדוגמה' },
+    }
+    const { rerender } = render(
+      <AuthContext.Provider value={signedIn}>
+        <AuthButton />
+      </AuthContext.Provider>,
+    )
+    expect(screen.getByTestId('auth-account')).toHaveTextContent('תלמיד לדוגמה')
+
+    // The exact transition AuthProvider's own onAuthStateChange produces on
+    // a successful sign-out: user clears and status returns to signed-out.
+    rerender(
+      <AuthContext.Provider value={{ ...BASE_AUTH, status: 'signed-out', user: null }}>
+        <AuthButton />
+      </AuthContext.Provider>,
+    )
+
+    expect(screen.queryByTestId('auth-account')).not.toBeInTheDocument()
+    expect(screen.queryByText('תלמיד לדוגמה')).not.toBeInTheDocument()
+    expect(screen.queryByText('student@example.com')).not.toBeInTheDocument()
+    expect(screen.getByTestId('guest-mode-badge')).toBeInTheDocument()
+    expect(screen.getByTestId('google-sign-in-button')).toBeInTheDocument()
   })
 
   it('closes the menu on Escape', () => {

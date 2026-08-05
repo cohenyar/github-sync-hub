@@ -1,7 +1,18 @@
 import { cleanup } from '@testing-library/react'
 import '@testing-library/jest-dom/vitest'
 import { afterEach, beforeEach, vi } from 'vitest'
-import { markOnboardingComplete } from '../onboarding'
+// Deliberately importing the specific submodule, not the '../onboarding'
+// barrel: that barrel also re-exports WelcomeScreen/BootSequence/
+// ProfileCreation, which (via WelcomeScreen's auth UI) transitively loads
+// the *real* src/auth/supabaseClient.ts as a side effect of this setup file
+// running before any individual test's own vi.mock('./supabaseClient', ...)
+// can take effect. Since setupFiles execute in an earlier phase than a test
+// file's own hoisted vi.mock calls, that real module instance gets cached
+// first and a later per-test mock can't retroactively replace it — this was
+// the actual cause of every AuthProvider.test.tsx case failing (it always
+// saw the real, unconfigured client, never the mocked one). Importing the
+// leaf module directly avoids pulling in anything auth-related at all.
+import { markOnboardingComplete } from '../onboarding/onboardingStorage'
 
 // Onboarding: the World Scene (which mounts a real @react-three/fiber
 // <Canvas>) is now the default view, so every test that renders <GameApp/>
