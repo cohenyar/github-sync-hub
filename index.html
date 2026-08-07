@@ -103,6 +103,9 @@
         }
       }, 4000)
     </script>
-    <script type="module" src="/src/main.tsx"></script>
+    <!-- Version the development entry so a preview that cached an older Vite
+         module graph cannot keep requesting renamed assets forever. Vite
+         strips and bundles this normally in production builds. -->
+    <script type="module" src="/src/main.tsx?v=20260807-1"></script>
   </body>
 </html>
