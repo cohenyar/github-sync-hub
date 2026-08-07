@@ -146,9 +146,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       window.clearTimeout(timeoutId)
       subscription.unsubscribe()
     }
-
-    }
   }, [])
+
 
   function continueAsGuest() {
     try {
