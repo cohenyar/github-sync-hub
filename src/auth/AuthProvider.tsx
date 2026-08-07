@@ -35,15 +35,14 @@ function isValidRole(value: unknown): value is Role {
  */
 async function fetchRole(userId: string): Promise<Role | null> {
   if (!supabase) return null
-  const query = supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', userId)
-    .single()
+  const query: Promise<Role | null> = Promise.resolve(
+    supabase.from('profiles').select('role').eq('id', userId).single(),
+  )
     .then(({ data, error }) => (error || !data || !isValidRole(data.role) ? null : (data.role as Role)))
     .catch(() => null)
   const timeout = new Promise<null>((resolve) => window.setTimeout(() => resolve(null), 6000))
   return Promise.race([query, timeout])
+
 }
 
 
