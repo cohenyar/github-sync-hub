@@ -3,6 +3,7 @@ import { Link, NavLink } from 'react-router-dom'
 import { markBootStage } from '../bootDiagnostics'
 import { he } from '../i18n'
 
+import { LandingAuth } from './LandingAuth'
 import heroArt from '../assets/landing-hero.webp'
 import styles from './LandingPage.module.css'
 
@@ -72,6 +73,7 @@ export function LandingPage() {
               </NavLink>
             ))}
           </nav>
+          <LandingAuth />
         </div>
       </header>
 

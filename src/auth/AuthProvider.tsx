@@ -253,7 +253,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     role,
     isAdmin: role === 'admin',
     authError,
-    configured: isSupabaseConfigured,
+    // Availability, not just env presence: the client is resolved lazily and
+    // stays null if it failed to initialise — the UI must then explain itself
+    // rather than pretend sign-in works.
+    configured: isSupabaseConfigured && supabase !== null,
     isGuest,
     continueAsGuest,
     signInWithGoogle,
