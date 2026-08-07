@@ -1,5 +1,8 @@
+import { useEffect } from 'react'
 import { Link, NavLink } from 'react-router-dom'
+import { markBootStage } from '../bootDiagnostics'
 import { he } from '../i18n'
+
 import heroArt from '../assets/landing-hero.webp'
 import styles from './LandingPage.module.css'
 
