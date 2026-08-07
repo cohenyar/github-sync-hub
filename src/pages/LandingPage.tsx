@@ -97,7 +97,7 @@ export function LandingPage() {
         </div>
 
         <div className={styles.artwork}>
-          <img src={heroArt} alt="Meridian world" width={1280} height={1024} />
+          <img src={heroArt} alt="Meridian world" width={1280} height={1024} fetchPriority="high" decoding="async" />
           <div className={styles.artworkGlow} aria-hidden />
         </div>
       </section>
