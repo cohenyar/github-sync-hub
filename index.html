@@ -73,39 +73,28 @@
       </div>
     </div>
     <script>
-      // The preview can occasionally retain a stale Vite module after an
-      // asset rename. Never leave the visitor trapped behind an endless
-      // spinner: retry once with a clean URL, then expose a manual refresh.
+      // Bounded fail-safe only: never auto-reloads (a slow but valid boot must
+      // be allowed to finish). If React still hasn't mounted after 8s, the
+      // spinner is replaced by a readable message plus a manual refresh
+      // button, so the splash can never be a dead end.
       window.setTimeout(function () {
         var splash = document.getElementById('boot-splash')
         if (!splash) return
 
-        var retryKey = 'meridian:boot-retry'
-        if (!window.sessionStorage.getItem(retryKey)) {
-          window.sessionStorage.setItem(retryKey, '1')
-          var url = new URL(window.location.href)
-          url.searchParams.set('_boot', Date.now().toString())
-          window.location.replace(url.toString())
-          return
-        }
-
         var label = splash.querySelector('span')
         var ring = splash.querySelector('.ring')
         var retry = document.getElementById('boot-retry')
-        if (label) label.textContent = 'הטעינה נעצרה — אפשר לרענן מיד'
+        if (label) label.textContent = 'הטעינה מתעכבת — אפשר לרענן'
         if (ring) ring.style.display = 'none'
         if (retry) {
           retry.style.display = 'block'
           retry.onclick = function () {
-            window.sessionStorage.removeItem(retryKey)
             window.location.reload()
           }
         }
-      }, 4000)
+      }, 8000)
     </script>
-    <!-- Version the development entry so a preview that cached an older Vite
-         module graph cannot keep requesting renamed assets forever. Vite
-         strips and bundles this normally in production builds. -->
-    <script type="module" src="/src/main.tsx?v=20260807-1"></script>
+    <script type="module" src="/src/main.tsx"></script>
+
   </body>
 </html>

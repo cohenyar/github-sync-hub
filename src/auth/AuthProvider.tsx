@@ -29,14 +29,22 @@ function isValidRole(value: unknown): value is Role {
 /**
  * Fail-closed by construction: a Supabase query error, a missing profiles
  * row, and an unrecognized role value are all indistinguishable from "no
- * admin access" here — none of them can ever resolve to 'admin'.
+ * admin access" here — none of them can ever resolve to 'admin'. It also
+ * fails OPEN for startup: a hanging profiles request resolves to null after
+ * 6s instead of leaving the session stuck in 'loading' forever.
  */
 async function fetchRole(userId: string): Promise<Role | null> {
   if (!supabase) return null
-  const { data, error } = await supabase.from('profiles').select('role').eq('id', userId).single()
-  if (error || !data || !isValidRole(data.role)) return null
-  return data.role
+  const query: Promise<Role | null> = Promise.resolve(
+    supabase.from('profiles').select('role').eq('id', userId).single(),
+  )
+    .then(({ data, error }) => (error || !data || !isValidRole(data.role) ? null : (data.role as Role)))
+    .catch(() => null)
+  const timeout = new Promise<null>((resolve) => window.setTimeout(() => resolve(null), 6000))
+  return Promise.race([query, timeout])
+
 }
+
 
 function toAuthUser(session: Session): AuthUser {
   const metadata = session.user.user_metadata as Record<string, unknown> | undefined
@@ -91,15 +99,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Timeout protection: if Cloud never answers, the app must not sit in
     // 'loading' forever — it resolves to signed-out (guest still works) with
-    // a non-blocking warning. Only ever fires while still loading.
-    const timeoutId = window.setTimeout(() => {
-      if (cancelled) return
-      setStatus((current) => {
-        if (current !== 'loading') return current
-        setAuthError(he.authTimeoutMessage)
-        return 'signed-out'
-      })
-    }, 8000)
+    // a non-blocking warning. Re-armed on EVERY transition into 'loading'
+    // (initial load and every later auth event), never just the first one.
+    let timeoutId = 0
+    function armLoadingTimeout() {
+      window.clearTimeout(timeoutId)
+      timeoutId = window.setTimeout(() => {
+        if (cancelled) return
+        setStatus((current) => {
+          if (current !== 'loading') return current
+          setAuthError(he.authTimeoutMessage)
+          return 'signed-out'
+        })
+      }, 8000)
+    }
+
+    armLoadingTimeout()
 
     supabase.auth
       .getSession()
@@ -122,6 +137,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // render stale role/account info from the previous session while the
       // new one resolves.
       setStatus('loading')
+      armLoadingTimeout()
       resolveSession(session)
     })
 
@@ -131,6 +147,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       subscription.unsubscribe()
     }
   }, [])
+
 
   function continueAsGuest() {
     try {
