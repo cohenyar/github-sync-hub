@@ -3,7 +3,7 @@ import { createContext, useEffect, useState, type ReactNode } from 'react'
 import { markBootStage } from '../bootDiagnostics'
 import { he } from '../i18n'
 
-import { lovable } from '../integrations/lovable/index'
+
 import { isSupabaseConfigured, supabase } from './supabaseClient'
 import type { AuthActionResult, AuthContextValue, AuthStatus, AuthUser, Role } from './types'
 
@@ -178,15 +178,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function signInWithGoogle() {
-    if (!isSupabaseConfigured) return
+    if (!isSupabaseConfigured || !supabase) return
     setAuthError(null)
     clearGuest()
     // Managed Google sign-in through Lovable Cloud. The redirect target is
     // the full current URL, so signing in from /world or /dashboard returns
     // there after the OAuth round trip.
-    const result = await lovable.auth.signInWithOAuth('google', { redirect_uri: window.location.href })
-    if (result.error) setAuthError(result.error.message ?? he.authUnavailableMessage)
+    // Imported lazily: the generated Cloud modules throw at module-evaluation
+    // time when Cloud env values are missing, and that must never happen
+    // before React mounts.
+    try {
+      const { lovable } = await import('../integrations/lovable/index')
+      const result = await lovable.auth.signInWithOAuth('google', { redirect_uri: window.location.href })
+      if (result.error) setAuthError(result.error.message ?? he.authUnavailableMessage)
+    } catch {
+      setAuthError(he.authUnavailableMessage)
+    }
   }
+
 
   async function signUpWithEmail(email: string, password: string, displayName?: string): Promise<AuthActionResult> {
     if (!supabase) return { error: he.authUnavailableMessage }
