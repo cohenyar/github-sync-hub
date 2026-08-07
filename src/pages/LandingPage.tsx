@@ -1,6 +1,6 @@
 import { Link, NavLink } from 'react-router-dom'
 import { he } from '../i18n'
-import heroArt from '../assets/landing-hero.jpg'
+import heroArt from '../assets/landing-hero.webp'
 import styles from './LandingPage.module.css'
 
 /**
