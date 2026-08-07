@@ -1,9 +1,11 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { BrowserRouter, Route, Routes, useSearchParams } from 'react-router-dom'
 import { AuthProvider, ProtectedAdminRoute } from './auth'
+import { markBootStage } from './bootDiagnostics'
 import { AppLoading } from './pages/AppLoading'
 import { LandingPage } from './pages/LandingPage'
 import { NotFound } from './pages/NotFound'
+
 
 /**
  * Startup performance: only the landing page (the first thing anyone sees)
