@@ -1,5 +1,8 @@
+import { useEffect } from 'react'
 import { Link, NavLink } from 'react-router-dom'
+import { markBootStage } from '../bootDiagnostics'
 import { he } from '../i18n'
+
 import heroArt from '../assets/landing-hero.webp'
 import styles from './LandingPage.module.css'
 
@@ -39,7 +42,13 @@ const STATS = [
 ] as const
 
 export function LandingPage() {
+  // Startup instrumentation only — no behavioral effect.
+  useEffect(() => {
+    markBootStage('landing-rendered')
+  }, [])
+
   return (
+
     <div className={styles.page}>
       <div className={styles.starfield} aria-hidden />
 
