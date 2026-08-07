@@ -52,8 +52,15 @@ function WorldRoute() {
  * shell; each gets its own real design in a later phase.
  */
 export function AppRoutes() {
+  // Startup instrumentation only: records that React committed its first
+  // render and the router mounted. No behavioral effect.
+  useEffect(() => {
+    markBootStage('router-mounted')
+  }, [])
+
   return (
     <Suspense fallback={<AppLoading />}>
+
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/auth" element={<AuthPage />} />
