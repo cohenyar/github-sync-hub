@@ -1,6 +1,8 @@
 import type { Session } from '@supabase/supabase-js'
 import { createContext, useEffect, useState, type ReactNode } from 'react'
+import { markBootStage } from '../bootDiagnostics'
 import { he } from '../i18n'
+
 import { lovable } from '../integrations/lovable/index'
 import { isSupabaseConfigured, supabase } from './supabaseClient'
 import type { AuthActionResult, AuthContextValue, AuthStatus, AuthUser, Role } from './types'
