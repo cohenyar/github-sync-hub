@@ -1,7 +1,7 @@
 import type { Session } from '@supabase/supabase-js'
 import { createContext, useEffect, useState, type ReactNode } from 'react'
+import { markBootStage } from '../bootDiagnostics'
 import { he } from '../i18n'
-import { lovable } from '../integrations/lovable/index'
 import { translateAuthError } from './authErrorMessages'
 import { isLocalDevRuntime } from './runtimeEnvironment'
 import { isSupabaseConfigured, supabase } from './supabaseClient'
@@ -31,14 +31,22 @@ function isValidRole(value: unknown): value is Role {
 /**
  * Fail-closed by construction: a Supabase query error, a missing profiles
  * row, and an unrecognized role value are all indistinguishable from "no
- * admin access" here — none of them can ever resolve to 'admin'.
+ * admin access" here — none of them can ever resolve to 'admin'. It also
+ * fails OPEN for startup: a hanging profiles request resolves to null after
+ * 6s instead of leaving the session stuck in 'loading' forever.
  */
 async function fetchRole(userId: string): Promise<Role | null> {
   if (!supabase) return null
-  const { data, error } = await supabase.from('profiles').select('role').eq('id', userId).single()
-  if (error || !data || !isValidRole(data.role)) return null
-  return data.role
+  const query: Promise<Role | null> = Promise.resolve(
+    supabase.from('profiles').select('role').eq('id', userId).single(),
+  )
+    .then(({ data, error }) => (error || !data || !isValidRole(data.role) ? null : (data.role as Role)))
+    .catch(() => null)
+  const timeout = new Promise<null>((resolve) => window.setTimeout(() => resolve(null), 6000))
+  return Promise.race([query, timeout])
+
 }
+
 
 function toAuthUser(session: Session): AuthUser {
   const metadata = session.user.user_metadata as Record<string, unknown> | undefined
@@ -79,11 +87,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isGuest, setIsGuest] = useState<boolean>(readGuestFlag)
 
   useEffect(() => {
-    if (!isSupabaseConfigured || !supabase) return
+    markBootStage('auth-init-started')
+    if (!isSupabaseConfigured || !supabase) {
+      markBootStage('auth-skipped-unconfigured')
+      return
+    }
 
     let cancelled = false
 
     async function resolveSession(session: Session | null) {
+      markBootStage(session ? 'auth-session-resolved' : 'auth-session-resolved-none')
       if (!session) {
         if (!cancelled) {
           setUser(null)
@@ -95,11 +108,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       if (!cancelled) setUser(toAuthUser(session))
       const resolvedRole = await fetchRole(session.user.id)
+      markBootStage('auth-profile-resolved')
       if (cancelled) return
       setRole(resolvedRole)
       setAuthError(resolvedRole ? null : he.authProfileErrorMessage)
       setStatus('signed-in')
     }
+
+
+
+    // Timeout protection: if Cloud never answers, the app must not sit in
+    // 'loading' forever — it resolves to signed-out (guest still works) with
+    // a non-blocking warning. Re-armed on EVERY transition into 'loading'
+    // (initial load and every later auth event), never just the first one.
+    let timeoutId = 0
+    function armLoadingTimeout() {
+      window.clearTimeout(timeoutId)
+      timeoutId = window.setTimeout(() => {
+        if (cancelled) return
+        setStatus((current) => {
+          if (current !== 'loading') return current
+          setAuthError(he.authTimeoutMessage)
+          return 'signed-out'
+        })
+      }, 8000)
+    }
+
+    armLoadingTimeout()
 
     supabase.auth
       .getSession()
@@ -113,6 +148,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       })
 
+
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -122,14 +158,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // stale role/account info from the previous session while the new
       // one resolves.
       setStatus('loading')
+      armLoadingTimeout()
       resolveSession(session)
     })
 
     return () => {
       cancelled = true
+      window.clearTimeout(timeoutId)
       subscription.unsubscribe()
     }
   }, [])
+
 
   function continueAsGuest() {
     try {
@@ -150,7 +189,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function signInWithGoogle() {
-    if (!isSupabaseConfigured) return
+    if (!isSupabaseConfigured || !supabase) return
     // Lovable's managed OAuth broker (/~oauth/initiate) only exists on
     // Lovable's hosted infrastructure — on a bare Vite dev server it
     // 404s to the app's own NotFound page. Detected and stopped here,
@@ -164,8 +203,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Managed Google sign-in through Lovable Cloud. The redirect target is
     // the full current URL, so signing in from /world or /dashboard returns
     // there after the OAuth round trip.
-    const result = await lovable.auth.signInWithOAuth('google', { redirect_uri: window.location.href })
-    if (result.error) setAuthError(result.error.message ?? he.authUnavailableMessage)
+    // Imported lazily: the generated Cloud modules throw at module-evaluation
+    // time when Cloud env values are missing, and that must never happen
+    // before React mounts.
+    try {
+      const { lovable } = await import('../integrations/lovable/index')
+      const result = await lovable.auth.signInWithOAuth('google', { redirect_uri: window.location.href })
+      if (result.error) setAuthError(result.error.message ?? he.authUnavailableMessage)
+    } catch {
+      setAuthError(he.authUnavailableMessage)
+    }
   }
 
   // Email/password sign-up. Deliberately returns its own scoped result
@@ -236,7 +283,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     role,
     isAdmin: role === 'admin',
     authError,
-    configured: isSupabaseConfigured,
+    // Availability, not just env presence: the client is resolved lazily and
+    // stays null if it failed to initialise — the UI must then explain itself
+    // rather than pretend sign-in works.
+    configured: isSupabaseConfigured && supabase !== null,
     isGuest,
     continueAsGuest,
     signInWithGoogle,

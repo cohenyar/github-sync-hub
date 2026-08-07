@@ -7,20 +7,39 @@
  * './supabaseClient') keeps its import path. There is exactly ONE Supabase
  * client instance in the app; never call createClient anywhere else.
  *
- * Note: the generated client throws synchronously at import time if either
- * env var is missing, so importing this module (even just to read
- * isSupabaseConfigured) requires a real or placeholder .env — see .env.example.
+ * Startup safety: the generated client THROWS at module-evaluation time when
+ * VITE_SUPABASE_URL / VITE_SUPABASE_PUBLISHABLE_KEY are absent from the build.
+ * A static import would therefore take the whole app down before React mounts
+ * (boot splash stuck at `html-parsed`). We must not edit the generated file,
+ * so instead we import it lazily and only when the env values are actually
+ * present, and we swallow any import failure. Missing Cloud config now
+ * degrades to `supabase === null`, which the auth layer already handles as a
+ * signed-out / guest-capable state.
  */
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { supabase as cloudClient } from '../integrations/supabase/client'
 
 /**
- * Lovable Cloud is always provisioned for this project, so this is true in
- * every real run. It is kept because the whole auth surface degrades to
- * guest mode when it is false (and tests mock this module).
+ * True when Lovable Cloud env values reached this build. When false, the whole
+ * auth surface degrades to guest mode (and tests mock this module).
  */
 export const isSupabaseConfigured = Boolean(
   import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
 )
 
-export const supabase: SupabaseClient | null = isSupabaseConfigured ? (cloudClient as unknown as SupabaseClient) : null
+async function loadCloudClient(): Promise<SupabaseClient | null> {
+  if (!isSupabaseConfigured) {
+    console.warn(
+      '[meridian] Lovable Cloud env values are missing from this build — continuing in guest mode.',
+    )
+    return null
+  }
+  try {
+    const mod = await import('../integrations/supabase/client')
+    return mod.supabase as unknown as SupabaseClient
+  } catch (error) {
+    console.warn('[meridian] Lovable Cloud client failed to initialise — continuing in guest mode.', error)
+    return null
+  }
+}
+
+export const supabase: SupabaseClient | null = await loadCloudClient()

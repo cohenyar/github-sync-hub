@@ -354,7 +354,14 @@ export function WorldScene3D({
       )}
       {/* Mobile UX pass — the movement stick, shown only on a touch-primary
           device and only while movement itself is enabled (hidden during
-          dialogue/terminal, matching InteractionPrompt's own gating). */}
+          dialogue/terminal, matching InteractionPrompt's own gating).
+          Merge note: origin/main independently added its own TouchJoystick
+          (logic/touchInput.ts + useWasdInput's built-in merge) for the same
+          feature. Kept this one instead since it's the one PlayerAvatar
+          actually reads today (touchInputRef, threaded through explicitly
+          below) — TouchJoystick's parallel path is left in place, unused,
+          rather than deleted mid-merge; worth a follow-up pass to remove
+          the redundant system entirely. */}
       {isTouchDevice && isMovementEnabled && <VirtualJoystick onChange={setJoystickVector} />}
     </div>
   )

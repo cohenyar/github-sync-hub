@@ -46,45 +46,62 @@ describe('Routing foundation', () => {
   // console rendering at /world, so each pre-seeds the onboarding flag (as
   // a returning player would have) and switches to the classic view via the
   // existing toggle, exactly as a player would.
+  // /world is code-split too (GameApp pulls in the 3D scene + SQL engine),
+  // so its chunk takes measurably longer to import under jsdom — hence the
+  // explicit per-test timeout. Behavior itself is unchanged.
   it('renders the real game, unwrapped, at /world', async () => {
     markOnboardingComplete()
     renderAt('/world')
+    // GameApp is now lazy-loaded (route-level code-splitting, origin/main) —
+    // the Welcome Screen it renders doesn't exist in the DOM until that
+    // chunk resolves, so passEntryGates (synchronous) must wait for it first
+    // rather than running immediately after render.
+    await screen.findByTestId('welcome-continue-button', {}, { timeout: 15000 })
     passEntryGates()
-    fireEvent.click(await screen.findByTestId('settings-menu-button'))
+    fireEvent.click(await screen.findByTestId('settings-menu-button', {}, { timeout: 15000 }))
     fireEvent.click(await screen.findByTestId('toggle-world-scene-button'))
     expect(await screen.findByRole('button', { name: he.run })).toBeInTheDocument()
-  })
+  }, 30000)
 
   it('renders the real game at /world?path=math too (Batch 3A.2 query param), with no crash', async () => {
     markOnboardingComplete()
     renderAt('/world?path=math')
+    // GameApp is now lazy-loaded (route-level code-splitting, origin/main) —
+    // the Welcome Screen it renders doesn't exist in the DOM until that
+    // chunk resolves, so passEntryGates (synchronous) must wait for it first
+    // rather than running immediately after render.
+    await screen.findByTestId('welcome-continue-button', {}, { timeout: 15000 })
     passEntryGates()
-    fireEvent.click(await screen.findByTestId('settings-menu-button'))
+    fireEvent.click(await screen.findByTestId('settings-menu-button', {}, { timeout: 15000 }))
     fireEvent.click(await screen.findByTestId('toggle-world-scene-button'))
     expect(await screen.findByRole('button', { name: he.run })).toBeInTheDocument()
-  })
+  }, 30000)
 
+
+  // Startup performance: these routes are code-split (React.lazy), so their
+  // chunk resolves on the next microtask — assertions await the result.
   it.each([
     ['/courses', he.navCoursesLabel],
     ['/tutor', he.navTutorLabel],
     ['/progress', he.navProgressLabel],
     ['/profile', he.navProfileLabel],
-  ])('renders the %s placeholder', (path, title) => {
+  ])('renders the %s placeholder', async (path, title) => {
     renderAt(path)
-    expect(screen.getByRole('heading', { name: title })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: title })).toBeInTheDocument()
   })
 
-  it('renders the subject-selection dashboard at /dashboard', () => {
+  it('renders the subject-selection dashboard at /dashboard', async () => {
     renderAt('/dashboard')
-    expect(screen.getByRole('heading', { name: he.dashboardHeading })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: he.dashboardHeading })).toBeInTheDocument()
     expect(screen.getByTestId('subject-card-math')).toBeInTheDocument()
     expect(screen.getByTestId('subject-card-english')).toBeInTheDocument()
   })
 
-  it('reads the :courseId param on /courses/:courseId', () => {
+  it('reads the :courseId param on /courses/:courseId', async () => {
     renderAt('/courses/sql-basics')
-    expect(screen.getByText(`${he.courseDetailPrefix}sql-basics`)).toBeInTheDocument()
+    expect(await screen.findByText(`${he.courseDetailPrefix}sql-basics`)).toBeInTheDocument()
   })
+
 
   it('renders NotFound for an unknown path, with a way back to the landing page', () => {
     renderAt('/this-route-does-not-exist')
