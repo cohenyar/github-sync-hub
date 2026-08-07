@@ -1,0 +1,1 @@
+import{t as e}from"./jsx-runtime-n5LQ9ujS.js";import{a as t}from"./auth-k7gLqr0t.js";import{n,t as r}from"./PageShell-Bj7uWUXL.js";var i=e();function a({title:e}){return(0,i.jsx)(r,{children:(0,i.jsxs)(`div`,{className:n.content,children:[(0,i.jsx)(`h1`,{children:e}),(0,i.jsx)(`p`,{children:t.placeholderComingSoon})]})})}export{a as t};
