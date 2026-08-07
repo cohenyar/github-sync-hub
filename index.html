@@ -47,6 +47,16 @@
         border-top-color: rgba(120, 180, 255, 0.9);
         animation: boot-spin 0.9s linear infinite;
       }
+      #boot-retry {
+        display: none;
+        border: 1px solid rgba(120, 180, 255, 0.55);
+        border-radius: 8px;
+        padding: 0.65rem 1rem;
+        color: #dbeafe;
+        background: rgba(30, 64, 175, 0.25);
+        font: inherit;
+        cursor: pointer;
+      }
       @keyframes boot-spin {
         to {
           transform: rotate(360deg);
@@ -59,8 +69,40 @@
       <div id="boot-splash">
         <div class="ring"></div>
         <span>טוען את מרידיאן…</span>
+        <button id="boot-retry" type="button">רענון מהיר</button>
       </div>
     </div>
+    <script>
+      // The preview can occasionally retain a stale Vite module after an
+      // asset rename. Never leave the visitor trapped behind an endless
+      // spinner: retry once with a clean URL, then expose a manual refresh.
+      window.setTimeout(function () {
+        var splash = document.getElementById('boot-splash')
+        if (!splash) return
+
+        var retryKey = 'meridian:boot-retry'
+        if (!window.sessionStorage.getItem(retryKey)) {
+          window.sessionStorage.setItem(retryKey, '1')
+          var url = new URL(window.location.href)
+          url.searchParams.set('_boot', Date.now().toString())
+          window.location.replace(url.toString())
+          return
+        }
+
+        var label = splash.querySelector('span')
+        var ring = splash.querySelector('.ring')
+        var retry = document.getElementById('boot-retry')
+        if (label) label.textContent = 'הטעינה נעצרה — אפשר לרענן מיד'
+        if (ring) ring.style.display = 'none'
+        if (retry) {
+          retry.style.display = 'block'
+          retry.onclick = function () {
+            window.sessionStorage.removeItem(retryKey)
+            window.location.reload()
+          }
+        }
+      }, 4000)
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
