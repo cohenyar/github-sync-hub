@@ -77,11 +77,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isGuest, setIsGuest] = useState<boolean>(readGuestFlag)
 
   useEffect(() => {
-    if (!isSupabaseConfigured || !supabase) return
+    markBootStage('auth-init-started')
+    if (!isSupabaseConfigured || !supabase) {
+      markBootStage('auth-skipped-unconfigured')
+      return
+    }
 
     let cancelled = false
 
     async function resolveSession(session: Session | null) {
+      markBootStage(session ? 'auth-session-resolved' : 'auth-session-resolved-none')
       if (!session) {
         if (!cancelled) {
           setUser(null)
@@ -93,11 +98,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       if (!cancelled) setUser(toAuthUser(session))
       const resolvedRole = await fetchRole(session.user.id)
+      markBootStage('auth-profile-resolved')
       if (cancelled) return
       setRole(resolvedRole)
       setAuthError(resolvedRole ? null : he.authProfileErrorMessage)
       setStatus('signed-in')
     }
+
+
 
     // Timeout protection: if Cloud never answers, the app must not sit in
     // 'loading' forever — it resolves to signed-out (guest still works) with
