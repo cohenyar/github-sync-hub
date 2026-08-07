@@ -1,3 +1,5 @@
+import { Html } from '@react-three/drei'
+import { he } from '../../../../i18n'
 import { CORE_ARCHIVE_POSITION } from '../../../logic/scenePositions3D'
 import { Door } from './parts/Door'
 import { SignPost } from './parts/SignPost'
@@ -13,12 +15,33 @@ import { WindowFrame } from './parts/WindowFrame'
  * violet-white rather than the warm amber every other building uses,
  * matching DistrictMarker's own Core palette — this building visually
  * belongs to the Core, not to any one district.
+ *
+ * Playtest fix pass (issue 2) — the actual interactable (the Records Hub
+ * destination marker) stands a few meters away and had no visible name of
+ * its own; this building is the thing a player naturally associates with
+ * "the Records Hub," so its floating name label (same <Html> technique as
+ * TeacherNpcAccents, not drei's <Text> — see that file's own comment on
+ * why) is what actually answers "what is this place" on approach. The
+ * building itself is not the interactable and stays exactly that: scenery.
  */
 export function CoreArchiveBuilding() {
   const { x, z } = CORE_ARCHIVE_POSITION
 
   return (
     <group position={[x, 0, z]}>
+      <Html position={[0, 3.1, 0]} center distanceFactor={8} style={{ pointerEvents: 'none' }}>
+        <span
+          data-testid="core-archive-building-label"
+          style={{
+            color: '#f5ead8',
+            fontSize: '14px',
+            whiteSpace: 'nowrap',
+            textShadow: '0 0 4px #0e1524, 0 0 4px #0e1524',
+          }}
+        >
+          {he.recordsCoreName}
+        </span>
+      </Html>
       {/* Meridian 1.2 palette pass: nudged from #4a4358/#5f5570 toward the
           brand's violet, matching DistrictMarker's Core landmark color —
           both were already this hue family, just desaturated. */}

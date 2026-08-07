@@ -74,6 +74,12 @@
   top: calc(100% + 8px);
   inset-inline-end: 0;
   min-width: 220px;
+  /* Mobile UX pass — H2: never let this (the signed-in account menu, and
+     the email-password form nested inside .signedOutActions on mobile)
+     exceed the viewport, regardless of how narrow it is. A no-op on
+     desktop, where 100vw is never the binding constraint. */
+  max-width: calc(100vw - 24px);
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -216,4 +222,76 @@
 .authLink:hover {
   opacity: 1;
   text-decoration: underline;
+}
+
+/* Mobile UX pass — H2: the signed-out Google/auth-link/email-toggle row,
+   already fine on desktop, has no room to sit inline on a narrow viewport
+   alongside the guest badge plus the archive/settings buttons sharing this
+   same HUD corner. Desktop keeps exactly the current inline row (this rule
+   is a no-op above the breakpoint); only the media query below changes
+   anything. */
+.signedOutActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mobileMenuTrigger {
+  display: none;
+}
+
+@media (max-width: 479.98px) {
+  .mobileMenuTrigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text);
+    font-size: 18px;
+    cursor: pointer;
+  }
+
+  .mobileMenuTrigger:hover,
+  .mobileMenuTrigger:focus-visible,
+  .mobileMenuTrigger[aria-expanded='true'] {
+    border-color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  /* Collapsed by default; opening it reveals the same three actions desktop
+     always shows, stacked in a compact popover instead of wrapping into a
+     crowded multi-line HUD row. position: relative so the email-password
+     menu nested inside (.menu) anchors to this panel, not to .wrap. */
+  .signedOutActions {
+    display: none;
+  }
+
+  .signedOutActionsOpen {
+    display: flex;
+    /* Its own position: absolute already makes it a valid anchor for the
+       email-password menu nested inside (.menu), the same way any
+       non-static position does — no separate position: relative needed. */
+    position: absolute;
+    top: calc(100% + 8px);
+    inset-inline-end: 0;
+    max-width: calc(100vw - 24px);
+    box-sizing: border-box;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 10px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--panel-bg);
+    box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.55);
+    z-index: 40;
+  }
+
+  .signedOutActionsOpen .authLink {
+    padding-inline: 0;
+  }
 }

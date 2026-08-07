@@ -87,7 +87,9 @@ describe('Load-on-boot', () => {
 
     expect(screen.getByText(`${he.progressLabelPrefix}0%`)).toBeInTheDocument()
     expect(screen.getByText(new RegExp(`${he.nextLabelPrefix}קשרי מחוז \\(${he.locked}\\)`))).toBeInTheDocument()
-    await waitFor(() => expect(screen.getByText('שאילתה חדשה ממתינה. אני מקשיב.')).toBeInTheDocument())
+    // Playtest fix pass (issue 6B) — mission-started now interpolates the
+    // actual mission's own title (First Contact, on a fresh game).
+    await waitFor(() => expect(screen.getByText('משימה חדשה מתחילה: מגע ראשון. אני מקשיב.')).toBeInTheDocument())
   })
 
   it('boots straight into a previously saved game, resuming on the actual current mission', async () => {
@@ -152,8 +154,11 @@ describe('Load-on-boot', () => {
     // MissionStarted publishes once District Ties's own database finishes
     // preparing — a separate async chain from readyRunButton's own wait, so
     // this needs its own waitFor rather than assuming it has already landed.
+    // Playtest fix pass (issue 6B) — mission-started now interpolates the
+    // actual mission's own title (District Ties, the real current mission
+    // here, per this test's own comment above).
     await waitFor(() =>
-      expect(screen.getByTestId('odin-latest-message')).toHaveTextContent('שאילתה חדשה ממתינה. אני מקשיב.'),
+      expect(screen.getByTestId('odin-latest-message')).toHaveTextContent('משימה חדשה מתחילה: קשרי מחוז. אני מקשיב.'),
     )
     expect(screen.getByRole('list', { name: he.odinHistoryAriaLabel })).toHaveTextContent('ברוך שובך למרידיאן')
     // The one thing this test actually guards: no spurious re-narration of

@@ -1,0 +1,55 @@
+.panel {
+  margin-top: var(--ds-space-3);
+  border: 1px solid var(--ds-border);
+  border-inline-start: 3px solid var(--ds-ai);
+  border-radius: var(--ds-radius-lg);
+  padding: var(--ds-space-4);
+  background: var(--ds-surface);
+  color: var(--ds-text);
+  text-align: start;
+}
+
+.title {
+  margin: 0 0 var(--ds-space-3);
+  font-family: var(--ds-font-display);
+  font-size: var(--ds-text-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ds-accent-strong);
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ds-space-2);
+}
+
+.questionButton {
+  min-height: 44px;
+  padding: var(--ds-space-2) var(--ds-space-3);
+  border-radius: var(--ds-radius-md);
+  border: 1px solid var(--ds-border);
+  background: var(--ds-surface-muted);
+  color: var(--ds-text);
+  font-size: var(--ds-text-xs);
+  cursor: pointer;
+  transition:
+    border-color var(--ds-duration-base) var(--ds-ease-out),
+    background var(--ds-duration-base) var(--ds-ease-out);
+}
+
+.questionButton:hover,
+.questionButton:focus-visible {
+  border-color: var(--ds-border-strong);
+  background: var(--ds-surface-strong);
+}
+
+.answer {
+  margin: var(--ds-space-3) 0 0;
+  padding-top: var(--ds-space-3);
+  border-top: 1px solid var(--ds-border);
+  color: var(--ds-text);
+  line-height: var(--ds-leading-normal);
+  white-space: pre-line;
+}

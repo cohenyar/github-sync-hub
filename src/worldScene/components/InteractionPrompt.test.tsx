@@ -20,7 +20,7 @@ describe('InteractionPrompt', () => {
         destinationInfoById={{}}
       />,
     )
-    expect(screen.getByTestId('interaction-prompt')).toHaveTextContent('לחץ לשיחה')
+    expect(screen.getByTestId('interaction-prompt')).toHaveTextContent('לחץ/י לשיחה')
   })
 
   it('names the destination and shows its progress when available', () => {
@@ -66,7 +66,7 @@ describe('InteractionPrompt', () => {
         destinationInfoById={{}}
       />,
     )
-    expect(screen.getByTestId('interaction-prompt')).toHaveTextContent('לחץ לכניסה')
+    expect(screen.getByTestId('interaction-prompt')).toHaveTextContent('לחץ/י לכניסה')
   })
 })
 
@@ -81,7 +81,7 @@ describe('InteractionPrompt — NPC name and Talk button (Batch 3A.3)', () => {
     )
     const prompt = screen.getByTestId('interaction-prompt')
     expect(prompt).toHaveTextContent('Nadav Stern')
-    expect(prompt).toHaveTextContent('לחץ לשיחה')
+    expect(prompt).toHaveTextContent('לחץ/י לשיחה')
   })
 
   it('falls back to the plain talk prompt when the id has no entry in npcNameById', () => {
@@ -92,7 +92,7 @@ describe('InteractionPrompt — NPC name and Talk button (Batch 3A.3)', () => {
         npcNameById={{}}
       />,
     )
-    expect(screen.getByTestId('interaction-prompt')).toHaveTextContent('לחץ לשיחה')
+    expect(screen.getByTestId('interaction-prompt')).toHaveTextContent('לחץ/י לשיחה')
   })
 
   it('renders no Talk button when onInteract is not provided', () => {
@@ -171,5 +171,59 @@ describe('InteractionPrompt — destination Enter button (Game Feel pass, touch 
     )
     fireEvent.click(screen.getByTestId('destination-enter-button'))
     expect(onInteract).toHaveBeenCalledTimes(1)
+  })
+
+  // Playtest fix pass (issue 2) — this button previously always rendered
+  // he.talkButtonLabel ("שיחה"/Talk), a copy bug since a district-kind
+  // interactable is never an NPC.
+  it('labels a regular (non-Hub) destination\'s enter button with the generic Enter action, never Talk', () => {
+    render(
+      <InteractionPrompt
+        interactable={{ id: 'east', kind: 'district', position: { x: 0, z: 0 } }}
+        destinationInfoById={{ east: AVAILABLE }}
+        onInteract={vi.fn()}
+      />,
+    )
+    const button = screen.getByTestId('destination-enter-button')
+    expect(button).toHaveTextContent('כניסה')
+    expect(button).not.toHaveTextContent('שיחה')
+  })
+
+  it('gives the Records Hub (core) a specific activate action instead of the generic Enter', () => {
+    render(
+      <InteractionPrompt
+        interactable={{ id: 'core', kind: 'district', position: { x: 0, z: 0 } }}
+        destinationInfoById={{ core: COMPLETED }}
+        onInteract={vi.fn()}
+      />,
+    )
+    const button = screen.getByTestId('destination-enter-button')
+    expect(button).toHaveTextContent('הפעל/י את מוקד הרשומות')
+  })
+})
+
+describe('InteractionPrompt — locked-destination prerequisite text (playtest fix, issue 4)', () => {
+  it('explains what must be completed instead of showing only "Locked"', () => {
+    render(
+      <InteractionPrompt
+        interactable={{ id: 'east', kind: 'district', position: { x: 0, z: 0 } }}
+        destinationInfoById={{
+          east: { name: 'רובע הסוחרים', status: 'locked', progress: { completed: 0, total: 3 }, lockRequirementMissionTitle: 'יציבות הדרום' },
+        }}
+      />,
+    )
+    const prompt = screen.getByTestId('interaction-prompt')
+    expect(prompt).toHaveTextContent('רובע הסוחרים')
+    expect(prompt).toHaveTextContent('נדרש: השלמת יציבות הדרום')
+  })
+
+  it('falls back to the plain "Locked" label when no requirement title is known', () => {
+    render(
+      <InteractionPrompt
+        interactable={{ id: 'south', kind: 'district', position: { x: 0, z: 0 } }}
+        destinationInfoById={{ south: LOCKED }}
+      />,
+    )
+    expect(screen.getByTestId('interaction-prompt')).toHaveTextContent('נעול')
   })
 })

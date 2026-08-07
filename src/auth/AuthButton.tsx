@@ -29,18 +29,28 @@ import { useOptionalAuth } from './useAuth'
 export function AuthButton() {
   const auth = useOptionalAuth()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  // Mobile UX pass — H2: separate from isMenuOpen (which still only ever
+  // means "the email form is open," same as before). This one controls the
+  // collapsed popover a narrow viewport hides the Google/auth-link/email
+  // row behind — see .signedOutActions's media query. Irrelevant on desktop,
+  // where that row is always shown regardless of this flag.
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (!isMenuOpen) return
+    if (!isMenuOpen && !isMobileMenuOpen) return
 
     function handlePointerDown(event: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         setIsMenuOpen(false)
+        setIsMobileMenuOpen(false)
       }
     }
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') setIsMenuOpen(false)
+      if (event.key === 'Escape') {
+        setIsMenuOpen(false)
+        setIsMobileMenuOpen(false)
+      }
     }
 
     document.addEventListener('mousedown', handlePointerDown)
@@ -49,7 +59,7 @@ export function AuthButton() {
       document.removeEventListener('mousedown', handlePointerDown)
       document.removeEventListener('keydown', handleKeyDown)
     }
-  }, [isMenuOpen])
+  }, [isMenuOpen, isMobileMenuOpen])
 
   if (!auth) return null
   const { status, user, authError, configured, signInWithGoogle, signOut } = auth
@@ -143,33 +153,56 @@ export function AuthButton() {
       <span className={styles.guestBadge} data-testid="guest-mode-badge">
         {he.guestModeLabel}
       </span>
-      <Button variant="primary" size="md" data-testid="google-sign-in-button" onClick={() => void signInWithGoogle()}>
-        {he.signInWithGoogle}
-      </Button>
-      {/* Plain anchor, not <Link>: AuthButton is dropped into chrome that
-          isn't always inside a Router (GameControlBar in existing tests). */}
-      <a className={styles.authLink} href="/auth" data-testid="auth-page-link">
-        {he.authGoToSignIn}
-      </a>
+
+      {/* Mobile UX pass — H2: below ~480px this is the only thing shown by
+          default; tapping it reveals .signedOutActions instead of the row
+          overflowing the corner HUD (see AuthButton.module.css). Hidden
+          entirely on desktop, where .signedOutActions is already visible. */}
       <button
         type="button"
-        className={styles.emailToggle}
-        data-testid="email-auth-toggle-button"
+        className={styles.mobileMenuTrigger}
+        data-testid="auth-mobile-menu-trigger"
         aria-haspopup="menu"
-        aria-expanded={isMenuOpen}
-        onClick={() => setIsMenuOpen((open) => !open)}
+        aria-expanded={isMobileMenuOpen}
+        aria-label={he.authMobileMenuLabel}
+        onClick={() => setIsMobileMenuOpen((open) => !open)}
       >
-        {he.emailAuthToggleLabel}
+        <span aria-hidden="true">🔑</span>
       </button>
+
+      <div
+        className={`${styles.signedOutActions} ${isMobileMenuOpen ? styles.signedOutActionsOpen : ''}`}
+        role="menu"
+        aria-label={he.authMobileMenuLabel}
+      >
+        <Button variant="primary" size="md" data-testid="google-sign-in-button" onClick={() => void signInWithGoogle()}>
+          {he.signInWithGoogle}
+        </Button>
+        {/* Plain anchor, not <Link>: AuthButton is dropped into chrome that
+            isn't always inside a Router (GameControlBar in existing tests). */}
+        <a className={styles.authLink} href="/auth" data-testid="auth-page-link">
+          {he.authGoToSignIn}
+        </a>
+        <button
+          type="button"
+          className={styles.emailToggle}
+          data-testid="email-auth-toggle-button"
+          aria-haspopup="menu"
+          aria-expanded={isMenuOpen}
+          onClick={() => setIsMenuOpen((open) => !open)}
+        >
+          {he.emailAuthToggleLabel}
+        </button>
+        {isMenuOpen && (
+          <div className={styles.menu} role="menu" aria-label={he.emailAuthToggleLabel}>
+            <EmailPasswordForm onSuccess={() => setIsMenuOpen(false)} />
+          </div>
+        )}
+      </div>
       {authError && (
         <span role="alert" className={styles.error} data-testid="auth-error">
           {authError}
         </span>
-      )}
-      {isMenuOpen && (
-        <div className={styles.menu} role="menu" aria-label={he.emailAuthToggleLabel}>
-          <EmailPasswordForm onSuccess={() => setIsMenuOpen(false)} />
-        </div>
       )}
     </span>
   )

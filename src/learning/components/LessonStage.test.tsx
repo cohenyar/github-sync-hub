@@ -23,13 +23,13 @@ const ENGLISH_LESSON: EnglishLessonConfig = {
 
 describe('LessonStage — renders the right panel for the right subject only', () => {
   it('renders MathExercisePanel, never EnglishExercisePanel, for a math lesson', () => {
-    render(<LessonStage lesson={MATH_LESSON} isCompleted={false} onResult={vi.fn()} onReturnToWorld={vi.fn()} />)
+    render(<LessonStage lesson={MATH_LESSON} onResult={vi.fn()} onReturnToWorld={vi.fn()} />)
     expect(screen.getByTestId('math-exercise-panel')).toBeInTheDocument()
     expect(screen.queryByTestId('english-exercise-panel')).not.toBeInTheDocument()
   })
 
   it('renders EnglishExercisePanel, never MathExercisePanel, for an english lesson', () => {
-    render(<LessonStage lesson={ENGLISH_LESSON} isCompleted={false} onResult={vi.fn()} onReturnToWorld={vi.fn()} />)
+    render(<LessonStage lesson={ENGLISH_LESSON} onResult={vi.fn()} onReturnToWorld={vi.fn()} />)
     expect(screen.getByTestId('english-exercise-panel')).toBeInTheDocument()
     expect(screen.queryByTestId('math-exercise-panel')).not.toBeInTheDocument()
   })
@@ -38,7 +38,7 @@ describe('LessonStage — renders the right panel for the right subject only', (
 describe('LessonStage — completion flow', () => {
   it('bubbles a wrong answer up via onResult(false) and keeps showing the exercise, not the success message', () => {
     const onResult = vi.fn()
-    render(<LessonStage lesson={MATH_LESSON} isCompleted={false} onResult={onResult} onReturnToWorld={vi.fn()} />)
+    render(<LessonStage lesson={MATH_LESSON} onResult={onResult} onReturnToWorld={vi.fn()} />)
 
     fireEvent.change(screen.getByTestId('math-answer-input'), { target: { value: '7' } })
     fireEvent.click(screen.getByTestId('math-submit-button'))
@@ -50,7 +50,7 @@ describe('LessonStage — completion flow', () => {
 
   it('bubbles a correct answer up via onResult(true) and swaps to the success message', () => {
     const onResult = vi.fn()
-    render(<LessonStage lesson={MATH_LESSON} isCompleted={false} onResult={onResult} onReturnToWorld={vi.fn()} />)
+    render(<LessonStage lesson={MATH_LESSON} onResult={onResult} onReturnToWorld={vi.fn()} />)
 
     fireEvent.change(screen.getByTestId('math-answer-input'), { target: { value: '11' } })
     fireEvent.click(screen.getByTestId('math-submit-button'))
@@ -60,16 +60,39 @@ describe('LessonStage — completion flow', () => {
     expect(screen.queryByTestId('math-exercise-panel')).not.toBeInTheDocument()
   })
 
-  it('shows the success message immediately, with no exercise panel, when isCompleted is true from the start', () => {
-    render(<LessonStage lesson={MATH_LESSON} isCompleted={true} onResult={vi.fn()} onReturnToWorld={vi.fn()} />)
+  // Bug-fix pass: LessonStage no longer accepts an isCompleted prop — a
+  // fresh mount (exactly what GameApp gives it every time a lesson is
+  // opened, whether via "Start Lesson" or "תרגל שוב") always shows the
+  // exercise fresh, never the success message, regardless of persisted
+  // completion. That persisted state lives one level up, in GameApp/
+  // completedLessonIds, and never reaches this component at all.
+  it('always shows the exercise fresh on mount, never the success message, with no isCompleted input to override it', () => {
+    render(<LessonStage lesson={MATH_LESSON} onResult={vi.fn()} onReturnToWorld={vi.fn()} />)
 
+    expect(screen.queryByTestId('lesson-success-message')).not.toBeInTheDocument()
+    expect(screen.getByTestId('math-exercise-panel')).toBeInTheDocument()
+  })
+
+  it('replaying (a fresh mount after an earlier pass) behaves exactly like the first attempt', () => {
+    const { unmount } = render(<LessonStage lesson={MATH_LESSON} onResult={vi.fn()} onReturnToWorld={vi.fn()} />)
+    fireEvent.change(screen.getByTestId('math-answer-input'), { target: { value: '11' } })
+    fireEvent.click(screen.getByTestId('math-submit-button'))
     expect(screen.getByTestId('lesson-success-message')).toBeInTheDocument()
-    expect(screen.queryByTestId('math-exercise-panel')).not.toBeInTheDocument()
+    unmount()
+
+    // Simulates GameApp's real activeLessonId cycle (null -> id -> null -> id):
+    // LessonStage fully unmounts and remounts, exactly like clicking the
+    // dialogue's start-lesson/practice-again button again.
+    render(<LessonStage lesson={MATH_LESSON} onResult={vi.fn()} onReturnToWorld={vi.fn()} />)
+
+    expect(screen.queryByTestId('lesson-success-message')).not.toBeInTheDocument()
+    expect(screen.getByTestId('math-exercise-panel')).toBeInTheDocument()
+    expect(screen.getByTestId('math-answer-input')).toHaveValue(null)
   })
 
   it('calls onReturnToWorld when the return button is clicked, whether or not the lesson passed yet', () => {
     const onReturnToWorld = vi.fn()
-    render(<LessonStage lesson={MATH_LESSON} isCompleted={false} onResult={vi.fn()} onReturnToWorld={onReturnToWorld} />)
+    render(<LessonStage lesson={MATH_LESSON} onResult={vi.fn()} onReturnToWorld={onReturnToWorld} />)
 
     fireEvent.click(screen.getByTestId('lesson-return-to-world-button'))
     expect(onReturnToWorld).toHaveBeenCalledTimes(1)
@@ -78,7 +101,9 @@ describe('LessonStage — completion flow', () => {
 
 describe('LessonStage — success wording (Batch 3A.5)', () => {
   it('shows a distinct what-to-do-next line alongside the success message, once passed', () => {
-    render(<LessonStage lesson={MATH_LESSON} isCompleted={true} onResult={vi.fn()} onReturnToWorld={vi.fn()} />)
+    render(<LessonStage lesson={MATH_LESSON} onResult={vi.fn()} onReturnToWorld={vi.fn()} />)
+    fireEvent.change(screen.getByTestId('math-answer-input'), { target: { value: '11' } })
+    fireEvent.click(screen.getByTestId('math-submit-button'))
 
     const nextSteps = screen.getByTestId('lesson-success-next-steps')
     expect(nextSteps).toHaveTextContent(he.lessonSuccessNextStepsMessage)
@@ -86,7 +111,7 @@ describe('LessonStage — success wording (Batch 3A.5)', () => {
   })
 
   it('does not show the next-steps line while the exercise is still active', () => {
-    render(<LessonStage lesson={MATH_LESSON} isCompleted={false} onResult={vi.fn()} onReturnToWorld={vi.fn()} />)
+    render(<LessonStage lesson={MATH_LESSON} onResult={vi.fn()} onReturnToWorld={vi.fn()} />)
     expect(screen.queryByTestId('lesson-success-next-steps')).not.toBeInTheDocument()
   })
 })

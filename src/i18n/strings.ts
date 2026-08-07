@@ -22,7 +22,7 @@ export const he = {
   admin: 'ניהול',
   hideAdmin: 'הסתר ניהול',
   resetConfirmTitle: 'לאפס את כל ההתקדמות?',
-  resetConfirmYes: 'כן, אפס',
+  resetConfirmYes: 'כן, אפס/י',
   cancel: 'ביטול',
 
   // Mission Select
@@ -35,16 +35,25 @@ export const he = {
   completed: 'הושלמה',
 
   // SQL terminal
-  sqlEditorLabel: 'שאילתה',
-  sqlEditorTitle: 'שאילתה',
-  run: 'הרץ',
+  // Playtest fix pass (issue 5) — "שאילתה" (Query) duplicated as both the
+  // aria-label and the visible header read as a generic technical form
+  // label with no narrative framing. Renamed to name what the player is
+  // actually doing (issuing a command to the Records Hub's core), and
+  // "run" was normalized from the malformed "הרץ/הריצי" full-word slash
+  // form to the short-suffix style used consistently across this screen.
+  sqlEditorLabel: 'הפקודה שלך',
+  sqlEditorTitle: 'הפקודה שלך',
+  run: 'הרץ/י',
   sqlPlaceholder: '-- כתוב כאן את השאילתה שלך',
+  // A single, generic, non-spoiler syntax reminder — never the mission's
+  // own referenceSql, which would just hand over the answer.
+  sqlExampleHint: 'לדוגמה: SELECT * FROM שם_טבלה;',
   databasePrepareErrorPrefix: 'שגיאה בהכנת מסד הנתונים: ',
   // Player-facing replacement for the raw technical exception: never shown
   // with the underlying error text appended — that's preserved internally
   // (MissionStatus.error, and logged via console.error) for debugging only.
   databasePrepareErrorMessage: 'אירעה שגיאה בהכנת מסד הנתונים למשימה. ניתן לנסות שוב.',
-  retryDatabaseSetup: 'נסה שוב',
+  retryDatabaseSetup: 'נסה/י שוב',
   sqlErrorPrefix: 'שגיאת SQL: ',
 
   // Mission panel
@@ -56,7 +65,7 @@ export const he = {
   progressLabelPrefix: 'התקדמות: ',
   statusLabelPrefix: 'סטטוס: ',
   nextLabelPrefix: 'הבא: ',
-  continueToPrefix: 'המשך אל ',
+  continueToPrefix: 'המשך/י אל ',
   missionLabel: 'משימה',
   ofLabel: 'מתוך',
 
@@ -77,9 +86,9 @@ export const he = {
   worldSceneToggle: 'חזרה לעולם',
   dashboardToggle: 'תצוגה קלאסית',
   cityPlazaLabel: 'כיכר העיר מרידיאן',
-  playerAvatarLabel: 'אתה',
-  talkPrompt: 'לחץ לשיחה',
-  enterPrompt: 'לחץ לכניסה',
+  playerAvatarLabel: 'את/ה',
+  talkPrompt: 'לחץ/י לשיחה',
+  enterPrompt: 'לחץ/י לכניסה',
   recordsCoreName: 'מוקד הרשומות',
   districtThriving: 'משגשג',
   districtStable: 'יציב',
@@ -99,7 +108,7 @@ export const he = {
   northCourseName: 'מסלול הצפון',
   southCourseName: 'רובע היציבות',
   eastCourseName: 'רובע הסוחרים',
-  enterDestinationPrefix: 'היכנס אל ',
+  enterDestinationPrefix: 'היכנס/י אל ',
   destinationLockedLabel: 'נעול',
   courseProgressPrefix: 'התקדמות מסלול: ',
 
@@ -127,7 +136,7 @@ export const he = {
   currentDistrictLabel: 'מחוז נוכחי',
   companionFieldLabel: 'מלווה',
   nextActionLabel: 'הפעולה הבאה',
-  continueMissionCta: 'המשך משימה',
+  continueMissionCta: 'המשך/י משימה',
   companionPanelTitle: 'המלווה שלך',
   companionNoContext: 'אין כרגע הודעה מהמלווה.',
   activeJourneyTitle: 'היעד הפעיל',
@@ -142,7 +151,7 @@ export const he = {
   eventSaveSuccess: 'המשחק נשמר בהצלחה',
   eventLoadSuccess: 'המשחק נטען בהצלחה',
   eventNextStepAvailable: 'השלב הבא זמין',
-  dismissEventLabel: 'סגור התראה',
+  dismissEventLabel: 'סגור/סגרי התראה',
 
   // Command Deck recomposition — cinematic game-interface chrome.
   stageLabel: 'שלב',
@@ -159,6 +168,19 @@ export const he = {
   odinStatusLabel: 'סטטוס: דטרמיניסטי / לא מקוון',
   odinIdleMessage: 'Odin מקשיב. אין עדיין מה לדווח.',
   odinHistoryAriaLabel: 'היסטוריית ההודעות של Odin',
+  // Playtest fix pass (issue 6C) — a small, deterministic help panel (no
+  // AI/LLM): no such entry point existed anywhere before this. Mounted
+  // right alongside the existing Odin panel (see AskOdinPanel.tsx).
+  askOdinPanelTitle: 'שאל/י את אודין',
+  askOdinWhatNowLabel: 'מה לעשות עכשיו?',
+  askOdinHintLabel: 'תן לי רמז.',
+  askOdinExplainLabel: 'הסבר את המשימה.',
+  askOdinWhyFailedLabel: 'למה הפקודה לא עבדה?',
+  askOdinWhereToGoLabel: 'לאן ללכת?',
+  askOdinNoHintFallback: 'אין רמז נוסף למשימה הזו כרגע — אפשר לנסות "הסבר את המשימה".',
+  askOdinNoErrorYetFallback: 'לא נרשמה שגיאה עדיין. הרץ/י שאילתה כדי לבדוק.',
+  askOdinWhereToGoPrefix: 'המטרה הנוכחית שלך היא להגיע אל ',
+  askOdinNoDestinationFallback: 'אין יעד ספציפי כרגע — אפשר להמשיך לחקור את העיר.',
   npcBioAriaSuffix: 'פרופיל',
   noRowsReturned: 'לא הוחזרו שורות.',
   // Distinct from eventCampaignCompleted (the notification-toast title for
@@ -167,12 +189,12 @@ export const he = {
   campaignCompleteTitle: 'כל המשימות הושלמו!',
 
   // Phase 3A.1 — subject-selection dashboard.
-  dashboardHeading: 'בחר מסלול למידה',
+  dashboardHeading: 'בחר/י מסלול למידה',
   subjectMathLabel: 'מתמטיקה',
   subjectMathTagline: 'תרגול חשבון בסיסי וסדר פעולות.',
   subjectEnglishLabel: 'אנגלית מהעברית',
   subjectEnglishTagline: 'תרגול אוצר מילים מעברית לאנגלית.',
-  startLearningCta: 'התחל למידה',
+  startLearningCta: 'התחל/התחילי למידה',
   comingLaterBadge: 'בקרוב',
 
   // Phase 3A.3 — NPC interaction repair + lesson-start handoff.
@@ -181,15 +203,15 @@ export const he = {
   // InteractionPrompt's new destination-enter-button (touch's equivalent
   // of pressing E/Enter on an available district).
   enterButtonLabel: 'כניסה',
-  startLessonAction: 'התחל שיעור',
+  startLessonAction: 'התחל/התחילי שיעור',
   // Phase 3A.5 — shown instead of startLessonAction once the linked lesson is already completed.
-  replayLessonAction: 'תרגל שוב',
+  replayLessonAction: 'תרגל/י שוב',
 
   // Phase 3A.4A — subject-neutral lesson exercise foundation.
-  submitAnswerCta: 'שלח תשובה',
+  submitAnswerCta: 'שלח/י תשובה',
   exerciseCorrectFeedback: 'נכון! כל הכבוד.',
   exerciseIncorrectFeedback: 'לא מדויק. נסה/י שוב.',
-  hintCta: 'הצג רמז',
+  hintCta: 'הצג/הציגי רמז',
   mathAnswerLabel: 'התשובה שלך',
   englishAnswerLabel: 'התרגום שלך',
 
@@ -215,6 +237,35 @@ export const he = {
   authUnavailableMessage: 'לא ניתן להתחבר לשירות ההתחברות כרגע. אפשר להמשיך במצב אורח.',
   authProfileErrorMessage: 'לא ניתן היה לאמת הרשאות משתמש. מחוברים ללא הרשאות ניהול.',
   navAdminLabel: 'ניהול',
+  // Mobile UX pass — H2: on a narrow viewport the signed-out sign-in row
+  // (Google button + /auth link + email toggle) collapses behind one
+  // compact trigger instead of overflowing the corner HUD; this is its
+  // accessible name (see AuthButton.tsx/.module.css).
+  authMobileMenuLabel: 'אפשרויות התחברות',
+
+  // Playtest fix pass — Google's managed OAuth redirect (/~oauth/initiate)
+  // only resolves on Lovable's hosted infrastructure; on a bare Vite dev
+  // server it 404s. AuthProvider.signInWithGoogle detects this (see
+  // runtimeEnvironment.ts) and sets this message instead of navigating.
+  authGoogleLocalDevMessage:
+    'התחברות Google זמינה בגרסת Lovable המפורסמת. בפיתוח מקומי ניתן להמשיך כאורח או להתחבר במייל.',
+  returnToWelcomeChoicesLabel: 'חזרה למסך הפתיחה',
+  // Playtest fix pass — "returning local player" is now shown as its own
+  // distinct state from "guest," since having a local profile already
+  // means something more specific than "no account yet" (see
+  // WelcomeScreen.tsx).
+  welcomeReturningLocalLabel: 'משתמש/ת מקומי/ת — ממשיכ/ה מסע קיים שנשמר במכשיר הזה.',
+
+  // Playtest fix pass (issue 2) — InteractionPrompt.tsx previously labeled
+  // the Records Hub's own enter button with he.talkButtonLabel ("שיחה"),
+  // a copy bug (it's not an NPC). The Hub also gets a specific action verb
+  // instead of the generic Enter, per the playtest's explicit request.
+  activateRecordsHubButtonLabel: 'הפעל/י את מוקד הרשומות',
+  // Playtest fix pass (issue 4) — a locked destination used to show only
+  // "Locked" with zero explanation. Combined with the blocking mission's
+  // own titleHe (see destinationContent.getDestinationLockRequirementMissionId),
+  // e.g. "רובע הסוחרים — נדרש: השלמת יציבות הדרום".
+  destinationLockRequirementPrefix: 'נדרש: השלמת ',
 
   // Game Feel pass — email/password sign-in alongside the existing Google
   // option (see auth/EmailPasswordForm.tsx).
@@ -269,8 +320,8 @@ export const he = {
   authNewPasswordLabel: 'סיסמה חדשה',
   authResetAction: 'עדכון סיסמה',
   authResetSuccess: 'הסיסמה עודכנה. אפשר להמשיך.',
-  authCheckEmailMessage: 'שלחנו אליך אימייל. יש ללחוץ על הקישור שבו כדי להמשיך.',
-  authContinueAsGuest: 'המשך כאורח',
+  authCheckEmailMessage: 'שלחנו לך אימייל. יש ללחוץ על הקישור שבו כדי להמשיך.',
+  authContinueAsGuest: 'המשך/י כאורח/ת',
   authGuestNote: 'אפשר לשחק ללא חשבון. ההתקדמות נשמרת במכשיר הזה בלבד.',
   authAccountSectionLabel: 'חשבון ענן',
   authGuestBadge: 'מצב אורח',
@@ -285,8 +336,8 @@ export const he = {
   bootLogLoadingCity: 'טוען את מערכות העיר…',
   bootLogDetectingRecruit: 'מזהה מגויס חדש…',
   bootLogConnectionEstablished: 'החיבור הושלם.',
-  bootOdinIntro: 'שלום. אני אודין, ואלווה אותך במרידיאן. בוא נתחיל.',
-  bootSkipAction: 'דלג',
+  bootOdinIntro: 'שלום. אני אודין, ואלווה אותך במרידיאן. בוא/י נתחיל.',
+  bootSkipAction: 'דלג/י',
 
   // Meridian 1.2 — corner HUD shell, profile menu, and the Archive's
   // narrative framing (see game-ui/SettingsMenu.tsx, auth/AuthButton.tsx,
@@ -318,22 +369,22 @@ export const he = {
   profileCreationEyebrow: 'לפני שממשיכים',
   profileCreationTitle: 'איך נקרא לך?',
   profileCreationSubtitle: 'מרידיאן זקוקה לשם ולזהות לפני שממשיכים.',
-  profileEditTitle: 'ערוך פרופיל',
+  profileEditTitle: 'ערוך/ערכי פרופיל',
   profileNameLabel: 'השם שלך',
   profileNamePlaceholder: 'הקלד/י שם…',
   profileNameRequiredError: 'יש להזין שם כדי להמשיך.',
   profileAvatarLabel: 'בחר/י מראה',
-  profileCreationSubmitCta: 'המשך למרידיאן',
-  profileEditSubmitCta: 'שמור שינויים',
-  profileEditButtonLabel: 'ערוך פרופיל',
+  profileCreationSubmitCta: 'המשך/י למרידיאן',
+  profileEditSubmitCta: 'שמור/שמרי שינויים',
+  profileEditButtonLabel: 'ערוך/ערכי פרופיל',
   currentPlayerLabel: 'המשתמש/ת שלך',
 
   // Meridian 1.4 — Welcome Screen (src/onboarding/WelcomeScreen.tsx), the
   // game's title screen. "Meridian" itself stays untranslated (a proper
   // noun/wordmark), matching Odin's own convention elsewhere.
   welcomeTagline: 'מרידיאן מחכה לאות שלך.',
-  welcomeContinueCta: 'המשך במסע',
-  welcomeGuestCta: 'המשך כאורח/ת',
+  welcomeContinueCta: 'המשך/י במסע',
+  welcomeGuestCta: 'המשך/י כאורח/ת',
   welcomeNoAccountYet: 'עדיין לא מחוברים לחשבון.',
   // Meridian 1.4 — Auth UX clarity pass: the account (Google sign-in) and
   // the local profile/save are two separate things (see the Meridian 1.4

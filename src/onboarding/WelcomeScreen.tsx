@@ -55,6 +55,12 @@ export function WelcomeScreen({
   const auth = useOptionalAuth()
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [showEmailForm, setShowEmailForm] = useState(false)
+  // Reset directly by the Google button's own click handler below (rather
+  // than an effect keyed on auth.authError) so the notice reliably
+  // reappears even if the player dismisses it and clicks Google again —
+  // AuthProvider sets the exact same message string both times, which a
+  // value-keyed effect would never see as "changed."
+  const [authErrorDismissed, setAuthErrorDismissed] = useState(false)
   const settingsRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -89,6 +95,13 @@ export function WelcomeScreen({
   // Excludes 'loading' so it doesn't flash on for the instant before a
   // real session resolves.
   const isGuestState = status !== 'signed-in' && status !== 'loading'
+  // Playtest fix pass — a returning local player (an existing save/profile
+  // on this device) is a more specific, more reassuring state than the
+  // generic "no account" guest label, even though neither one involves
+  // Cloud auth. hasProfile always wins over the bare guest label once it's
+  // true, regardless of the (never-UI-visible-before-now) isGuest flag.
+  const showReturningLocalLabel = isGuestState && hasProfile
+  const showLocalDevGoogleNotice = auth?.authError === he.authGoogleLocalDevMessage && !authErrorDismissed
 
   return (
     <div className={styles.screen} data-testid="welcome-screen">
@@ -141,15 +154,27 @@ export function WelcomeScreen({
                 variant="secondary"
                 size="lg"
                 data-testid="welcome-google-signin-button"
-                onClick={() => void auth?.signInWithGoogle()}
+                onClick={() => {
+                  setAuthErrorDismissed(false)
+                  void auth?.signInWithGoogle()
+                }}
               >
                 {he.signInWithGoogle}
               </Button>
+              {/* Playtest fix pass — this used to call the exact same
+                  handler as "Continue Journey" above, with no real
+                  behavioral difference. It now actually sets the explicit
+                  guest flag (see AuthProvider.continueAsGuest), so the two
+                  buttons genuinely differ rather than looking like two
+                  choices that do the same thing. */}
               <Button
                 variant="ghost"
                 size="lg"
                 data-testid="welcome-guest-button"
-                onClick={onContinue}
+                onClick={() => {
+                  auth?.continueAsGuest()
+                  onContinue()
+                }}
               >
                 {he.welcomeGuestCta}
               </Button>
@@ -157,9 +182,47 @@ export function WelcomeScreen({
           )}
         </div>
 
+        {showLocalDevGoogleNotice && (
+          <div className={styles.localDevNotice} data-testid="welcome-google-local-dev-notice">
+            <p>{he.authGoogleLocalDevMessage}</p>
+            <div className={styles.localDevActions}>
+              <Button
+                variant="ghost"
+                size="md"
+                data-testid="welcome-local-dev-guest-button"
+                onClick={() => {
+                  auth?.continueAsGuest()
+                  onContinue()
+                }}
+              >
+                {he.welcomeGuestCta}
+              </Button>
+              <Button
+                variant="ghost"
+                size="md"
+                data-testid="welcome-local-dev-email-button"
+                onClick={() => {
+                  setShowEmailForm(true)
+                  setAuthErrorDismissed(true)
+                }}
+              >
+                {he.emailAuthToggleLabel}
+              </Button>
+              <Button
+                variant="ghost"
+                size="md"
+                data-testid="welcome-local-dev-dismiss-button"
+                onClick={() => setAuthErrorDismissed(true)}
+              >
+                {he.returnToWelcomeChoicesLabel}
+              </Button>
+            </div>
+          </div>
+        )}
+
         {isGuestState && (
           <p className={styles.guestLabel} data-testid="welcome-guest-label">
-            {he.guestModeLabel} — {he.welcomeNoAccountYet}
+            {showReturningLocalLabel ? he.welcomeReturningLocalLabel : `${he.guestModeLabel} — ${he.welcomeNoAccountYet}`}
           </p>
         )}
 

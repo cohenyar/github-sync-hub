@@ -123,6 +123,90 @@ describe('WelcomeScreen — auth configured, signed out', () => {
     expect(screen.getByTestId('welcome-guest-label')).toBeInTheDocument()
     expect(screen.queryByTestId('welcome-auth-not-configured')).not.toBeInTheDocument()
   })
+
+  // Playtest fix pass (issue 1B) — the two buttons used to be visually
+  // distinct but behaviorally identical (both just called onContinue).
+  it('Continue as Guest explicitly sets the guest flag; Continue Journey never does', () => {
+    const continueAsGuest = vi.fn()
+    const props = renderScreen({}, { status: 'signed-out', continueAsGuest })
+
+    fireEvent.click(screen.getByTestId('welcome-continue-button'))
+    expect(continueAsGuest).not.toHaveBeenCalled()
+
+    fireEvent.click(screen.getByTestId('welcome-guest-button'))
+    expect(continueAsGuest).toHaveBeenCalledTimes(1)
+    expect(props.onContinue).toHaveBeenCalledTimes(2)
+  })
+
+  // Playtest fix pass (issue 1A) — Google's managed OAuth broker only
+  // exists on Lovable's hosted infra; on localhost/Vite dev,
+  // AuthProvider.signInWithGoogle detects this itself and sets authError
+  // to he.authGoogleLocalDevMessage instead of navigating. This confirms
+  // the resulting notice offers all three required follow-ups.
+  describe('the local-dev Google-sign-in notice (H1 fix)', () => {
+    function renderWithLocalDevError() {
+      const continueAsGuest = vi.fn()
+      const props = renderScreen(
+        {},
+        { status: 'signed-out', authError: he.authGoogleLocalDevMessage, continueAsGuest },
+      )
+      return { ...props, continueAsGuest }
+    }
+
+    it('shows the explanation plus Guest, Email, and a dismiss action — never a raw 404', () => {
+      renderWithLocalDevError()
+      const notice = screen.getByTestId('welcome-google-local-dev-notice')
+      expect(notice).toHaveTextContent(he.authGoogleLocalDevMessage)
+      expect(screen.getByTestId('welcome-local-dev-guest-button')).toBeInTheDocument()
+      expect(screen.getByTestId('welcome-local-dev-email-button')).toBeInTheDocument()
+      expect(screen.getByTestId('welcome-local-dev-dismiss-button')).toBeInTheDocument()
+    })
+
+    it('its Guest button continues as guest, same as the primary Guest choice', () => {
+      const props = renderWithLocalDevError()
+      fireEvent.click(screen.getByTestId('welcome-local-dev-guest-button'))
+      expect(props.continueAsGuest).toHaveBeenCalledTimes(1)
+      expect(props.onContinue).toHaveBeenCalledTimes(1)
+    })
+
+    it('its Email button reveals the email sign-in form', () => {
+      renderWithLocalDevError()
+      expect(screen.queryByTestId('email-password-form')).not.toBeInTheDocument()
+      fireEvent.click(screen.getByTestId('welcome-local-dev-email-button'))
+      expect(screen.getByTestId('email-password-form')).toBeInTheDocument()
+    })
+
+    it('its dismiss action returns to the plain Welcome Screen choices', () => {
+      renderWithLocalDevError()
+      fireEvent.click(screen.getByTestId('welcome-local-dev-dismiss-button'))
+      expect(screen.queryByTestId('welcome-google-local-dev-notice')).not.toBeInTheDocument()
+      // The ordinary signed-out choices are still right there underneath.
+      expect(screen.getByTestId('welcome-guest-button')).toBeInTheDocument()
+      expect(screen.getByTestId('welcome-google-signin-button')).toBeInTheDocument()
+    })
+
+    it('clicking Google again after dismissing brings the notice back', () => {
+      renderWithLocalDevError()
+      fireEvent.click(screen.getByTestId('welcome-local-dev-dismiss-button'))
+      expect(screen.queryByTestId('welcome-google-local-dev-notice')).not.toBeInTheDocument()
+
+      fireEvent.click(screen.getByTestId('welcome-google-signin-button'))
+      expect(screen.getByTestId('welcome-google-local-dev-notice')).toBeInTheDocument()
+    })
+  })
+})
+
+describe('WelcomeScreen — returning local player (a save/profile exists, no Cloud account)', () => {
+  it('shows the more specific "returning local player" label instead of the generic Guest one', () => {
+    renderScreen({ hasProfile: true, playerName: 'נועה' }, { status: 'signed-out' })
+    expect(screen.getByTestId('welcome-guest-label')).toHaveTextContent(he.welcomeReturningLocalLabel)
+    expect(screen.getByTestId('welcome-guest-label')).not.toHaveTextContent(he.welcomeNoAccountYet)
+  })
+
+  it('still shows the generic Guest label when there is no local profile yet', () => {
+    renderScreen({ hasProfile: false }, { status: 'signed-out' })
+    expect(screen.getByTestId('welcome-guest-label')).toHaveTextContent(he.welcomeNoAccountYet)
+  })
 })
 
 describe('WelcomeScreen — auth configured, signed in', () => {

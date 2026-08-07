@@ -7,6 +7,8 @@ export interface DestinationPromptInfo {
   name: string
   status: ContentStatus
   progress: { completed: number; total: number }
+  /** Playtest fix pass (issue 4) — the blocking mission's titleHe, only set while status === 'locked'. */
+  lockRequirementMissionTitle?: string
 }
 
 export interface InteractionPromptProps {
@@ -69,8 +71,16 @@ export function InteractionPrompt({ interactable, destinationInfoById, npcNameBy
 
   const isLocked = info.status === 'locked'
   const label = isLocked
-    ? `${info.name} — ${he.destinationLockedLabel}`
+    ? info.lockRequirementMissionTitle
+      ? `${info.name} — ${he.destinationLockRequirementPrefix}${info.lockRequirementMissionTitle}`
+      : `${info.name} — ${he.destinationLockedLabel}`
     : `${he.enterDestinationPrefix}${info.name} (${info.progress.completed}/${info.progress.total})`
+  // Playtest fix pass (issue 2) — the Records Hub gets a specific action
+  // verb instead of the generic Enter; every other destination keeps the
+  // generic one. This also fixes a copy bug: this button previously always
+  // read he.talkButtonLabel ("שיחה"/Talk), which is an NPC-only label that
+  // never belonged on a district-kind interactable.
+  const enterActionLabel = interactable.id === 'core' ? he.activateRecordsHubButtonLabel : he.enterButtonLabel
 
   return (
     <div
@@ -82,7 +92,7 @@ export function InteractionPrompt({ interactable, destinationInfoById, npcNameBy
       <span>{label}</span>
       {onInteract && !isLocked && (
         <button type="button" className={styles.enterButton} data-testid="destination-enter-button" onClick={onInteract}>
-          {he.talkButtonLabel}
+          {enterActionLabel}
         </button>
       )}
     </div>

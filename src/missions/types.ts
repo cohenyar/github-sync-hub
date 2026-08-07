@@ -15,4 +15,10 @@ export interface MissionConfig {
   titleHe?: string
   goalHe?: string
   promptHe?: string
+  /**
+   * Playtest fix pass (issue 6C) — a short, non-spoiler nudge toward the
+   * right SQL concept/columns, surfaced only via the new Ask Odin panel's
+   * "תן לי רמז" button. Deliberately never the referenceSql itself.
+   */
+  hintHe?: string
 }

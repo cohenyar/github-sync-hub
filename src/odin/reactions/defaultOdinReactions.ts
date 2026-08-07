@@ -1,3 +1,4 @@
+import { getMissionById } from '../../missions'
 import type { OdinReaction } from '../types'
 
 /**
@@ -17,13 +18,26 @@ export const defaultOdinReactions: OdinReaction[] = [
     id: 'world-entered-greeting',
     trigger: { event: 'WorldEntered' },
     message: 'Welcome to Meridian. The Records Core is waiting — that’s your starting point.',
-    messageHe: 'ברוך הבא למרידיאן. מוקד הרשומות ממתין לך — זו נקודת ההתחלה שלך.',
+    messageHe: 'ברוך/ה הבא/ה למרידיאן. מוקד הרשומות ממתין לך — זו נקודת ההתחלה שלך.',
   },
+  // Playtest fix pass (issue 6B) — this used to be one static line, shown
+  // verbatim every single time any mission starts (the very first thing a
+  // player who audited the game noticed as "generic and repeated"). Now
+  // interpolates the actual mission's own title, so it always carries real
+  // context and never reads as a copy-pasted repeat of itself. Falls back
+  // to the old static line only if the mission id somehow doesn't resolve
+  // (should not happen via the real UI).
   {
     id: 'mission-started',
     trigger: { event: 'MissionStarted' },
-    message: 'A new query awaits. I am listening.',
-    messageHe: 'שאילתה חדשה ממתינה. אני מקשיב.',
+    message: (event) => {
+      const title = event.type === 'MissionStarted' ? getMissionById(event.missionId)?.title : undefined
+      return title ? `New mission: ${title}. I am listening.` : 'A new query awaits. I am listening.'
+    },
+    messageHe: (event) => {
+      const title = event.type === 'MissionStarted' ? getMissionById(event.missionId)?.titleHe : undefined
+      return title ? `משימה חדשה מתחילה: ${title}. אני מקשיב.` : 'שאילתה חדשה ממתינה. אני מקשיב.'
+    },
   },
   {
     id: 'first-contact-completed',
@@ -121,49 +135,76 @@ export const defaultOdinReactions: OdinReaction[] = [
     message: 'Every thread accounted for. Meridian answers as one city now.',
     messageHe: 'כל החוטים התחברו. מרידיאן עונה כעת כעיר אחת.',
   },
+  // Playtest fix pass (issue 6A) — previously a single generic line for
+  // every possible SQL error, regardless of what actually went wrong. Now
+  // classified (see missions/runQuery.classifySqlError, threaded through
+  // QueryFailedEvent.sqlErrorKind by GameApp's onFailure handler) into the
+  // three most common, actionable cases; matchReaction's existing
+  // specificity rule (more matcher fields wins) already makes each of
+  // these win over the plain reason-only fallback below for a classified
+  // error, and falls back to it automatically for an unclassified
+  // ('generic') one — no new matching logic needed.
+  {
+    id: 'query-failed-sql-error-unknown-table',
+    trigger: { event: 'QueryFailed', reason: 'sql-error', sqlErrorKind: 'unknown-table' },
+    message: "That table name doesn't exist. Check its spelling against this mission's data.",
+    messageHe: 'שם הטבלה שכתבת לא קיים בארכיון. בדוק/י את האיות שלו מול הנתונים של המשימה.',
+  },
+  {
+    id: 'query-failed-sql-error-unknown-column',
+    trigger: { event: 'QueryFailed', reason: 'sql-error', sqlErrorKind: 'unknown-column' },
+    message: "That column name doesn't exist on this table. Check its spelling.",
+    messageHe: 'שם העמודה שכתבת לא קיים בטבלה הזו. בדוק/י את האיות שלו.',
+  },
+  {
+    id: 'query-failed-sql-error-syntax',
+    trigger: { event: 'QueryFailed', reason: 'sql-error', sqlErrorKind: 'syntax' },
+    message: "There's a syntax error — check for a missing comma, quote, or parenthesis.",
+    messageHe: 'יש שגיאת תחביר בשאילתה — בדוק/י אם חסר פסיק, מרכאות או סוגריים.',
+  },
   {
     id: 'query-failed-sql-error',
     trigger: { event: 'QueryFailed', reason: 'sql-error' },
     message: "That query didn't run. Check the syntax and try again.",
-    messageHe: 'לא ניתן היה להריץ את השאילתה. בדוק את התחביר ונסה שוב.',
+    messageHe: 'לא ניתן היה להריץ את השאילתה. בדוק/י את התחביר ונסה/י שוב.',
   },
   {
     id: 'query-failed-mismatch',
     trigger: { event: 'QueryFailed', reason: 'mismatch' },
     message: "Close, but the records don't match yet. Look again at what the query returns.",
-    messageHe: 'קרוב, אך הרשומות עדיין לא תואמות. הבט שוב במה שהשאילתה מחזירה.',
+    messageHe: 'קרוב, אך הרשומות עדיין לא תואמות. הבט/הביטי שוב במה שהשאילתה מחזירה.',
   },
   {
     id: 'district-ties-failed-mismatch',
     trigger: { event: 'QueryFailed', missionId: 'district-ties', reason: 'mismatch' },
     message: 'Check the district value in your WHERE clause — it should match North exactly.',
-    messageHe: 'בדוק את ערך המחוז בתנאי ה-WHERE שלך — הוא צריך להתאים בדיוק לצפון.',
+    messageHe: 'בדוק/י את ערך המחוז בתנאי ה-WHERE שלך — הוא צריך להתאים בדיוק לצפון.',
   },
   {
     id: 'south-stability-failed-mismatch',
     trigger: { event: 'QueryFailed', missionId: 'south-stability', reason: 'mismatch' },
     message:
       'A compound filter needs every condition to hold together — check both the district and the severity threshold.',
-    messageHe: 'תנאי מורכב דורש שכל החלקים יתקיימו יחד — בדוק גם את המחוז וגם את סף החומרה.',
+    messageHe: 'תנאי מורכב דורש שכל החלקים יתקיימו יחד — בדוק/י גם את המחוז וגם את סף החומרה.',
   },
   {
     id: 'full-signal-failed-mismatch',
     trigger: { event: 'QueryFailed', missionId: 'full-signal', reason: 'mismatch' },
     message:
       'Grouping and counting only works together — make sure every selected column is either grouped or aggregated.',
-    messageHe: 'קיבוץ וספירה פועלים רק יחד — הקפד שכל עמודה שנבחרה תהיה מקובצת או מצורפת.',
+    messageHe: 'קיבוץ וספירה פועלים רק יחד — הקפד/הקפידי שכל עמודה שנבחרה תהיה מקובצת או מצורפת.',
   },
   {
     id: 'linked-records-failed-mismatch',
     trigger: { event: 'QueryFailed', missionId: 'linked-records', reason: 'mismatch' },
     message: "A join connects rows through a shared column — check that you're joining on the right one.",
-    messageHe: 'פקודת JOIN מחברת שורות לפי עמודה משותפת — בדוק שאתה מתחבר לפי העמודה הנכונה.',
+    messageHe: 'פקודת JOIN מחברת שורות לפי עמודה משותפת — בדוק/י שאת/ה מתחבר/ת לפי העמודה הנכונה.',
   },
   {
     id: 'priority-signal-failed-mismatch',
     trigger: { event: 'QueryFailed', missionId: 'priority-signal', reason: 'mismatch' },
     message: 'Same rows, wrong sequence — check your ORDER BY.',
-    messageHe: 'אותן שורות, סדר לא נכון — בדוק את ה-ORDER BY שלך.',
+    messageHe: 'אותן שורות, סדר לא נכון — בדוק/י את ה-ORDER BY שלך.',
   },
   // Batch 3A.4B — the two sample lessons' completion/failure feedback.
   // Separate event types (LessonCompleted/LessonFailed) from the SQL side's

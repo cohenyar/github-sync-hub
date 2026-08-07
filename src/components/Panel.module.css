@@ -71,6 +71,16 @@
   font-size: var(--ds-text-sm);
 }
 
+/* Playtest fix pass (issue 5) — a static, generic syntax reminder under the
+   query textarea (see SqlEditorPanel.tsx). dir="ltr" is set on the element
+   itself, same as the textarea, since it's SQL syntax, not prose. */
+.hint {
+  margin: var(--ds-space-2) 0 0;
+  color: var(--ds-text-muted);
+  font-family: var(--ds-font-mono);
+  font-size: var(--ds-text-xs);
+}
+
 .result {
   margin-top: var(--ds-space-3);
   display: flex;

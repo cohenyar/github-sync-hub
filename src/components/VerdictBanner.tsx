@@ -26,7 +26,7 @@ function buildFailHint(verdict: Verdict): string | null {
   if (extraCount > 0 && missingCount === 0) {
     return `${countLine} ${extraCount} שורות מיותרות — ייתכן שהתנאי רחב מדי.`
   }
-  return `${countLine} חסרות ${missingCount}, ${extraCount} מיותרות — בדוק את תנאי הסינון.`
+  return `${countLine} חסרות ${missingCount}, ${extraCount} מיותרות — בדוק/י את תנאי הסינון.`
 }
 
 export function VerdictBanner({ verdict }: VerdictBannerProps) {

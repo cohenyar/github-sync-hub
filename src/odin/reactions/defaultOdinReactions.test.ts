@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { matchReaction } from '../services/matchReaction'
+import { matchReaction, resolveMessage } from '../services/matchReaction'
 import { defaultOdinReactions } from './defaultOdinReactions'
 
 function find(id: string) {
@@ -228,6 +228,58 @@ describe('defaultOdinReactions', () => {
 
     const fallback = matchReaction(defaultOdinReactions, { type: 'ArchivePageFound', pageId: 'some-future-page' })
     expect(fallback?.id).toBe('archive-page-found-generic')
+  })
+
+  // Playtest fix pass (issue 6B) — mission-started now names the actual
+  // mission instead of repeating one static line every time.
+  it("interpolates the actual mission's title into the mission-started message", () => {
+    const reaction = find('mission-started')
+    const event = { type: 'MissionStarted' as const, missionId: 'first-contact' }
+    expect(resolveMessage(reaction, event)).toBe('משימה חדשה מתחילה: מגע ראשון. אני מקשיב.')
+
+    const secondEvent = { type: 'MissionStarted' as const, missionId: 'district-ties' }
+    expect(resolveMessage(reaction, secondEvent)).not.toBe(resolveMessage(reaction, event))
+  })
+
+  it('falls back to the old static line for an unresolvable mission id (should not happen via the real UI)', () => {
+    const reaction = find('mission-started')
+    const event = { type: 'MissionStarted' as const, missionId: 'does-not-exist' }
+    expect(resolveMessage(reaction, event)).toBe('שאילתה חדשה ממתינה. אני מקשיב.')
+  })
+
+  // Playtest fix pass (issue 6A) — a classified SQL error wins over the
+  // plain reason-only fallback, and an unclassified ('generic') one still
+  // falls back to it, via the existing specificity rule — no new matching
+  // logic needed.
+  it('picks a specific SQL-error reaction over the generic fallback when the error is classified', () => {
+    for (const sqlErrorKind of ['unknown-table', 'unknown-column', 'syntax'] as const) {
+      const reaction = matchReaction(defaultOdinReactions, {
+        type: 'QueryFailed',
+        missionId: 'first-contact',
+        reason: 'sql-error',
+        sqlErrorKind,
+      })
+      expect(reaction?.id).toBe(`query-failed-sql-error-${sqlErrorKind}`)
+    }
+  })
+
+  it('falls back to the generic sql-error reaction for an unclassified error', () => {
+    const reaction = matchReaction(defaultOdinReactions, {
+      type: 'QueryFailed',
+      missionId: 'first-contact',
+      reason: 'sql-error',
+      sqlErrorKind: 'generic',
+    })
+    expect(reaction?.id).toBe('query-failed-sql-error')
+  })
+
+  it('falls back to the generic sql-error reaction when no classification is present at all', () => {
+    const reaction = matchReaction(defaultOdinReactions, {
+      type: 'QueryFailed',
+      missionId: 'first-contact',
+      reason: 'sql-error',
+    })
+    expect(reaction?.id).toBe('query-failed-sql-error')
   })
 
   it('reacts to a returning player with a one-time welcome-back line, distinct from WorldEntered (Meridian 1.3)', () => {

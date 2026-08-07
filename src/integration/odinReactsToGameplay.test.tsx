@@ -26,8 +26,11 @@ describe('Odin reacts to real gameplay end to end', () => {
     renderGameApp()
     await readyRunButton()
 
+    // Playtest fix pass (issue 6B) — mission-started now interpolates the
+    // actual mission's own title (First Contact, on a fresh game) instead
+    // of a repeated static line.
     await waitFor(() => {
-      expect(screen.getByText('שאילתה חדשה ממתינה. אני מקשיב.')).toBeInTheDocument()
+      expect(screen.getByText('משימה חדשה מתחילה: מגע ראשון. אני מקשיב.')).toBeInTheDocument()
     })
     expect(screen.getByText(he.odinStatusLabel)).toBeInTheDocument()
   })
@@ -70,7 +73,7 @@ describe('Odin reacts to real gameplay end to end', () => {
     expect(screen.queryByText(/האות יציב/)).not.toBeInTheDocument()
     await waitFor(() => {
       expect(
-        screen.getByText('קרוב, אך הרשומות עדיין לא תואמות. הבט שוב במה שהשאילתה מחזירה.'),
+        screen.getByText('קרוב, אך הרשומות עדיין לא תואמות. הבט/הביטי שוב במה שהשאילתה מחזירה.'),
       ).toBeInTheDocument()
     })
   })
@@ -86,8 +89,13 @@ describe('Odin reacts to real gameplay end to end', () => {
 
     await screen.findByText(new RegExp(`^${he.sqlErrorPrefix}`))
 
+    // Playtest fix pass (issue 6A) — sql.js's real message for this input
+    // is `near "NOT": syntax error`, classified 'syntax', so Odin now picks
+    // the specific syntax-error reaction rather than the old generic one.
     await waitFor(() => {
-      expect(screen.getByText('לא ניתן היה להריץ את השאילתה. בדוק את התחביר ונסה שוב.')).toBeInTheDocument()
+      expect(
+        screen.getByText('יש שגיאת תחביר בשאילתה — בדוק/י אם חסר פסיק, מרכאות או סוגריים.'),
+      ).toBeInTheDocument()
     })
   })
 
@@ -115,11 +123,11 @@ describe('Odin reacts to real gameplay end to end', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText('בדוק את ערך המחוז בתנאי ה-WHERE שלך — הוא צריך להתאים בדיוק לצפון.'),
+        screen.getByText('בדוק/י את ערך המחוז בתנאי ה-WHERE שלך — הוא צריך להתאים בדיוק לצפון.'),
       ).toBeInTheDocument()
     })
     expect(
-      screen.queryByText('קרוב, אך הרשומות עדיין לא תואמות. הבט שוב במה שהשאילתה מחזירה.'),
+      screen.queryByText('קרוב, אך הרשומות עדיין לא תואמות. הבט/הביטי שוב במה שהשאילתה מחזירה.'),
     ).not.toBeInTheDocument()
   })
 })

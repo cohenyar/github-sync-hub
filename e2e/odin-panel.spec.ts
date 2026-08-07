@@ -13,7 +13,9 @@ test.describe('Odin narrates real gameplay events', () => {
 
     await expect(page.getByTestId('odin-panel')).toBeVisible()
     await expect(page.getByText('סטטוס: דטרמיניסטי / לא מקוון' /* he.odinStatusLabel */)).toBeVisible()
-    await expect(page.getByTestId('odin-latest-message')).toHaveText('שאילתה חדשה ממתינה. אני מקשיב.')
+    // Playtest fix pass (issue 6B) — mission-started now names the actual
+    // mission (First Contact, on a fresh game) instead of a static line.
+    await expect(page.getByTestId('odin-latest-message')).toHaveText('משימה חדשה מתחילה: מגע ראשון. אני מקשיב.')
 
     expect(errors).toEqual([])
   })
@@ -65,12 +67,17 @@ test.describe('Odin narrates real gameplay events', () => {
     await runSql(page, 'SELECT * FROM citizens WHERE id = 1;')
     await verdictIsFail(page)
     await expect(
-      page.getByText('קרוב, אך הרשומות עדיין לא תואמות. הבט שוב במה שהשאילתה מחזירה.'),
+      page.getByText('קרוב, אך הרשומות עדיין לא תואמות. הבט/הביטי שוב במה שהשאילתה מחזירה.'),
     ).toBeVisible()
 
     await runSql(page, 'NOT VALID SQL')
     await expect(page.getByTestId('sql-error-message')).toBeVisible()
-    await expect(page.getByText('לא ניתן היה להריץ את השאילתה. בדוק את התחביר ונסה שוב.')).toBeVisible()
+    // Playtest fix pass (issue 6A) — sql.js's real message for this input is
+    // `near "NOT": syntax error`, classified 'syntax', so Odin now picks the
+    // specific syntax-error reaction instead of the old generic one.
+    await expect(
+      page.getByText('יש שגיאת תחביר בשאילתה — בדוק/י אם חסר פסיק, מרכאות או סוגריים.'),
+    ).toBeVisible()
 
     expect(errors).toEqual([])
   })
@@ -94,7 +101,7 @@ test.describe('Odin narrates real gameplay events', () => {
     await runSql(page, "SELECT * FROM citizens WHERE district = 'south';")
     await verdictIsFail(page)
     await expect(
-      page.getByText('בדוק את ערך המחוז בתנאי ה-WHERE שלך — הוא צריך להתאים בדיוק לצפון.'),
+      page.getByText('בדוק/י את ערך המחוז בתנאי ה-WHERE שלך — הוא צריך להתאים בדיוק לצפון.'),
     ).toBeVisible()
 
     expect(errors).toEqual([])

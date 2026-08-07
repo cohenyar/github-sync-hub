@@ -197,3 +197,78 @@ describe('AuthButton', () => {
     expect(screen.getByTestId('sign-out-button')).toBeInTheDocument()
   })
 })
+
+describe('AuthButton — mobile layout (H2 fix)', () => {
+  // jsdom does not evaluate width-based @media queries or compute real
+  // layout, so these check the DOM/semantic contract the CSS breakpoint in
+  // AuthButton.module.css relies on (present, correctly labeled, correctly
+  // wired to state) — not real viewport geometry. Geometry itself (no
+  // overflow at 320/375/390/412px and Pixel 7, no HUD overlap) is verified
+  // in a real browser by e2e/auth-mobile-layout.spec.ts.
+  it('renders a collapsed mobile trigger alongside the always-visible actions row, both present regardless of viewport', () => {
+    renderButton({ status: 'signed-out' })
+
+    const trigger = screen.getByTestId('auth-mobile-menu-trigger')
+    expect(trigger).toHaveAttribute('aria-haspopup', 'menu')
+    expect(trigger).toHaveAttribute('aria-expanded', 'false')
+    expect(trigger).toHaveAccessibleName(he.authMobileMenuLabel)
+
+    // The three actions the trigger reveals on a narrow viewport are always
+    // in the DOM (CSS alone hides them below the breakpoint) — never
+    // duplicated, never removed.
+    expect(screen.getByTestId('google-sign-in-button')).toBeInTheDocument()
+    expect(screen.getByTestId('auth-page-link')).toBeInTheDocument()
+    expect(screen.getByTestId('email-auth-toggle-button')).toBeInTheDocument()
+    expect(screen.getAllByTestId('google-sign-in-button')).toHaveLength(1)
+  })
+
+  it('opening the mobile trigger is independent of the email form toggle — it does not jump straight to the form', () => {
+    renderButton({ status: 'signed-out' })
+
+    fireEvent.click(screen.getByTestId('auth-mobile-menu-trigger'))
+    expect(screen.getByTestId('auth-mobile-menu-trigger')).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.queryByTestId('email-password-form')).not.toBeInTheDocument()
+    expect(screen.getByTestId('email-auth-toggle-button')).toHaveAttribute('aria-expanded', 'false')
+
+    // From there, the existing email toggle still works exactly as before.
+    fireEvent.click(screen.getByTestId('email-auth-toggle-button'))
+    expect(screen.getByTestId('email-password-form')).toBeInTheDocument()
+  })
+
+  it('closing on outside click or Escape collapses both the mobile popover and the email form together', () => {
+    renderButton({ status: 'signed-out' })
+
+    fireEvent.click(screen.getByTestId('auth-mobile-menu-trigger'))
+    fireEvent.click(screen.getByTestId('email-auth-toggle-button'))
+    expect(screen.getByTestId('email-password-form')).toBeInTheDocument()
+
+    fireEvent.keyDown(document, { key: 'Escape' })
+    expect(screen.getByTestId('auth-mobile-menu-trigger')).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.queryByTestId('email-password-form')).not.toBeInTheDocument()
+  })
+
+  it('the not-configured and loading branches render no mobile trigger — nothing there needs collapsing', () => {
+    render(
+      <AuthContext.Provider value={{ ...BASE_AUTH, configured: false }}>
+        <AuthButton />
+      </AuthContext.Provider>,
+    )
+    expect(screen.queryByTestId('auth-mobile-menu-trigger')).not.toBeInTheDocument()
+  })
+
+  it('the signed-in account trigger and menu are unaffected by the H2 fix — same controls, same behavior', () => {
+    // Regression guard: H2 only touches the signed-out branch (a new
+    // .mobileMenuTrigger/.signedOutActions wrapper) plus a shared,
+    // desktop-neutral .menu max-width — the signed-in trigger/menu markup
+    // itself is untouched.
+    renderButton({
+      status: 'signed-in',
+      user: { id: 'u1', email: 'student@example.com', avatarUrl: null, displayName: 'תלמיד לדוגמה' },
+    })
+    expect(screen.queryByTestId('auth-mobile-menu-trigger')).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByTestId('auth-account'))
+    expect(screen.getByRole('menu')).toBeInTheDocument()
+    expect(screen.getByTestId('sign-out-button')).toBeInTheDocument()
+  })
+})

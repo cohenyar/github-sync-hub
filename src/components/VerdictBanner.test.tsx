@@ -63,7 +63,7 @@ describe('VerdictBanner', () => {
     })
     render(<VerdictBanner verdict={v} />)
     expect(
-      screen.getByText('ציפינו ל-2 שורות, התקבלו 2. חסרות 1, 1 מיותרות — בדוק את תנאי הסינון.'),
+      screen.getByText('ציפינו ל-2 שורות, התקבלו 2. חסרות 1, 1 מיותרות — בדוק/י את תנאי הסינון.'),
     ).toBeInTheDocument()
   })
 })

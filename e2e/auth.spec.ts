@@ -61,14 +61,23 @@ test.describe('Auth access in the main flow', () => {
     await expect(page.getByTestId('auth-account')).toHaveCount(0)
   })
 
-  test('the sign-in entry point and Guest badge are also visible on a phone-sized viewport, without overlapping the HUD', async ({
+  test('the Guest badge and a compact sign-in trigger are visible on a phone-sized viewport, without overlapping the HUD', async ({
     page,
   }) => {
+    // Mobile UX pass — H2: below 480px the Google/auth-link/email row
+    // collapses behind one compact trigger instead of overflowing the
+    // corner HUD — see e2e/auth-mobile-layout.spec.ts for the full fix
+    // coverage (all four required widths, reachability, overlap, RTL).
     await page.setViewportSize({ width: 412, height: 915 })
     await page.goto('/world')
-    await expect(page.getByTestId('google-sign-in-button')).toBeVisible()
     await expect(page.getByTestId('guest-mode-badge')).toBeVisible()
+    await expect(page.getByTestId('auth-mobile-menu-trigger')).toBeVisible()
 
+    const triggerBox = (await page.getByTestId('auth-mobile-menu-trigger').boundingBox())!
+    expect(triggerBox.y).toBeGreaterThanOrEqual(0)
+    expect(triggerBox.x + triggerBox.width).toBeLessThanOrEqual(412)
+
+    await page.getByTestId('auth-mobile-menu-trigger').click()
     const signInBox = (await page.getByTestId('google-sign-in-button').boundingBox())!
     expect(signInBox.y).toBeGreaterThanOrEqual(0)
     expect(signInBox.x + signInBox.width).toBeLessThanOrEqual(412)

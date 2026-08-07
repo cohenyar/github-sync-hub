@@ -28,8 +28,11 @@ export const fullSignalMission: MissionConfig = {
   referenceSql: 'SELECT district, COUNT(*) AS total FROM citizens GROUP BY district;',
   successEffect: { kind: 'ADVANCE_TURN' },
   titleHe: 'אות מלא',
-  goalHe: 'ראה את מרידיאן כולה: כמה תושבים רשומים במרשם, לפי מחוז.',
+  goalHe: 'ראה/י את מרידיאן כולה: כמה תושבים רשומים במרשם, לפי מחוז.',
+  // Playtest fix pass (issue 5) — normalized from "ספור/ספרי" to the
+  // short-suffix style used consistently across this mission screen.
   promptHe:
-    'כל מחוז עונה כעת למרשם. ספור כמה תושבים חיים בכל מחוז — ' +
+    'כל מחוז עונה כעת למרשם. ספור/י כמה תושבים חיים בכל מחוז — ' +
     'הפעם הראשונה שמוקד הרשומות רואה את העיר כולה בבת אחת.',
+  hintHe: 'רמז: קבץ/י לפי district (GROUP BY) וספר/י שורות בכל קבוצה (COUNT).',
 }

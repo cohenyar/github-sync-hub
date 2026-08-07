@@ -7,8 +7,6 @@ import styles from './LessonStage.module.css'
 
 export interface LessonStageProps {
   lesson: LessonConfig
-  /** Whether this lesson was already completed in a previous session — reopening it shows the success state immediately instead of forcing a resubmit. */
-  isCompleted: boolean
   onResult: (pass: boolean) => void
   onReturnToWorld: () => void
 }
@@ -19,8 +17,15 @@ export interface LessonStageProps {
  * isMathLesson/isEnglishLesson type guards used everywhere else in
  * src/learning, and neither panel — nor this component — ever imports
  * anything from src/missions.
+ *
+ * Bug-fix pass: every entry point into a lesson (GameApp's handleStartLesson)
+ * is the same "Start Lesson"/"תרגל שוב" button regardless of prior
+ * completion, and a fresh mount always starts here. Persisted completion
+ * (completedLessonIds) intentionally has no say over what this component
+ * shows — a replay must behave exactly like the first attempt, so success
+ * is shown only once the player actually passes again in this session.
  */
-export function LessonStage({ lesson, isCompleted, onResult, onReturnToWorld }: LessonStageProps) {
+export function LessonStage({ lesson, onResult, onReturnToWorld }: LessonStageProps) {
   const [justPassed, setJustPassed] = useState(false)
 
   function handleResult(pass: boolean) {
@@ -28,7 +33,7 @@ export function LessonStage({ lesson, isCompleted, onResult, onReturnToWorld }: 
     if (pass) setJustPassed(true)
   }
 
-  const showSuccess = justPassed || isCompleted
+  const showSuccess = justPassed
 
   return (
     <div className={styles.overlay} role="dialog" data-testid="lesson-stage" data-lesson-id={lesson.id}>

@@ -108,4 +108,14 @@ describe('SqlEditorPanel', () => {
 
     expect(screen.getByText(he.fail)).toBeInTheDocument()
   })
+
+  // Playtest fix pass (issue 5) — a generic, non-spoiler syntax example is
+  // always visible before the player's first attempt, not only after a
+  // failure.
+  it('always shows a generic syntax example hint, distinct from the mission\'s own reference query', () => {
+    render(<SqlEditorPanel status={status()} onRun={vi.fn()} />)
+    const hint = screen.getByTestId('sql-example-hint')
+    expect(hint).toHaveTextContent(he.sqlExampleHint)
+    expect(hint).not.toHaveTextContent(mission.referenceSql)
+  })
 })

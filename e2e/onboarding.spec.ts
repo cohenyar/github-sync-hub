@@ -44,7 +44,7 @@ test.describe('Onboarding — first-time player', () => {
     await expect(page.getByTestId('world-scene-3d')).toBeVisible()
 
     // Odin's one-time world-entry greeting.
-    await expect(page.getByTestId('odin-presence')).toContainText('ברוך הבא למרידיאן')
+    await expect(page.getByTestId('odin-presence')).toContainText('ברוך/ה הבא/ה למרידיאן')
 
     // The default (Math) destination is explicitly highlighted, not just
     // "the only unlocked one" — walk to it and start its lesson, proving

@@ -1,7 +1,7 @@
 import { he } from '../../i18n'
 import { getMissionById, type MissionConfig } from '../../missions'
 import type { PlayerProgress } from '../../progression'
-import { getMissionContentStatus, type ContentStatus } from '../../unlocks'
+import { defaultUnlockRules, getMissionContentStatus, type ContentStatus } from '../../unlocks'
 
 /**
  * Hub World, A1 — which missions belong to which destination. This is the
@@ -80,6 +80,31 @@ export function getDestinationContentStatus(destinationId: string, playerProgres
   if (statuses.every((status) => status === 'completed')) return 'completed'
   if (statuses[0] === 'locked') return 'locked'
   return 'available'
+}
+
+function getMissionUnlockRequirementMissionId(missionId: string): string | undefined {
+  const rule = defaultUnlockRules.find((candidate) => candidate.target.type === 'mission' && candidate.target.id === missionId)
+  const condition = rule?.conditions.find((candidate) => candidate.kind === 'missionCompleted')
+  return condition?.kind === 'missionCompleted' ? condition.missionId : undefined
+}
+
+/**
+ * Playtest fix pass (issue 4) — which mission the player must actually
+ * finish before this destination unlocks. Deliberately not the
+ * destination's own first mission id: East's own first mission is
+ * `full-signal`, but the real prerequisite blocking it (what a player
+ * needs to be told) is `south-stability`, named in that mission's own
+ * unlock rule. Undefined once the destination is unlocked, or if it was
+ * never gated in the first place.
+ */
+export function getDestinationLockRequirementMissionId(
+  destinationId: string,
+  playerProgress: PlayerProgress,
+): string | undefined {
+  if (getDestinationContentStatus(destinationId, playerProgress) !== 'locked') return undefined
+  const missions = getDestinationMissions(destinationId)
+  const first = missions[0]
+  return first ? getMissionUnlockRequirementMissionId(first.id) : undefined
 }
 
 export interface DestinationProgress {

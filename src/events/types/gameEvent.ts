@@ -1,3 +1,4 @@
+import type { SqlErrorKind } from '../../missions/runQuery'
 import type { UnlockTarget } from '../../unlocks'
 import type { WorldState } from '../../worldState'
 
@@ -36,6 +37,13 @@ export interface QueryFailedEvent {
   type: 'QueryFailed'
   missionId: string
   reason: 'mismatch' | 'sql-error'
+  /**
+   * Playtest fix pass (issue 6A) — only set when reason === 'sql-error': a
+   * deterministic classification of sql.js's own error message (see
+   * missions/runQuery.classifySqlError), never the raw driver text itself.
+   * Lets Odin react with something more specific than "check your syntax."
+   */
+  sqlErrorKind?: SqlErrorKind
 }
 
 /**

@@ -23,6 +23,11 @@ vi.mock('../integrations/lovable/index', () => ({
   lovable: { auth: { signInWithOAuth: mocks.lovableSignInWithOAuth } },
 }))
 
+// This whole file exercises the real (Lovable-hosted) OAuth call path —
+// the local-dev short-circuit itself is covered separately, in
+// AuthProviderLocalDevGoogleGuard.test.tsx.
+vi.mock('./runtimeEnvironment', () => ({ isLocalDevRuntime: false }))
+
 vi.mock('./supabaseClient', () => ({
   isSupabaseConfigured: true,
   supabase: {

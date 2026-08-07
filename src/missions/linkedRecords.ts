@@ -48,8 +48,9 @@ export const linkedRecordsMission: MissionConfig = {
     'FROM citizens JOIN district_officials ON citizens.district = district_officials.district;',
   successEffect: { kind: 'ADJUST_STAT', districtId: 'north', stat: 'stability', delta: 15 },
   titleHe: 'רשומות מקושרות',
-  goalHe: 'חבר בין כל תושב במרשם לבין הנציג המייצג את מחוזו.',
+  goalHe: 'חבר/י בין כל תושב במרשם לבין הנציג המייצג את מחוזו.',
   promptHe:
     'מוקד הרשומות מכיר את התושבים. הוא מכיר את הנציגים. מעולם לא חיבר בין השניים.\n' +
-    'חבר בין שתי הטבלאות לפי מחוז, כדי להעמיד כל תושב מול מי שמייצג אותו.',
+    'חבר/י בין שתי הטבלאות לפי מחוז, כדי להעמיד כל תושב מול מי שמייצג אותו.',
+  hintHe: 'רמז: חבר/י בין citizens ל-district_officials לפי עמודת district המשותפת (JOIN).',
 }

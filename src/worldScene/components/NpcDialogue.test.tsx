@@ -36,6 +36,25 @@ describe('NpcDialogue', () => {
     render(<NpcDialogue npc={mera} context={context()} onClose={vi.fn()} />)
 
     expect(screen.getByText('Mera Solt')).toBeInTheDocument()
+  })
+
+  // Playtest fix pass (issue 2) — Mera's dialogue now explicitly explains
+  // that the Hub is open (not locked), why the signal being unstable
+  // matters (it can't locate residents), and the one concrete next step —
+  // this used to be a single flat line that never said any of that, and
+  // never named an action at all.
+  it("explains, in Mera's own dialogue, that the Hub is open but its signal can't locate residents, and names the concrete next step", () => {
+    render(<NpcDialogue npc={mera} context={context()} onClose={vi.fn()} />)
+
+    const missionContext = screen.getByTestId('npc-dialogue-mission-context')
+    expect(missionContext).toHaveTextContent('פתוח')
+    expect(missionContext).not.toHaveTextContent('נעול')
+    expect(missionContext).toHaveTextContent('ליבת האיתור')
+  })
+
+  it('drops Mera\'s mission-context line once the Hub is stable/thriving (the phase is authored per-status, not always shown)', () => {
+    render(<NpcDialogue npc={mera} context={context({ districtStatusByDistrictId: { core: 'thriving' } })} onClose={vi.fn()} />)
+
     expect(screen.queryByTestId('npc-dialogue-mission-context')).not.toBeInTheDocument()
   })
 
@@ -230,12 +249,12 @@ describe('NpcDialogue — replay action label (Batch 3A.5)', () => {
     render(
       <NpcDialogue npc={mathTeacher} context={context({ completedLessonIds: [] })} onClose={vi.fn()} onStartLesson={vi.fn()} />,
     )
-    expect(screen.getByTestId('npc-dialogue-start-lesson-button')).toHaveTextContent('התחל שיעור')
+    expect(screen.getByTestId('npc-dialogue-start-lesson-button')).toHaveTextContent('התחל/התחילי שיעור')
   })
 
   it('shows the normal start action when completedLessonIds is entirely absent from the context', () => {
     render(<NpcDialogue npc={mathTeacher} context={context()} onClose={vi.fn()} onStartLesson={vi.fn()} />)
-    expect(screen.getByTestId('npc-dialogue-start-lesson-button')).toHaveTextContent('התחל שיעור')
+    expect(screen.getByTestId('npc-dialogue-start-lesson-button')).toHaveTextContent('התחל/התחילי שיעור')
   })
 
   it('shows "תרגל שוב" once the linked lesson is already completed', () => {
@@ -247,7 +266,7 @@ describe('NpcDialogue — replay action label (Batch 3A.5)', () => {
         onStartLesson={vi.fn()}
       />,
     )
-    expect(screen.getByTestId('npc-dialogue-start-lesson-button')).toHaveTextContent('תרגל שוב')
+    expect(screen.getByTestId('npc-dialogue-start-lesson-button')).toHaveTextContent('תרגל/י שוב')
   })
 
   it('still resolves and calls onStartLesson with the same namespaced id when replaying', () => {
@@ -273,6 +292,6 @@ describe('NpcDialogue — replay action label (Batch 3A.5)', () => {
         onStartLesson={vi.fn()}
       />,
     )
-    expect(screen.getByTestId('npc-dialogue-start-lesson-button')).toHaveTextContent('התחל שיעור')
+    expect(screen.getByTestId('npc-dialogue-start-lesson-button')).toHaveTextContent('התחל/התחילי שיעור')
   })
 })

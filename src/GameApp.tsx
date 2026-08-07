@@ -6,9 +6,16 @@ import { ArchivePagesPanel, CampaignCompleteBanner, MissionPanel, MissionSelect,
 import { createProgressionMissionCompletedHandler, createUnlockReactionHandler, gameEventBus } from './events'
 import { he } from './i18n'
 import { getLearningPath, getLessonById, LEARNING_PATHS, LessonStage } from './learning'
-import { getDefaultMission, getMissionById, getMissionDisplayText, missionRegistry, useMissionManager } from './missions'
+import {
+  classifySqlError,
+  getDefaultMission,
+  getMissionById,
+  getMissionDisplayText,
+  missionRegistry,
+  useMissionManager,
+} from './missions'
 import { getNpcById } from './npcs'
-import { OdinPanel, useOdin } from './odin'
+import { AskOdinPanel, OdinPanel, useOdin } from './odin'
 import {
   BootSequence,
   clearOnboardingFlag,
@@ -40,6 +47,7 @@ import {
   getDestinationConfig,
   getDestinationContentStatus,
   getDestinationEntryMission,
+  getDestinationLockRequirementMissionId,
   getDestinationProgress,
   getDistrictStatusColor,
   getNpcDialogue,
@@ -480,6 +488,10 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
         type: 'QueryFailed',
         missionId: mission.id,
         reason: result.kind === 'error' ? 'sql-error' : 'mismatch',
+        // Playtest fix pass (issue 6A) — a deterministic classification,
+        // never the raw driver message, so Odin can react with something
+        // more specific than one generic "check your syntax" line.
+        sqlErrorKind: result.kind === 'error' ? classifySqlError(result.message) : undefined,
       })
       playFail()
     },
@@ -547,14 +559,18 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
   // playerProgress on every render — no independent progression engine, no
   // new persisted state (see destinationContent.ts).
   const destinationInfoById: Readonly<Record<string, DestinationPromptInfo>> = Object.fromEntries(
-    DESTINATION_IDS.map((destinationId) => [
-      destinationId,
-      {
-        name: getDestinationConfig(destinationId)?.name ?? destinationId,
-        status: getDestinationContentStatus(destinationId, playerProgress),
-        progress: getDestinationProgress(destinationId, playerProgress),
-      },
-    ]),
+    DESTINATION_IDS.map((destinationId) => {
+      const requirementMissionId = getDestinationLockRequirementMissionId(destinationId, playerProgress)
+      return [
+        destinationId,
+        {
+          name: getDestinationConfig(destinationId)?.name ?? destinationId,
+          status: getDestinationContentStatus(destinationId, playerProgress),
+          progress: getDestinationProgress(destinationId, playerProgress),
+          lockRequirementMissionTitle: requirementMissionId ? getMissionById(requirementMissionId)?.titleHe : undefined,
+        },
+      ]
+    }),
   )
   const currentDestinationInfo = destinationInfoById[sceneState.playerDistrictId]
   const currentDestinationName = currentDestinationInfo?.name ?? sceneState.playerDistrictId
@@ -712,6 +728,7 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
               {!activeLesson && (
                 <QuestChip
                   title={getMissionDisplayText(activeMission).title}
+                  goal={getMissionDisplayText(activeMission).goal}
                   currentMissionIndex={activeCampaignEntry?.order}
                   totalMissions={campaignSummary.totalMissions}
                 />
@@ -754,7 +771,6 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
               {activeLesson && (
                 <LessonStage
                   lesson={activeLesson}
-                  isCompleted={completedLessonIds.includes(activeLesson.id)}
                   onResult={(pass) => handleLessonResult(activeLesson.id, pass)}
                   onReturnToWorld={handleReturnFromLesson}
                 />
@@ -826,7 +842,18 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
               <MissionSelect options={missionOptions} activeMissionId={activeMission.id} onSelect={handleSelectMission} />
             </QuestTrack>
           }
-          advisor={<OdinPanel latestMessage={odinMessage} history={odinHistory} />}
+          advisor={
+            <>
+              <OdinPanel latestMessage={odinMessage} history={odinHistory} />
+              <AskOdinPanel
+                missionGoal={getMissionDisplayText(activeMission).goal}
+                missionPrompt={getMissionDisplayText(activeMission).prompt}
+                missionHint={getMissionDisplayText(activeMission).hint}
+                destinationName={activeDestinationName}
+                history={odinHistory}
+              />
+            </>
+          }
           devTools={
             <>
               <button type="button" className="debugToggle" onClick={() => setShowDebug((current) => !current)}>

@@ -35,8 +35,11 @@ export const prioritySignalMission: MissionConfig = {
   verifyOptions: { ordered: true },
   successEffect: { kind: 'ADJUST_STAT', districtId: 'south', stat: 'stability', delta: 20 },
   titleHe: 'אות בעדיפות',
-  goalHe: 'סדר את דוחות התקרית הפתוחים של מרידיאן מהדחוף ביותר לפחות דחוף.',
+  goalHe: 'סדר/י את דוחות התקרית הפתוחים של מרידיאן מהדחוף ביותר לפחות דחוף.',
+  // Playtest fix pass (issue 5) — normalized from "מיין/מייני" to the
+  // short-suffix style used consistently across this mission screen.
   promptHe:
     'מוקד הרשומות שומע כעת כל מחוז, אך עדיין לא יודע במה לטפל קודם.\n' +
-    'מיין את הדוחות הפתוחים כך שהחמור ביותר יעלה לראש הרשימה.',
+    'מיין/י את הדוחות הפתוחים כך שהחמור ביותר יעלה לראש הרשימה.',
+  hintHe: 'רמז: מיין/י לפי עמודת severity (ORDER BY).',
 }

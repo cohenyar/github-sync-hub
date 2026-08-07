@@ -185,7 +185,10 @@ test.describe('Phase 2 primary 3D scene: the canonical world-scene loop', () => 
 
     await expect(prompt).toHaveAttribute('data-locked', 'true')
     await expect(prompt).toContainText('מסלול הצפון')
-    await expect(prompt).toContainText('נעול')
+    // Playtest fix pass (issue 4) — a locked destination now names the real
+    // blocking mission (District Ties requires First Contact) instead of
+    // showing only the bare "Locked" label.
+    await expect(prompt).toContainText('נדרש: השלמת מגע ראשון')
 
     // A deliberate, explained no-op — not a silent failure: interacting
     // with a locked destination must not open a Terminal.
@@ -679,7 +682,9 @@ test.describe('Batch 3A.3: teacher NPC interaction reliability', () => {
     await expect(page.getByTestId('npc-dialogue-start-lesson-button')).toBeVisible()
   })
 
-  test('reopening an already-completed lesson shows the success state immediately, without needing to resubmit', async ({
+  // Bug-fix pass: "תרגל שוב" must actually restart the exercise, not
+  // immediately show the completed state — see LessonStage.tsx.
+  test('reopening an already-completed lesson via תרגל שוב restarts the exercise fresh, not the success state', async ({
     page,
   }) => {
     await page.goto('/world')
@@ -692,10 +697,23 @@ test.describe('Batch 3A.3: teacher NPC interaction reliability', () => {
     await page.getByTestId('lesson-return-to-world-button').click()
 
     await page.keyboard.press('KeyE')
+    await expect(page.getByTestId('npc-dialogue-start-lesson-button')).toContainText('תרגל/י שוב')
     await page.getByTestId('npc-dialogue-start-lesson-button').click()
 
+    // A real fresh attempt: the exercise panel is back, with no leftover
+    // answer or verdict from the earlier pass, and it can be failed again.
+    await expect(page.getByTestId('lesson-success-message')).toHaveCount(0)
+    await expect(page.getByTestId('math-exercise-panel')).toBeVisible()
+    await expect(page.getByTestId('math-answer-input')).toHaveValue('')
+    await page.getByTestId('math-answer-input').fill('7')
+    await page.getByTestId('math-submit-button').click()
+    await expect(page.getByTestId('math-exercise-feedback')).toHaveText('לא מדויק. נסה/י שוב.' /* he.exerciseIncorrectFeedback */)
+    await expect(page.getByTestId('lesson-success-message')).toHaveCount(0)
+
+    // And it can still be passed again, same as the first attempt.
+    await page.getByTestId('math-answer-input').fill('11')
+    await page.getByTestId('math-submit-button').click()
     await expect(page.getByTestId('lesson-success-message')).toBeVisible()
-    await expect(page.getByTestId('math-exercise-panel')).toHaveCount(0)
   })
 
   test('completedLessonIds persists through Save and a full page reload', async ({ page }) => {
@@ -723,7 +741,7 @@ test.describe('Batch 3A.3: teacher NPC interaction reliability', () => {
     // consequence line, not the old generic "well done."
     await expect(page.getByTestId('npc-dialogue-mission-context')).toContainText('המניפסט נסגר בזמן בזכותך')
     // Batch 3A.5 — the replay wording also survives the reload.
-    await expect(page.getByTestId('npc-dialogue-start-lesson-button')).toContainText('תרגל שוב')
+    await expect(page.getByTestId('npc-dialogue-start-lesson-button')).toContainText('תרגל/י שוב')
   })
 
   test('?path=math marks the Mathematics teacher and leaves the English teacher available; the world loads cleanly for both query values', async ({
@@ -807,7 +825,7 @@ test.describe('Batch 3A.5: visual polish + lesson completion UX', () => {
     await page.goto('/world')
     await walkToMathTeacher(page)
     await page.keyboard.press('KeyE')
-    await expect(page.getByTestId('npc-dialogue-start-lesson-button')).toContainText('התחל שיעור')
+    await expect(page.getByTestId('npc-dialogue-start-lesson-button')).toContainText('התחל/התחילי שיעור')
 
     await page.getByTestId('npc-dialogue-start-lesson-button').click()
     await page.getByTestId('math-answer-input').fill('11')
@@ -816,10 +834,10 @@ test.describe('Batch 3A.5: visual polish + lesson completion UX', () => {
     await page.getByTestId('lesson-return-to-world-button').click()
 
     await page.keyboard.press('KeyE')
-    await expect(page.getByTestId('npc-dialogue-start-lesson-button')).toContainText('תרגל שוב')
+    await expect(page.getByTestId('npc-dialogue-start-lesson-button')).toContainText('תרגל/י שוב')
   })
 
-  test('replaying an already-completed lesson is idempotent: still shows success, still just one completed entry', async ({
+  test('replaying an already-completed lesson is idempotent: resubmitting still passes, still just one completed entry', async ({
     page,
   }) => {
     await page.goto('/world')
@@ -831,9 +849,14 @@ test.describe('Batch 3A.5: visual polish + lesson completion UX', () => {
     await expect(page.getByTestId('lesson-success-message')).toBeVisible()
     await page.getByTestId('lesson-return-to-world-button').click()
 
-    // Replay: open again via the now-"תרגל שוב" button.
+    // Replay: open again via the now-"תרגל/י שוב" button and actually
+    // resubmit — the bug this guards against is the exercise never
+    // reappearing at all, so the replay must go through the real panel.
     await page.keyboard.press('KeyE')
     await page.getByTestId('npc-dialogue-start-lesson-button').click()
+    await expect(page.getByTestId('math-exercise-panel')).toBeVisible()
+    await page.getByTestId('math-answer-input').fill('11')
+    await page.getByTestId('math-submit-button').click()
     await expect(page.getByTestId('lesson-success-message')).toBeVisible()
     await page.getByTestId('lesson-return-to-world-button').click()
 
@@ -842,6 +865,10 @@ test.describe('Batch 3A.5: visual polish + lesson completion UX', () => {
     await page.getByTestId('settings-menu-button').click()
     await page.getByTestId('toggle-world-scene-button').click()
     await expect(page.getByTestId('active-mission-title')).toHaveAttribute('data-mission-id', 'first-contact')
+
+    // No double-grant: the Archive Page linked to this lesson was only
+    // ever found once, even though the lesson was completed twice.
+    await expect(page.getByTestId('quest-track-archive-pages-button')).toContainText(/1$/)
   })
 
   test('no console errors while both buildings, their signs/lanterns, and completion badges render together', async ({
@@ -925,7 +952,7 @@ test.describe('Meridian 1.0 closeout: auto-save on leaving /world', () => {
     // Meridian 1.3 — Narrative Backbone §07: a specific, persistent
     // consequence line, not the old generic "well done."
     await expect(page.getByTestId('npc-dialogue-mission-context')).toContainText('המניפסט נסגר בזמן בזכותך')
-    await expect(page.getByTestId('npc-dialogue-start-lesson-button')).toContainText('תרגל שוב')
+    await expect(page.getByTestId('npc-dialogue-start-lesson-button')).toContainText('תרגל/י שוב')
   })
 
   test('does not interfere with the manual Save button or its confirmation', async ({ page }) => {

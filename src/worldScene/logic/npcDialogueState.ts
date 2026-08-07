@@ -36,6 +36,16 @@ const NPC_LINKED_MISSION_ID: Readonly<Record<string, string>> = {
   'north-warden': 'first-contact',
   'south-organizer': 'south-stability',
   'north-analyst': 'full-signal',
+  // Playtest fix pass (issue 4) — east-broker used to be a district-status
+  // NPC, but the East district's own stats (loyalty/stability: 75, see
+  // initialDistricts.ts) never change anywhere in the campaign, so its
+  // status is always 'thriving' and any 'unstable'-phase content on him
+  // was dead — no real playthrough could ever reach it. full-signal is the
+  // mission whose unlock (missionCompleted: 'south-stability') is the
+  // *actual* thing gating the East course (see defaultUnlockRules.ts /
+  // destinationContent.getDestinationLockRequirementMissionId) — linking
+  // him to it makes his dialogue track the real, reachable gate.
+  'east-broker': 'full-signal',
 }
 
 /**

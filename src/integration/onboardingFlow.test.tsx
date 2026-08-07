@@ -79,13 +79,13 @@ describe('Onboarding: first-time player', () => {
     renderGameApp()
     fireEvent.click(screen.getByTestId('boot-sequence-skip-button'))
 
-    expect(screen.getByTestId('odin-presence')).toHaveTextContent('ברוך הבא למרידיאן')
+    expect(screen.getByTestId('odin-presence')).toHaveTextContent('ברוך/ה הבא/ה למרידיאן')
   })
 
   it('never replays the world-entry greeting when toggling between the World Scene and classic dashboard afterward', () => {
     renderGameApp()
     fireEvent.click(screen.getByTestId('boot-sequence-skip-button'))
-    expect(screen.getByTestId('odin-presence')).toHaveTextContent('ברוך הבא למרידיאן')
+    expect(screen.getByTestId('odin-presence')).toHaveTextContent('ברוך/ה הבא/ה למרידיאן')
 
     // Toggle back and forth several times — WorldEntered must never publish
     // again, so Odin's narration history never grows past its one entry.
@@ -99,7 +99,7 @@ describe('Onboarding: first-time player', () => {
     // The classic dashboard's OdinPanel only renders a "history" list once
     // more than one narration entry exists — its absence here proves the
     // greeting is still the *only* entry Odin has ever narrated.
-    expect(screen.getByTestId('odin-latest-message')).toHaveTextContent('ברוך הבא למרידיאן')
+    expect(screen.getByTestId('odin-latest-message')).toHaveTextContent('ברוך/ה הבא/ה למרידיאן')
     expect(screen.queryByTestId('odin-history')).not.toBeInTheDocument()
   })
 
@@ -116,7 +116,7 @@ describe('Onboarding: first-time player', () => {
     renderGameApp()
     expect(screen.queryByTestId('boot-sequence')).not.toBeInTheDocument()
     expect(screen.getByTestId('world-scene-3d')).toBeInTheDocument()
-    expect(screen.getByTestId('odin-presence')).not.toHaveTextContent('ברוך הבא למרידיאן')
+    expect(screen.getByTestId('odin-presence')).not.toHaveTextContent('ברוך/ה הבא/ה למרידיאן')
     expect(screen.getByTestId('odin-presence')).toHaveTextContent('ברוך שובך למרידיאן')
   })
 })
@@ -136,7 +136,7 @@ describe('Onboarding: returning player', () => {
   it('does not narrate the first-time world-entry greeting, but does get a Meridian 1.3 welcome-back line instead', () => {
     renderGameApp()
 
-    expect(screen.getByTestId('odin-presence')).not.toHaveTextContent('ברוך הבא למרידיאן')
+    expect(screen.getByTestId('odin-presence')).not.toHaveTextContent('ברוך/ה הבא/ה למרידיאן')
     expect(screen.getByTestId('odin-presence')).toHaveTextContent('ברוך שובך למרידיאן')
   })
 })
@@ -147,7 +147,7 @@ describe('Onboarding: SessionResumed (Meridian 1.3)', () => {
     // The boot sequence owns the screen; skip it to reach the World Scene.
     fireEvent.click(screen.getByTestId('boot-sequence-skip-button'))
 
-    expect(screen.getByTestId('odin-presence')).toHaveTextContent('ברוך הבא למרידיאן')
+    expect(screen.getByTestId('odin-presence')).toHaveTextContent('ברוך/ה הבא/ה למרידיאן')
     expect(screen.getByTestId('odin-presence')).not.toHaveTextContent('ברוך שובך למרידיאן')
   })
 

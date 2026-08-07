@@ -36,6 +36,12 @@ export function SqlEditorPanel({ status, onRun, onRetry }: SqlEditorPanelProps) 
         placeholder={he.sqlPlaceholder}
         rows={8}
       />
+      {/* Playtest fix pass (issue 5) — one static, generic (non-spoiler)
+          syntax example, since the screen previously offered no example or
+          hint of any kind before the player's first attempt. */}
+      <p className={styles.hint} data-testid="sql-example-hint" dir="ltr">
+        {he.sqlExampleHint}
+      </p>
       <button
         type="button"
         className={styles.runButton}

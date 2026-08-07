@@ -332,6 +332,34 @@
   line-height: var(--ds-leading-normal);
 }
 
+/* Playtest fix pass — shown only for the specific, detected local-dev
+   Google-sign-in case (see AuthProvider.signInWithGoogle); same visual
+   family as .authNotConfiguredNotice since both are "here's why, and
+   here's what to do instead" notices. */
+.localDevNotice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--ds-space-2);
+  max-width: min(360px, 100%);
+  padding: var(--ds-space-3) var(--ds-space-4);
+  border-radius: var(--ds-radius-md);
+  background: rgba(245, 200, 92, 0.1);
+  border: 1px solid rgba(245, 200, 92, 0.3);
+  color: #f5c85c;
+  font-size: var(--ds-text-xs);
+  line-height: var(--ds-leading-normal);
+  text-align: center;
+}
+
+.localDevActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ds-space-2);
+}
+
 .confirmPrompt {
   display: flex;
   flex-direction: column;

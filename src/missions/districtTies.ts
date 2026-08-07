@@ -25,8 +25,11 @@ export const districtTiesMission: MissionConfig = {
   referenceSql: "SELECT * FROM citizens WHERE district = 'north';",
   successEffect: { kind: 'ADJUST_STAT', districtId: 'north', stat: 'loyalty', delta: 15 },
   titleHe: 'קשרי מחוז',
-  goalHe: 'חשוף אילו תושבים גרים במחוז הצפון של מרידיאן.',
+  // Playtest fix pass (issue 5) — normalized from "חשוף/חשפי" to the
+  // short-suffix style used consistently across this mission screen.
+  goalHe: 'חשוף/י אילו תושבים גרים במחוז הצפון של מרידיאן.',
   promptHe:
     'מוקד הרשומות כבר רואה את התושבים, אך לא את מקום מגוריהם.\n' +
-    'סנן את המרשם כדי להעלות את קשרי מחוז הצפון.',
+    'סנן/י את המרשם כדי להעלות את קשרי מחוז הצפון.',
+  hintHe: 'רמז: סנן/י את טבלת citizens לפי עמודת district.',
 }

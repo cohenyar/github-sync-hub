@@ -104,6 +104,27 @@ describe('getNpcDialogueState — mission-linked NPCs', () => {
     const state = getNpcDialogueState(northWarden, context({ missionContentStatusByMissionId: {} }))
     expect(state).toEqual({ kind: 'mission', phase: 'locked' })
   })
+
+  // Playtest fix pass (issue 4) — east-broker is linked to full-signal (the
+  // mission that actually gates the East course), not the East district's
+  // own stability stat, which never changes anywhere in the campaign.
+  it('links east-broker to full-signal, not his home district\'s (always-thriving) status', () => {
+    const eastBroker: NpcConfig = {
+      id: 'east-broker',
+      name: 'Tomas Reyeth',
+      districtId: 'east',
+      role: 'Trade Broker',
+      description: '',
+    }
+    const state = getNpcDialogueState(
+      eastBroker,
+      context({
+        missionContentStatusByMissionId: { 'full-signal': 'locked' },
+        districtStatusByDistrictId: { east: 'thriving' },
+      }),
+    )
+    expect(state).toEqual({ kind: 'mission', phase: 'locked' })
+  })
 })
 
 describe('getNpcDialogueState — district-status NPCs', () => {

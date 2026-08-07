@@ -3,6 +3,7 @@ import { createContext, useEffect, useState, type ReactNode } from 'react'
 import { he } from '../i18n'
 import { lovable } from '../integrations/lovable/index'
 import { translateAuthError } from './authErrorMessages'
+import { isLocalDevRuntime } from './runtimeEnvironment'
 import { isSupabaseConfigured, supabase } from './supabaseClient'
 import type { AuthActionResult, AuthContextValue, AuthStatus, AuthUser, Role } from './types'
 
@@ -150,6 +151,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function signInWithGoogle() {
     if (!isSupabaseConfigured) return
+    // Lovable's managed OAuth broker (/~oauth/initiate) only exists on
+    // Lovable's hosted infrastructure — on a bare Vite dev server it
+    // 404s to the app's own NotFound page. Detected and stopped here,
+    // before ever navigating, rather than letting the SDK redirect first.
+    if (isLocalDevRuntime) {
+      setAuthError(he.authGoogleLocalDevMessage)
+      return
+    }
     setAuthError(null)
     clearGuest()
     // Managed Google sign-in through Lovable Cloud. The redirect target is

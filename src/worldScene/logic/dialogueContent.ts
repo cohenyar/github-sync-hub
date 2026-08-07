@@ -16,13 +16,21 @@ const MISSION_DIALOGUE: Readonly<Record<string, Readonly<Record<MissionDialogueP
     locked: { greeting: 'שלום לך. אני דורין קאס, שומר מחוז הצפון.' },
     available: {
       greeting: 'שלום לך. אני דורין קאס, שומר מחוז הצפון.',
-      missionContext: 'יש עבודה שממתינה במוקד הרשומות. גשי למסוף ובררי מה נדרש כעת.',
+      missionContext: 'מוקד הרשומות פתוח וממתין לך. גש/י למסוף וברר/י מה נדרש כעת.',
     },
     inProgress: { greeting: 'עוד לא סיימת עם המוקד? הצפון עדיין ממתין לתשובה משם.' },
     completed: { greeting: 'הצפון נושם קצת יותר בקלות מאז שהמוקד ראה אותנו. תודה לך.' },
   },
   'south-organizer': {
-    locked: { greeting: 'שלום, אני פריה ננדל. הדרום עדיין לא יציב, אבל עוד לא הגיע הזמן לפתור את זה מהמוקד.' },
+    // Playtest fix pass (issue 3) — named the concrete prerequisite (finish
+    // District Ties at the Records Hub) instead of a vague "not yet time,"
+    // since she's visible from the start of the game (no unlockConditions)
+    // and most players meet her long before south-stability itself unlocks.
+    locked: {
+      greeting:
+        'שלום, אני פריה ננדל. הדרום עדיין לא יציב — אבל אני לא יכולה להתחיל לטפל בזה עדיין. ' +
+        'צריך קודם לחבר את קשרי המחוזות במוקד הרשומות. אחרי זה יהיו לי דוחות אמיתיים בשבילך.',
+    },
     available: {
       greeting: 'שלום, אני פריה ננדל. אני פועלת לייצב את מחוז הדרום.',
       missionContext: 'יש דוחות חמורים מהדרום שמחכים במוקד הרשומות. כדאי לבדוק מה קרה שם.',
@@ -34,28 +42,61 @@ const MISSION_DIALOGUE: Readonly<Record<string, Readonly<Record<MissionDialogueP
     locked: { greeting: 'שלום, אני יורן פטריק. אני עדיין אוסף מספיק דיווחים כדי לראות את התמונה המלאה.' },
     available: {
       greeting: 'שלום, אני יורן פטריק, אנליסט האותות.',
-      missionContext: 'עכשיו אפשר לראות את כל המחוזות בבת אחת. ספרי כמה תושבים יש בכל מחוז דרך המוקד.',
+      // Playtest fix pass (issue 5) — normalized from "ספור/ספרי" for
+      // consistency with the same verb's fix in fullSignal.ts's own promptHe.
+      missionContext: 'עכשיו אפשר לראות את כל המחוזות בבת אחת. ספור/י כמה תושבים יש בכל מחוז דרך המוקד.',
     },
     inProgress: { greeting: 'איך מתקדמת הספירה? המוקד עדיין מחכה לתמונה המלאה.' },
     completed: { greeting: 'עכשיו אני רואה את כל מרידיאן בבת אחת, מחוז אחר מחוז. תודה לך.' },
+  },
+  // Playtest fix pass (issue 4) — moved here from DISTRICT_DIALOGUE. He was
+  // previously keyed on the East district's own stability *stat*, but that
+  // stat (loyalty/stability: 75, see initialDistricts.ts) never changes
+  // anywhere in the campaign — East is always 'thriving' by that measure,
+  // so his old 'unstable' line was dead content no playthrough could ever
+  // reach. full-signal is the mission that actually gates the East course
+  // (its unlock condition is south-stability — see defaultUnlockRules.ts),
+  // so linking him to it makes his dialogue track the real, reachable gate
+  // instead of an always-happy stat.
+  'east-broker': {
+    locked: {
+      greeting: 'שלום, אני תומאס רייט, מתווך הסחר.',
+      missionContext:
+        'מסלולי הסחר במזרח חסומים כל עוד הדרום לא יציב — הדיווחים משם מדברים על עיכובי שוק. ' +
+        'כשהדרום יתייצב, מוקד הרשומות יוכל לפתוח כאן את נתוני הסוחרים.',
+    },
+    available: {
+      greeting: 'שלום, אני תומאס רייט, מתווך הסחר.',
+      missionContext: 'הדרום התייצב, ומסלולי הסחר במזרח סוף סוף יכולים לזוז — יש עוד עבודה, אבל זה מתחיל.',
+    },
+    inProgress: { greeting: 'עוד לא השלמת את איתור האות המלא? אני עדיין מחכה שהמסחר במזרח יוכר במוקד.' },
+    completed: { greeting: 'שלום, אני תומאס רייט. המזרח משגשג — הסחר עובר דרכי בלי הפרעה.' },
   },
 }
 
 const DISTRICT_DIALOGUE: Readonly<Record<string, Readonly<Record<DistrictStatus, NpcDialogueContent>>>> = {
   'archivist-mera': {
-    unstable: { greeting: 'ברוכה הבאה למוקד הרשומות. אני מרה, שומרת הארכיון. האות עדיין לא יציב.' },
+    // Playtest fix pass (issue 2) — the previous line ("still not stable")
+    // never said the Hub is physically open, never explained what
+    // "unstable" actually means in practice (it can't locate residents),
+    // and never gave a concrete next step — leaving "unstable" reading as
+    // a synonym for "locked" when it isn't. This is also now the one place
+    // in the game that names the actual action ("activate the locator
+    // core") rather than relying on a different NPC (Devrin Kass) to say
+    // it, since players don't reliably meet him first.
+    unstable: {
+      greeting: 'ברוך/ה הבא/ה למוקד הרשומות. אני מרה, שומרת הארכיון.',
+      missionContext:
+        'המוקד פתוח — זה לא הבעיה. האות שלו לא יציב, ולכן הוא לא מאתר את תושבי העיר. ' +
+        'גש/י לליבת האיתור והפעל/י אותה כדי לתקן את זה.',
+    },
     // Meridian 1.4 — the Core's single stat (signal) jumps unstable→thriving
     // in one atomic step (see firstContact.ts's successEffect), so this
     // phase is not currently reachable in any playthrough. Written to state
     // the current condition plainly rather than implying a remembered
     // "better than it was" trajectory the world can't actually show yet.
-    stable: { greeting: 'ברוכה הבאה. אני מרה, שומרת הארכיון. האות במוקד יציב.' },
-    thriving: { greeting: 'ברוכה הבאה, שוב. אני מרה. המוקד לא נראה כה בהיר מזמן.' },
-  },
-  'east-broker': {
-    unstable: { greeting: 'שלום, אני תומאס רייט. עכשיו כשהמוקד רואה את העיר, המסחר במזרח סוף סוף יכול לזוז — אבל עוד יש עבודה.' },
-    stable: { greeting: 'שלום, אני תומאס רייט, מתווך הסחר. מסלולי הסחר במזרח יציבים בינתיים.' },
-    thriving: { greeting: 'שלום, אני תומאס רייט. המזרח משגשג — הסחר עובר דרכי בלי הפרעה.' },
+    stable: { greeting: 'ברוך/ה הבא/ה. אני מרה, שומרת הארכיון. האות במוקד יציב.' },
+    thriving: { greeting: 'ברוך/ה הבא/ה, שוב. אני מרה. המוקד לא נראה כה בהיר מזמן.' },
   },
   'south-engineer': {
     unstable: { greeting: 'שלום, אני אלין פוס, מהנדסת המים. עוד יש מה לתקן בדרום.' },

@@ -1,7 +1,7 @@
 import type { Database } from 'sql.js'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createTestDatabase } from '../verifier/testDb'
-import { runQuery } from './runQuery'
+import { classifySqlError, runQuery } from './runQuery'
 import type { MissionConfig } from './types'
 
 const mission: MissionConfig = {
@@ -44,5 +44,32 @@ describe('runQuery', () => {
   it('returns an error result for invalid SQL instead of throwing', () => {
     const result = runQuery(db, 'SELEKT * FROM citizens', mission)
     expect(result.kind).toBe('error')
+  })
+
+  // Playtest fix pass (issue 6A) — classified against sql.js's own real
+  // error messages (not a guessed/hardcoded string), so this stays true to
+  // what the driver actually produces.
+  describe('classifySqlError, fed real sql.js error messages', () => {
+    it('classifies a reference to a table that does not exist', () => {
+      const result = runQuery(db, 'SELECT * FROM not_a_real_table', mission)
+      expect(result.kind).toBe('error')
+      if (result.kind === 'error') expect(classifySqlError(result.message)).toBe('unknown-table')
+    })
+
+    it('classifies a reference to a column that does not exist', () => {
+      const result = runQuery(db, 'SELECT not_a_real_column FROM citizens', mission)
+      expect(result.kind).toBe('error')
+      if (result.kind === 'error') expect(classifySqlError(result.message)).toBe('unknown-column')
+    })
+
+    it('classifies a plain syntax error', () => {
+      const result = runQuery(db, 'SELEKT * FROM citizens', mission)
+      expect(result.kind).toBe('error')
+      if (result.kind === 'error') expect(classifySqlError(result.message)).toBe('syntax')
+    })
+
+    it('falls back to generic for anything it does not recognize', () => {
+      expect(classifySqlError('some unrelated driver message')).toBe('generic')
+    })
   })
 })

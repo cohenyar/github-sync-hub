@@ -24,6 +24,12 @@
   white-space: nowrap;
 }
 
+.goal {
+  color: var(--text);
+  font-size: 0.76rem;
+  line-height: 1.35;
+}
+
 .progress {
   color: var(--text-muted);
   font-size: 0.72rem;

@@ -35,10 +35,48 @@ describe('getNpcDialogue — district-status NPCs', () => {
     expect(new Set(greetings).size).toBe(greetings.length)
   })
 
-  it('never attaches a mission-context line to a district-status NPC', () => {
+  it('leaves a purely decorative district-status NPC with no mission-context line', () => {
     for (const status of ['unstable', 'stable', 'thriving'] as const) {
-      expect(getNpcDialogue('east-broker', { kind: 'district', status }).missionContext).toBeUndefined()
+      expect(getNpcDialogue('south-engineer', { kind: 'district', status }).missionContext).toBeUndefined()
     }
+  })
+
+  // Playtest fix pass (issue 2) — Mera carries an actionable next step only
+  // in her 'unstable' phase, the one where the explanation is still needed.
+  it('gives Mera an actionable next step only while unstable', () => {
+    expect(getNpcDialogue('archivist-mera', { kind: 'district', status: 'unstable' }).missionContext).toBeDefined()
+    for (const status of ['stable', 'thriving'] as const) {
+      expect(getNpcDialogue('archivist-mera', { kind: 'district', status }).missionContext).toBeUndefined()
+    }
+  })
+})
+
+describe('getNpcDialogue — Tomas Reyeth (east-broker), playtest fix issue 4', () => {
+  // Moved from a district-status NPC to a mission-linked one: the East
+  // district's own stats (initialDistricts.ts) never change anywhere in
+  // the campaign, so an 'unstable'-keyed line on him was dead content no
+  // playthrough could ever reach — full-signal (whose unlock condition is
+  // south-stability) is the mission that actually gates the East course.
+  it('explains what is blocking East while full-signal is locked, naming the real prerequisite', () => {
+    const dialogue = getNpcDialogue('east-broker', { kind: 'mission', phase: 'locked' })
+    expect(dialogue.missionContext).toBeDefined()
+    expect(dialogue.missionContext).toContain('הדרום')
+  })
+
+  it('drops the "blocked" explanation once full-signal unlocks, replacing it with a distinct line', () => {
+    const locked = getNpcDialogue('east-broker', { kind: 'mission', phase: 'locked' })
+    const available = getNpcDialogue('east-broker', { kind: 'mission', phase: 'available' })
+    expect(available.missionContext).toBeDefined()
+    expect(available.missionContext).not.toBe(locked.missionContext)
+  })
+
+  it('gives inProgress and completed their own distinct greetings, not a repeat of the locked/available one', () => {
+    const shared = getNpcDialogue('east-broker', { kind: 'mission', phase: 'locked' }).greeting
+    const inProgress = getNpcDialogue('east-broker', { kind: 'mission', phase: 'inProgress' })
+    const completed = getNpcDialogue('east-broker', { kind: 'mission', phase: 'completed' })
+    expect(inProgress.greeting).not.toBe(shared)
+    expect(completed.greeting).not.toBe(shared)
+    expect(completed.greeting).not.toBe(inProgress.greeting)
   })
 })
 
@@ -84,10 +122,10 @@ describe('getNpcDialogue — content quality', () => {
         { npcId: 'north-warden', state: { kind: 'mission', phase } as NpcDialogueState },
         { npcId: 'south-organizer', state: { kind: 'mission', phase } as NpcDialogueState },
         { npcId: 'north-analyst', state: { kind: 'mission', phase } as NpcDialogueState },
+        { npcId: 'east-broker', state: { kind: 'mission', phase } as NpcDialogueState },
       ]),
       ...(['unstable', 'stable', 'thriving'] as const).flatMap((status) => [
         { npcId: 'archivist-mera', state: { kind: 'district', status } as NpcDialogueState },
-        { npcId: 'east-broker', state: { kind: 'district', status } as NpcDialogueState },
         { npcId: 'south-engineer', state: { kind: 'district', status } as NpcDialogueState },
       ]),
       ...(['available', 'completed'] as const).flatMap((phase) => [

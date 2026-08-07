@@ -6,6 +6,7 @@ import {
   getDestinationConfig,
   getDestinationContentStatus,
   getDestinationEntryMission,
+  getDestinationLockRequirementMissionId,
   getDestinationMissions,
   getDestinationProgress,
 } from './destinationContent'
@@ -86,6 +87,25 @@ describe('getDestinationContentStatus', () => {
     ])
     expect(getDestinationContentStatus('east', allSix)).toBe('completed')
     expect(getDestinationContentStatus('core', allSix)).toBe('completed')
+  })
+})
+
+describe('getDestinationLockRequirementMissionId (playtest fix, issue 4)', () => {
+  it('names the real blocking mission for a locked destination — not the destination\'s own first mission id', () => {
+    // East's own first mission is full-signal, but what actually blocks it
+    // (per defaultUnlockRules) is south-stability — that's what a player
+    // needs to be told to go finish, not the internal mission id.
+    expect(getDestinationLockRequirementMissionId('east', progress([]))).toBe('south-stability')
+  })
+
+  it('is undefined once the destination is no longer locked', () => {
+    expect(
+      getDestinationLockRequirementMissionId('east', progress(['first-contact', 'district-ties', 'south-stability'])),
+    ).toBeUndefined()
+  })
+
+  it('is undefined for a destination that was never gated (always available)', () => {
+    expect(getDestinationLockRequirementMissionId('core', progress([]))).toBeUndefined()
   })
 })
 
