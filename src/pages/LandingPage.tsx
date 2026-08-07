@@ -39,7 +39,13 @@ const STATS = [
 ] as const
 
 export function LandingPage() {
+  // Startup instrumentation only — no behavioral effect.
+  useEffect(() => {
+    markBootStage('landing-rendered')
+  }, [])
+
   return (
+
     <div className={styles.page}>
       <div className={styles.starfield} aria-hidden />
 
