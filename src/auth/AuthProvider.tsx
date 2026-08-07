@@ -99,15 +99,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Timeout protection: if Cloud never answers, the app must not sit in
     // 'loading' forever — it resolves to signed-out (guest still works) with
-    // a non-blocking warning. Only ever fires while still loading.
-    const timeoutId = window.setTimeout(() => {
-      if (cancelled) return
-      setStatus((current) => {
-        if (current !== 'loading') return current
-        setAuthError(he.authTimeoutMessage)
-        return 'signed-out'
-      })
-    }, 8000)
+    // a non-blocking warning. Re-armed on EVERY transition into 'loading'
+    // (initial load and every later auth event), never just the first one.
+    let timeoutId = 0
+    function armLoadingTimeout() {
+      window.clearTimeout(timeoutId)
+      timeoutId = window.setTimeout(() => {
+        if (cancelled) return
+        setStatus((current) => {
+          if (current !== 'loading') return current
+          setAuthError(he.authTimeoutMessage)
+          return 'signed-out'
+        })
+      }, 8000)
+    }
+
+    armLoadingTimeout()
 
     supabase.auth
       .getSession()
@@ -130,6 +137,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // render stale role/account info from the previous session while the
       // new one resolves.
       setStatus('loading')
+      armLoadingTimeout()
       resolveSession(session)
     })
 
@@ -137,6 +145,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       cancelled = true
       window.clearTimeout(timeoutId)
       subscription.unsubscribe()
+    }
+
     }
   }, [])
 
