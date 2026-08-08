@@ -315,7 +315,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   function signInWithGoogle(): Promise<void> {
-    if (!isSupabaseConfigured) return
+    if (!isSupabaseConfigured) return Promise.resolve()
     setAuthError(null)
     clearGuest()
     // Managed Google sign-in through Lovable Cloud.
