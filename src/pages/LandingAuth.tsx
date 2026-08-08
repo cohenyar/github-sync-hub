@@ -46,9 +46,6 @@ export function LandingAuth() {
   if (!configured) {
     return (
       <div className={styles.wrap} data-testid="landing-auth">
-        <span className={styles.note} role="status" data-testid="auth-unavailable">
-          {he.authUnavailableMessage}
-        </span>
         {retryCloudConnection && (
           <button type="button" className={styles.ghost} data-testid="auth-retry-button" onClick={retryCloudConnection}>
             {he.authRetryCta}
@@ -64,6 +61,7 @@ export function LandingAuth() {
       </div>
     )
   }
+
 
   if (status === 'signed-in') {
     const label = user?.displayName || user?.email || ''
