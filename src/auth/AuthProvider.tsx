@@ -3,6 +3,7 @@ import { createContext, useEffect, useState, type ReactNode } from 'react'
 import { markBootStage } from '../bootDiagnostics'
 import { he } from '../i18n'
 import { translateAuthError } from './authErrorMessages'
+import { googleAuthErrorMessage } from './googleAuthErrorMessages'
 import { isLocalDevRuntime } from './runtimeEnvironment'
 import { cloudClientPromise, isSupabaseConfigured } from './supabaseClient'
 import type { AuthActionResult, AuthContextValue, AuthStatus, AuthUser, Role } from './types'
@@ -255,9 +256,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const { lovable } = await import('../integrations/lovable/index')
       const result = await lovable.auth.signInWithOAuth('google', { redirect_uri: window.location.href })
-      if (result.error) setAuthError(result.error.message ?? he.authUnavailableMessage)
-    } catch {
-      setAuthError(he.authUnavailableMessage)
+      // Raw SDK/provider text is English and rarely actionable; classify it
+      // into a specific Hebrew instruction the player can act on.
+      if (result.error) setAuthError(googleAuthErrorMessage(result.error))
+    } catch (error) {
+      setAuthError(googleAuthErrorMessage(error))
     }
   }
 

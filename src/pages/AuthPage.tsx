@@ -177,6 +177,18 @@ export function AuthPage() {
           {he.signInWithGoogle}
         </button>
 
+        {/* Google failures are browser-side far more often than not (blocked
+            popup, third-party cookies) — show the specific fix, plus a retry
+            that doesn't require finding the button again. */}
+        {auth.authError && (
+          <div className={styles.error} role="alert" data-testid="google-auth-error">
+            <span>{auth.authError}</span>
+            <button type="button" className={styles.linkButton} onClick={() => void auth.signInWithGoogle()}>
+              {he.authRetryCta}
+            </button>
+          </div>
+        )}
+
         <div className={styles.guest}>
           <Link
             className={styles.linkButton}
