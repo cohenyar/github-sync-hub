@@ -63,25 +63,37 @@ describe('LandingAuth — Cloud client still resolving (auth-state race fix pass
   // flashing on every refresh where the client just hasn't resolved yet.
   it('shows the neutral loading state, never the unavailable notice, while status is \'loading\'', () => {
     renderLandingAuth({ status: 'loading', configured: false, cloudClientPending: true })
-    expect(screen.getByTestId('auth-loading')).toHaveTextContent(he.authLoadingMessage)
-    expect(screen.queryByTestId('auth-unavailable')).not.toBeInTheDocument()
+    expect(screen.getByTestId('auth-loading')).toHaveTextContent(he.authConnectingMessage)
+    expect(screen.queryByTestId('auth-env-missing')).not.toBeInTheDocument()
     expect(screen.queryByTestId('google-sign-in-button')).not.toBeInTheDocument()
     expect(screen.queryByTestId('continue-as-guest-button')).not.toBeInTheDocument()
   })
 })
 
 describe('LandingAuth — confirmed unavailable (client settled to null)', () => {
-  it('shows account and guest actions without retry or the unavailable notice once the client has confirmed failure', () => {
+  // State D: the env exists but the client failed to load, so this IS
+  // recoverable — offer one calm retry next to the always-available guest path.
+  it('offers retry, email and guest once the client has confirmed failure', () => {
     const retryCloudConnection = vi.fn()
     renderLandingAuth({ status: 'signed-out', configured: false, cloudClientLoadFailed: true, retryCloudConnection })
-    expect(screen.queryByTestId('auth-unavailable')).not.toBeInTheDocument()
+    expect(screen.getByTestId('auth-cloud-failed')).toHaveTextContent(he.authCloudFailedInline)
     expect(screen.getByTestId('continue-as-guest-button')).toBeInTheDocument()
-    expect(screen.queryByTestId('auth-retry-button')).not.toBeInTheDocument()
-    expect(retryCloudConnection).not.toHaveBeenCalled()
     expect(screen.getByTestId('auth-page-link')).toBeInTheDocument()
+    fireEvent.click(screen.getByTestId('auth-retry-button'))
+    expect(retryCloudConnection).toHaveBeenCalledTimes(1)
     // Google still stays hidden here: the managed OAuth call needs the client.
     expect(screen.queryByTestId('google-sign-in-button')).not.toBeInTheDocument()
   })
+
+  // State A: no cloud env at all — nothing to retry, just be honest.
+  it('states plainly that auth is not configured when there is no cloud env', () => {
+    renderLandingAuth({ status: 'signed-out', configured: false })
+    expect(screen.getByTestId('auth-env-missing')).toHaveTextContent(he.authEnvMissingInline)
+    expect(screen.getByTestId('continue-as-guest-button')).toBeInTheDocument()
+    expect(screen.queryByTestId('auth-retry-button')).not.toBeInTheDocument()
+  })
+
+
 
   it('calling Guest works from the unavailable state', () => {
     const continueAsGuest = vi.fn()
