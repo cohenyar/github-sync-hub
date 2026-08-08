@@ -67,6 +67,9 @@ export interface AuthContextValue {
   signInWithEmail: (email: string, password: string) => Promise<AuthActionResult>
   /** Sends a password-reset email; does not touch the current session. */
   sendPasswordReset: (email: string) => Promise<AuthActionResult>
+  /** Re-sends the sign-up confirmation email. Optional so existing fixtures keep compiling. */
+  resendConfirmationEmail?: (email: string) => Promise<AuthActionResult>
   updatePassword: (password: string) => Promise<AuthActionResult>
+
   signOut: () => Promise<void>
 }
