@@ -5,16 +5,17 @@ import { GoogleIcon } from '../auth/GoogleIcon'
 import styles from './LandingAuth.module.css'
 
 /**
- * Welcome-screen auth surface.
+ * Welcome-screen auth surface — the one place the visitor decides how to
+ * enter Meridian. It consumes the single AuthProvider context (optional, so
+ * the landing still renders if it is ever mounted outside a provider) and
+ * never creates a client of its own.
  *
- * The landing redesign dropped every auth control, so `/` exposed no way to
- * sign in, sign up, or even see whether you were a guest. This restores that
- * surface without adding a second auth client: it consumes the one
- * AuthProvider context (optional, so the landing still renders if it is ever
- * mounted outside a provider).
- *
- * Availability is never silently hidden: when Cloud auth is unavailable we
- * show a short non-blocking message and keep guest play working.
+ * Four explicit availability states, in this order (order matters — the
+ * pending window must never render as "unavailable"):
+ *   B. resolving        → neutral "connecting" note
+ *   A. env missing      → honest "not configured here" + Guest
+ *   D. client failed    → "failed to load" + Retry + Guest
+ *   C. ready            → Google + Email + Guest (three distinct actions)
  */
 export function LandingAuth() {
   const auth = useOptionalAuth()
@@ -30,37 +31,79 @@ export function LandingAuth() {
     signInWithGoogle,
     signOut,
     cloudClientPending,
+    cloudClientLoadFailed,
+    retryCloudConnection,
   } = auth
 
+  const guestButton = (
+    <button type="button" className={styles.ghost} data-testid="continue-as-guest-button" onClick={continueAsGuest}>
+      {he.authContinueAsGuest}
+    </button>
+  )
+  const emailLink = (
+    <Link to="/auth" className={styles.ghost} data-testid="auth-page-link">
+      {he.authGoToSignIn}
+    </Link>
+  )
+  const guestBadge = isGuest ? (
+    <span className={styles.badge} data-testid="auth-guest-badge">
+      {he.authGuestBadge}
+    </span>
+  ) : null
+
+  // B — still resolving.
   if (status === 'loading' || cloudClientPending) {
     return (
       <div className={styles.wrap} data-testid="landing-auth">
         <span className={styles.note} data-testid="auth-loading">
-          {he.authLoadingMessage}
+          {he.authConnectingMessage}
         </span>
       </div>
     )
   }
 
-  if (!configured) {
+  // D — client confirmed failed (env present, load failed): recoverable.
+  if (!configured && cloudClientLoadFailed) {
     return (
       <div className={styles.wrap} data-testid="landing-auth">
-        <Link to="/auth" className={styles.ghost} data-testid="auth-page-link">
-          {he.authGoToSignIn}
-        </Link>
-        <button type="button" className={styles.ghost} data-testid="continue-as-guest-button" onClick={continueAsGuest}>
-          {he.authContinueAsGuest}
-        </button>
-        {isGuest && <span className={styles.badge}>{he.authGuestBadge}</span>}
+        <span className={styles.note} data-testid="auth-cloud-failed">
+          {he.authCloudFailedInline}
+        </span>
+        {retryCloudConnection && (
+          <button
+            type="button"
+            className={styles.ghost}
+            data-testid="auth-retry-button"
+            onClick={() => retryCloudConnection()}
+          >
+            {he.authRetryShortCta}
+          </button>
+        )}
+        {emailLink}
+        {guestButton}
+        {guestBadge}
       </div>
     )
   }
 
+  // A — env genuinely missing.
+  if (!configured) {
+    return (
+      <div className={styles.wrap} data-testid="landing-auth">
+        <span className={styles.note} data-testid="auth-env-missing">
+          {he.authEnvMissingInline}
+        </span>
+        {guestButton}
+        {guestBadge}
+      </div>
+    )
+  }
 
   if (status === 'signed-in') {
     const label = user?.displayName || user?.email || ''
     return (
       <div className={styles.wrap} data-testid="landing-auth">
+        {user?.avatarUrl && <img className={styles.avatar} src={user.avatarUrl} alt="" width={28} height={28} />}
         <span className={styles.badge} data-testid="auth-signed-in-badge">
           {he.authSignedInAs}
           {label}
@@ -68,10 +111,16 @@ export function LandingAuth() {
         <button type="button" className={styles.ghost} data-testid="sign-out-button" onClick={() => void signOut()}>
           {he.signOut}
         </button>
+        {authError && (
+          <div className={styles.errorBox} role="alert" data-testid="auth-error">
+            <span>{authError}</span>
+          </div>
+        )}
       </div>
     )
   }
 
+  // C — ready and signed out: three clearly different choices.
   return (
     <div className={styles.wrap} data-testid="landing-auth">
       <button
@@ -84,13 +133,9 @@ export function LandingAuth() {
         {he.signInWithGoogle}
       </button>
 
-      <Link to="/auth" className={styles.ghost} data-testid="auth-page-link">
-        {he.authGoToSignIn}
-      </Link>
-      <button type="button" className={styles.ghost} data-testid="continue-as-guest-button" onClick={continueAsGuest}>
-        {he.authContinueAsGuest}
-      </button>
-      {isGuest && <span className={styles.badge} data-testid="auth-guest-badge">{he.authGuestBadge}</span>}
+      {emailLink}
+      {guestButton}
+      {guestBadge}
       {authError && (
         <div className={styles.errorBox} role="alert" data-testid="auth-error">
           <span>{authError}</span>

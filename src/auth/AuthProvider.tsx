@@ -396,6 +396,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: null, needsEmailConfirmation: true }
   }
 
+  /**
+   * Re-sends the sign-up confirmation email. Uses the same client and the
+   * same redirect target as signUpWithEmail — no new session, no new client.
+   */
+  async function resendConfirmationEmail(email: string): Promise<AuthActionResult> {
+    const client = await cloudClientPromise
+    if (!client) return { error: he.authUnavailableMessage }
+    const { error } = await client.auth.resend({
+      type: 'signup',
+      email,
+      options: { emailRedirectTo: `${window.location.origin}/` },
+    })
+    if (error) return { error: translateAuthError(error) }
+    return { error: null, needsEmailConfirmation: true }
+  }
+
+
+
   async function updatePassword(password: string): Promise<AuthActionResult> {
     const client = await cloudClientPromise
     if (!client) return { error: he.authUnavailableMessage }
@@ -444,6 +462,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signUpWithEmail,
     signInWithEmail,
     sendPasswordReset,
+    resendConfirmationEmail,
+
     updatePassword,
     signOut,
   }
