@@ -137,7 +137,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     armLoadingTimeout()
 
-    cloudClientPromise.then((client) => {
+    // On the first pass this is the original module-load promise; a
+    // user-initiated retry re-runs the same loader (never a second client).
+    const retry = (supabaseClientModule as { retryCloudClient?: () => Promise<SupabaseClient | null> })
+      .retryCloudClient
+    const clientPromise = retryAttempt > 0 && retry ? retry() : cloudClientPromise
+
+    clientPromise.then((client) => {
       if (cancelled) return
       setCloudClientState(client ? 'ready' : 'unavailable')
 
