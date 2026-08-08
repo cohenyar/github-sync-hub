@@ -70,7 +70,27 @@
   transform: translateY(1px);
 }
 
+/* Tablet / narrow-desktop (e.g. the Lovable preview pane): keep the auth
+   actions inline inside the nav pill instead of stacking full-width rows. */
 @media (max-width: 720px) {
+  .wrap {
+    justify-content: flex-end;
+    gap: 6px;
+  }
+  .google,
+  .ghost {
+    padding: 9px 12px;
+    font-size: 12px;
+    flex: 0 1 auto;
+  }
+  .note,
+  .errorBox {
+    max-width: 100%;
+  }
+}
+
+/* True mobile: stack full-width so every target stays comfortably tappable. */
+@media (max-width: 520px) {
   .wrap {
     width: 100%;
     max-width: 100%;
@@ -82,10 +102,6 @@
     padding: 10px 14px;
     font-size: 13px;
     flex: 1 1 100%;
-    max-width: 100%;
-  }
-  .note,
-  .errorBox {
     max-width: 100%;
   }
 }
