@@ -1,5 +1,5 @@
 import type { Session, SupabaseClient } from '@supabase/supabase-js'
-import { createContext, useEffect, useState, type ReactNode } from 'react'
+import { createContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import { markBootStage } from '../bootDiagnostics'
 import { he } from '../i18n'
 import { translateAuthError } from './authErrorMessages'
@@ -265,6 +265,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => window.clearTimeout(id)
   }, [cloudClientState, retryAttempt])
 
+  // Popup-blocker fix: the managed Google helper opens a popup window. Browsers
+  // only allow that inside the user-activation window of the click itself — any
+  // `await` before it (dynamic import, client promise) drops the activation, the
+  // popup is blocked, and the SDK falls back to a full-page redirect, which in
+  // Lovable Preview happens *inside the iframe* where Google refuses to render.
+  // So we preload the module up-front and call it synchronously on click.
+  const lovableModuleRef = useRef<typeof import('../integrations/lovable/index') | null>(null)
+  useEffect(() => {
+    if (cloudClientState !== 'ready') return
+    let cancelled = false
+    void import('../integrations/lovable/index')
+      .then((mod) => {
+        if (!cancelled) lovableModuleRef.current = mod
+      })
+      .catch(() => {
+        /* falls back to the lazy import inside signInWithGoogle */
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [cloudClientState])
+
+
+
 
 
 
@@ -288,13 +312,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function signInWithGoogle() {
     if (!isSupabaseConfigured) return
-    // Awaits the same promise the effect above does — already settled by
-    // the time this can actually be called for real, since the Google
-    // button itself only renders once cloudClientState is 'ready' (see
-    // AuthButton.tsx/WelcomeScreen.tsx/LandingAuth.tsx). Never a second
-    // client — this is the one loadCloudClient() call from module load.
-    const client = await cloudClientPromise
-    if (!client) return
     setAuthError(null)
     clearGuest()
     // Managed Google sign-in through Lovable Cloud.
@@ -304,17 +321,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // the user on a guarded route — or a 404 — before the session exists.
     // The intended page is remembered separately and restored by the app once
     // the session is hydrated.
-    // Imported lazily: the generated Cloud modules throw at module-evaluation
-    // time when Cloud env values are missing, and that must never happen
-    // before React mounts.
     try {
       sessionStorage.setItem(POST_AUTH_PATH_KEY, window.location.pathname + window.location.search)
     } catch {
       /* private mode — we simply return to the origin instead */
     }
     try {
-      const { lovable } = await import('../integrations/lovable/index')
+      // Preloaded above whenever possible — calling it with zero awaits in
+      // front keeps the click's user activation alive so the OAuth popup is
+      // not blocked (a blocked popup degrades to an in-iframe redirect that
+      // Google refuses to render inside Lovable Preview).
+      const preloaded = lovableModuleRef.current
+      const { lovable } = preloaded ?? (await import('../integrations/lovable/index'))
       const result = await lovable.auth.signInWithOAuth('google', { redirect_uri: window.location.origin })
+
 
       // Raw SDK/provider text is English and rarely actionable; classify it
       // into a specific Hebrew instruction the player can act on.
