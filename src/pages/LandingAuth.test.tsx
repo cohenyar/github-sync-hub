@@ -71,10 +71,10 @@ describe('LandingAuth — Cloud client still resolving (auth-state race fix pass
 })
 
 describe('LandingAuth — confirmed unavailable (client settled to null)', () => {
-  it('shows the unavailable notice with recovery actions once the client has confirmed failure — not before', () => {
+  it('shows recovery actions without the unavailable notice once the client has confirmed failure', () => {
     const retryCloudConnection = vi.fn()
     renderLandingAuth({ status: 'signed-out', configured: false, cloudClientLoadFailed: true, retryCloudConnection })
-    expect(screen.getByTestId('auth-unavailable')).toHaveTextContent(he.authUnavailableMessage)
+    expect(screen.queryByTestId('auth-unavailable')).not.toBeInTheDocument()
     expect(screen.getByTestId('continue-as-guest-button')).toBeInTheDocument()
     // Actionable, not a dead end: retry the client load in place, or go to
     // the full auth page (which owns email sign-in/sign-up).
@@ -92,6 +92,7 @@ describe('LandingAuth — confirmed unavailable (client settled to null)', () =>
     expect(continueAsGuest).toHaveBeenCalledTimes(1)
   })
 })
+
 
 describe('LandingAuth — client ready, signed out (required stable behavior)', () => {
   it('shows Google, the email/sign-in link, and Guest all together, and keeps them stable', () => {
