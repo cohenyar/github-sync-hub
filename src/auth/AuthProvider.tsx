@@ -1,5 +1,5 @@
 import type { Session, SupabaseClient } from '@supabase/supabase-js'
-import { createContext, useEffect, useState, type ReactNode } from 'react'
+import { createContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import { markBootStage } from '../bootDiagnostics'
 import { he } from '../i18n'
 import { translateAuthError } from './authErrorMessages'
@@ -264,6 +264,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, 800)
     return () => window.clearTimeout(id)
   }, [cloudClientState, retryAttempt])
+
+  // Popup-blocker fix: the managed Google helper opens a popup window. Browsers
+  // only allow that inside the user-activation window of the click itself — any
+  // `await` before it (dynamic import, client promise) drops the activation, the
+  // popup is blocked, and the SDK falls back to a full-page redirect, which in
+  // Lovable Preview happens *inside the iframe* where Google refuses to render.
+  // So we preload the module up-front and call it synchronously on click.
+  const lovableModuleRef = useRef<typeof import('../integrations/lovable/index') | null>(null)
+  useEffect(() => {
+    if (cloudClientState !== 'ready') return
+    let cancelled = false
+    void import('../integrations/lovable/index')
+      .then((mod) => {
+        if (!cancelled) lovableModuleRef.current = mod
+      })
+      .catch(() => {
+        /* falls back to the lazy import inside signInWithGoogle */
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [cloudClientState])
+
+
 
 
 
