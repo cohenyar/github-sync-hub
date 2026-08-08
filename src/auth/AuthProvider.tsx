@@ -27,6 +27,14 @@ const GUEST_KEY = 'meridian:guest'
  */
 export const POST_AUTH_PATH_KEY = 'meridian:post-auth-path'
 
+// Start fetching the managed OAuth helper as soon as this safe wrapper module
+// is evaluated. This does not block React startup and is still guarded by the
+// env check, but unlike the previous cloudClientState-dependent preload it is
+// ready before the user can reach and click the Google button in Preview.
+const lovableModulePromise = isSupabaseConfigured
+  ? import('../integrations/lovable/index').catch(() => null)
+  : Promise.resolve(null)
+
 function readGuestFlag(): boolean {
   try {
     return localStorage.getItem(GUEST_KEY) === 'true'
@@ -273,19 +281,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // So we preload the module up-front and call it synchronously on click.
   const lovableModuleRef = useRef<typeof import('../integrations/lovable/index') | null>(null)
   useEffect(() => {
-    if (cloudClientState !== 'ready') return
     let cancelled = false
-    void import('../integrations/lovable/index')
+    void lovableModulePromise
       .then((mod) => {
         if (!cancelled) lovableModuleRef.current = mod
-      })
-      .catch(() => {
-        /* falls back to the lazy import inside signInWithGoogle */
       })
     return () => {
       cancelled = true
     }
-  }, [cloudClientState])
+  }, [])
 
 
 
@@ -310,8 +314,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsGuest(false)
   }
 
-  async function signInWithGoogle() {
-    if (!isSupabaseConfigured) return
+  function signInWithGoogle(): Promise<void> {
+    if (!isSupabaseConfigured) return Promise.resolve()
     setAuthError(null)
     clearGuest()
     // Managed Google sign-in through Lovable Cloud.
@@ -326,22 +330,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
       /* private mode — we simply return to the origin instead */
     }
-    try {
-      // Preloaded above whenever possible — calling it with zero awaits in
-      // front keeps the click's user activation alive so the OAuth popup is
-      // not blocked (a blocked popup degrades to an in-iframe redirect that
-      // Google refuses to render inside Lovable Preview).
-      const preloaded = lovableModuleRef.current
-      const { lovable } = preloaded ?? (await import('../integrations/lovable/index'))
-      const result = await lovable.auth.signInWithOAuth('google', { redirect_uri: window.location.origin })
-
-
-      // Raw SDK/provider text is English and rarely actionable; classify it
-      // into a specific Hebrew instruction the player can act on.
-      if (result.error) setAuthError(googleAuthErrorMessage(result.error))
-    } catch (error) {
-      setAuthError(googleAuthErrorMessage(error))
+    const preloaded = lovableModuleRef.current
+    if (!preloaded) {
+      setAuthError(he.authLoadingMessage)
+      void lovableModulePromise.then((mod) => {
+        if (mod) lovableModuleRef.current = mod
+      })
+      return Promise.resolve()
     }
+
+    // This call is deliberately made synchronously in the click stack. Any
+    // dynamic import/await before it causes Preview browsers to block the
+    // OAuth popup and attempt an unusable in-iframe Google navigation.
+    return preloaded.lovable.auth
+      .signInWithOAuth('google', { redirect_uri: window.location.origin })
+      .then((result) => {
+        if (result.error) setAuthError(googleAuthErrorMessage(result.error))
+      })
+      .catch((error) => setAuthError(googleAuthErrorMessage(error)))
   }
 
   // Email/password sign-up. Deliberately returns its own scoped result
