@@ -68,3 +68,31 @@
     font-size: 13px;
   }
 }
+
+/* Google sign-in failures need to read as an actionable instruction, not a
+   faint footnote — the fix (allow popups / third-party cookies) lives here. */
+.errorBox {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+  max-width: 34ch;
+  padding: 9px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #ffc9c9;
+  background: rgba(255, 99, 99, 0.12);
+  border: 1px solid rgba(255, 99, 99, 0.3);
+}
+
+.retry {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-weight: 700;
+  color: #ffe1e1;
+  text-decoration: underline;
+  cursor: pointer;
+}

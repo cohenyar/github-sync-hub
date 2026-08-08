@@ -79,9 +79,12 @@ export function LandingAuth() {
       </button>
       {isGuest && <span className={styles.badge} data-testid="auth-guest-badge">{he.authGuestBadge}</span>}
       {authError && (
-        <span className={styles.note} role="alert" data-testid="auth-error">
-          {authError}
-        </span>
+        <div className={styles.errorBox} role="alert" data-testid="auth-error">
+          <span>{authError}</span>
+          <button type="button" className={styles.retry} onClick={() => void signInWithGoogle()}>
+            {he.authRetryCta}
+          </button>
+        </div>
       )}
     </div>
   )
