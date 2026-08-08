@@ -222,7 +222,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       window.clearTimeout(timeoutId)
       unsubscribe?.()
     }
-  }, [])
+  }, [retryAttempt])
+
+  /**
+   * User-initiated recovery from "auth unavailable": puts the UI back into a
+   * neutral resolving state and re-runs the client load + session wiring.
+   */
+  function retryCloudConnection() {
+    if (!isSupabaseConfigured) return
+    setAuthError(null)
+    setCloudClientState('pending')
+    setStatus('loading')
+    setRetryAttempt((n) => n + 1)
+  }
 
 
   function continueAsGuest() {
