@@ -6,6 +6,12 @@ import { translateAuthError } from './authErrorMessages'
 import { googleAuthErrorMessage } from './googleAuthErrorMessages'
 import { isLocalDevRuntime } from './runtimeEnvironment'
 import { cloudClientPromise, isSupabaseConfigured } from './supabaseClient'
+// Namespace import on purpose: `retryCloudClient` is a newer export, and every
+// existing test mocks './supabaseClient' with a factory that only provides
+// `isSupabaseConfigured` / `cloudClientPromise`. Reading it off the namespace
+// keeps those mocks valid (the binding is simply undefined there) instead of
+// failing at module link time on a missing named export.
+import * as supabaseClientModule from './supabaseClient'
 import type { AuthActionResult, AuthContextValue, AuthStatus, AuthUser, Role } from './types'
 
 const VALID_ROLES: readonly Role[] = ['student', 'admin']
