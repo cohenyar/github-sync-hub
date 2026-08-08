@@ -418,9 +418,12 @@
 /* --- Mobile tweaks -------------------------------------------------- */
 @media (max-width: 720px) {
   .navWrap { padding: 16px; }
-  .navBar { padding: 8px 10px 8px 14px; }
+  /* Wrap instead of overflowing: at narrow widths the auth actions move to
+     their own row so no control can sit outside the viewport. */
+  .navBar { padding: 10px 12px; flex-wrap: wrap; gap: 12px; border-radius: 22px; }
   .hero { padding: 24px 20px 20px; }
   .features { padding: 8px 20px 20px; }
   .statsBar { margin-inline: 20px; padding: 16px; }
   .ctaPrimary, .ctaSecondary { flex: 1; padding: 16px 20px; font-size: 15px; }
 }
+

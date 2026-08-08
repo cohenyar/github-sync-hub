@@ -2,6 +2,7 @@ import * as Sentry from '@sentry/react'
 import { lazy, Suspense, useEffect } from 'react'
 import { BrowserRouter, Route, Routes, useSearchParams } from 'react-router-dom'
 import { AuthProvider, ProtectedAdminRoute } from './auth'
+import { PostAuthRedirect } from './auth/PostAuthRedirect'
 import { markBootStage } from './bootDiagnostics'
 import { AppErrorFallback } from './errorReporting/AppErrorFallback'
 import { AppLoading } from './pages/AppLoading'
@@ -61,6 +62,8 @@ export function AppRoutes() {
 
   return (
     <Suspense fallback={<AppLoading />}>
+      <PostAuthRedirect />
+
 
       <Routes>
         <Route path="/" element={<LandingPage />} />

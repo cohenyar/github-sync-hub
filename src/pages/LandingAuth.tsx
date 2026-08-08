@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { he } from '../i18n'
 import { useOptionalAuth } from '../auth/useAuth'
+import { GoogleIcon } from '../auth/GoogleIcon'
 import styles from './LandingAuth.module.css'
 
 /**
@@ -87,9 +88,10 @@ export function LandingAuth() {
         data-testid="google-sign-in-button"
         onClick={() => void signInWithGoogle()}
       >
-        <span aria-hidden>G</span>
+        <GoogleIcon />
         {he.signInWithGoogle}
       </button>
+
       <Link to="/auth" className={styles.ghost} data-testid="auth-page-link">
         {he.authGoToSignIn}
       </Link>

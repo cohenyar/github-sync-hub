@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth'
 import { he } from '../i18n'
+import { GoogleIcon } from '../auth/GoogleIcon'
 import styles from './AuthPage.module.css'
 
 type Mode = 'sign-in' | 'sign-up' | 'forgot'
@@ -174,8 +175,10 @@ export function AuthPage() {
           data-testid="google-sign-in-button"
           onClick={() => void auth.signInWithGoogle()}
         >
+          <GoogleIcon />
           {he.signInWithGoogle}
         </button>
+
 
         {/* Google failures are browser-side far more often than not (blocked
             popup, third-party cookies) — show the specific fix, plus a retry
