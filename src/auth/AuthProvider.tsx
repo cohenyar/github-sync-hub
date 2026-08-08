@@ -6,6 +6,12 @@ import { translateAuthError } from './authErrorMessages'
 import { googleAuthErrorMessage } from './googleAuthErrorMessages'
 import { isLocalDevRuntime } from './runtimeEnvironment'
 import { cloudClientPromise, isSupabaseConfigured } from './supabaseClient'
+// Namespace import on purpose: `retryCloudClient` is a newer export, and every
+// existing test mocks './supabaseClient' with a factory that only provides
+// `isSupabaseConfigured` / `cloudClientPromise`. Reading it off the namespace
+// keeps those mocks valid (the binding is simply undefined there) instead of
+// failing at module link time on a missing named export.
+import * as supabaseClientModule from './supabaseClient'
 import type { AuthActionResult, AuthContextValue, AuthStatus, AuthUser, Role } from './types'
 
 const VALID_ROLES: readonly Role[] = ['student', 'admin']
@@ -100,6 +106,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [cloudClientState, setCloudClientState] = useState<'pending' | 'ready' | 'unavailable'>(
     isSupabaseConfigured ? 'pending' : 'unavailable',
   )
+  // Bumped by retryCloudConnection() — re-runs the whole session-wiring
+  // effect below, so a failed client load is recoverable without a reload.
+  const [retryAttempt, setRetryAttempt] = useState(0)
 
   useEffect(() => {
     markBootStage('auth-init-started')
@@ -131,7 +140,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     armLoadingTimeout()
 
-    cloudClientPromise.then((client) => {
+    // On the first pass this is the original module-load promise; a
+    // user-initiated retry re-runs the same loader (never a second client).
+    let retry: (() => Promise<SupabaseClient | null>) | undefined
+    try {
+      // Guarded: Vitest's module mocks THROW on access to an export their
+      // factory doesn't define, so this must never be a bare property read.
+      retry = (supabaseClientModule as { retryCloudClient?: () => Promise<SupabaseClient | null> }).retryCloudClient
+    } catch {
+      retry = undefined
+    }
+    const clientPromise = retryAttempt > 0 && retry ? retry() : cloudClientPromise
+
+    clientPromise.then((client) => {
       if (cancelled) return
       setCloudClientState(client ? 'ready' : 'unavailable')
 
@@ -207,7 +228,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       window.clearTimeout(timeoutId)
       unsubscribe?.()
     }
-  }, [])
+  }, [retryAttempt])
+
+  /**
+   * User-initiated recovery from "auth unavailable": puts the UI back into a
+   * neutral resolving state and re-runs the client load + session wiring.
+   */
+  function retryCloudConnection() {
+    if (!isSupabaseConfigured) return
+    setAuthError(null)
+    setCloudClientState('pending')
+    setStatus('loading')
+    setRetryAttempt((n) => n + 1)
+  }
 
 
   function continueAsGuest() {
@@ -351,6 +384,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Auth-state race fix pass — true only while genuinely still resolving;
     // never true once cloudClientState has settled either way.
     cloudClientPending: cloudClientState === 'pending',
+    retryCloudConnection,
     isGuest,
     continueAsGuest,
     signInWithGoogle,

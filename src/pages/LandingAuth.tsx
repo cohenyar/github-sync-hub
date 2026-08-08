@@ -19,9 +19,20 @@ export function LandingAuth() {
   const auth = useOptionalAuth()
   if (!auth) return null
 
-  const { status, user, configured, isGuest, authError, continueAsGuest, signInWithGoogle, signOut } = auth
+  const {
+    status,
+    user,
+    configured,
+    isGuest,
+    authError,
+    continueAsGuest,
+    signInWithGoogle,
+    signOut,
+    cloudClientPending,
+    retryCloudConnection,
+  } = auth
 
-  if (status === 'loading') {
+  if (status === 'loading' || cloudClientPending) {
     return (
       <div className={styles.wrap} data-testid="landing-auth">
         <span className={styles.note} data-testid="auth-loading">
@@ -37,6 +48,14 @@ export function LandingAuth() {
         <span className={styles.note} role="status" data-testid="auth-unavailable">
           {he.authUnavailableMessage}
         </span>
+        {retryCloudConnection && (
+          <button type="button" className={styles.ghost} data-testid="auth-retry-button" onClick={retryCloudConnection}>
+            {he.authRetryCta}
+          </button>
+        )}
+        <Link to="/auth" className={styles.ghost} data-testid="auth-page-link">
+          {he.authGoToSignIn}
+        </Link>
         <button type="button" className={styles.ghost} data-testid="continue-as-guest-button" onClick={continueAsGuest}>
           {he.authContinueAsGuest}
         </button>
