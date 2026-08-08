@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
 import { render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { he } from '../i18n'
 import { AuthProvider } from './AuthProvider'
 import { useAuth } from './useAuth'
 
@@ -45,8 +44,8 @@ afterEach(() => {
   localStorage.clear()
 })
 
-describe('AuthProvider — Google sign-in on a local dev runtime (H1/playtest fix)', () => {
-  it('never calls the Lovable OAuth broker, and shows the local-dev explanation instead of navigating', async () => {
+describe('AuthProvider — Google sign-in in Preview development runtime', () => {
+  it('calls the managed OAuth helper instead of blocking Preview', async () => {
     render(
       <AuthProvider>
         <Probe />
@@ -56,13 +55,11 @@ describe('AuthProvider — Google sign-in on a local dev runtime (H1/playtest fi
 
     screen.getByTestId('sign-in').click()
 
-    await waitFor(() => expect(screen.getByTestId('error')).toHaveTextContent(he.authGoogleLocalDevMessage))
-    // The one call that would have produced the /~oauth/initiate navigation
-    // and the resulting 404 never happens at all.
-    expect(mocks.lovableSignInWithOAuth).not.toHaveBeenCalled()
+    await waitFor(() => expect(mocks.lovableSignInWithOAuth).toHaveBeenCalledTimes(1))
+    expect(screen.getByTestId('error')).toHaveTextContent('')
   })
 
-  it('leaves guest state untouched by the blocked attempt (no accidental clearGuest side effect)', async () => {
+  it('clears guest state when starting Google sign-in', async () => {
     localStorage.setItem('meridian:guest', 'true')
 
     render(
@@ -75,7 +72,7 @@ describe('AuthProvider — Google sign-in on a local dev runtime (H1/playtest fi
 
     screen.getByTestId('sign-in').click()
 
-    await waitFor(() => expect(screen.getByTestId('error')).toHaveTextContent(he.authGoogleLocalDevMessage))
-    expect(screen.getByTestId('is-guest')).toHaveTextContent('true')
+    await waitFor(() => expect(mocks.lovableSignInWithOAuth).toHaveBeenCalledTimes(1))
+    expect(screen.getByTestId('is-guest')).toHaveTextContent('false')
   })
 })

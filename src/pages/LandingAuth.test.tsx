@@ -71,15 +71,13 @@ describe('LandingAuth — Cloud client still resolving (auth-state race fix pass
 })
 
 describe('LandingAuth — confirmed unavailable (client settled to null)', () => {
-  it('shows recovery actions without the unavailable notice once the client has confirmed failure', () => {
+  it('shows account and guest actions without retry or the unavailable notice once the client has confirmed failure', () => {
     const retryCloudConnection = vi.fn()
     renderLandingAuth({ status: 'signed-out', configured: false, cloudClientLoadFailed: true, retryCloudConnection })
     expect(screen.queryByTestId('auth-unavailable')).not.toBeInTheDocument()
     expect(screen.getByTestId('continue-as-guest-button')).toBeInTheDocument()
-    // Actionable, not a dead end: retry the client load in place, or go to
-    // the full auth page (which owns email sign-in/sign-up).
-    fireEvent.click(screen.getByTestId('auth-retry-button'))
-    expect(retryCloudConnection).toHaveBeenCalledTimes(1)
+    expect(screen.queryByTestId('auth-retry-button')).not.toBeInTheDocument()
+    expect(retryCloudConnection).not.toHaveBeenCalled()
     expect(screen.getByTestId('auth-page-link')).toBeInTheDocument()
     // Google still stays hidden here: the managed OAuth call needs the client.
     expect(screen.queryByTestId('google-sign-in-button')).not.toBeInTheDocument()

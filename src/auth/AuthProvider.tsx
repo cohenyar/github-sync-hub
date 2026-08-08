@@ -4,7 +4,6 @@ import { markBootStage } from '../bootDiagnostics'
 import { he } from '../i18n'
 import { translateAuthError } from './authErrorMessages'
 import { googleAuthErrorMessage } from './googleAuthErrorMessages'
-import { isLocalDevRuntime } from './runtimeEnvironment'
 import { cloudClientPromise, isSupabaseConfigured } from './supabaseClient'
 // Namespace import on purpose: `retryCloudClient` is a newer export, and every
 // existing test mocks './supabaseClient' with a factory that only provides
@@ -296,14 +295,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // client — this is the one loadCloudClient() call from module load.
     const client = await cloudClientPromise
     if (!client) return
-    // Lovable's managed OAuth broker (/~oauth/initiate) only exists on
-    // Lovable's hosted infrastructure — on a bare Vite dev server it
-    // 404s to the app's own NotFound page. Detected and stopped here,
-    // before ever navigating, rather than letting the SDK redirect first.
-    if (isLocalDevRuntime) {
-      setAuthError(he.authGoogleLocalDevMessage)
-      return
-    }
     setAuthError(null)
     clearGuest()
     // Managed Google sign-in through Lovable Cloud.
