@@ -62,9 +62,13 @@ export function AuthButton() {
   }, [isMenuOpen, isMobileMenuOpen])
 
   if (!auth) return null
-  const { status, user, authError, configured, signInWithGoogle, signOut } = auth
+  const { status, user, authError, configured, cloudClientLoadFailed, signInWithGoogle, signOut } = auth
 
   if (!configured) {
+    // Playtest fix pass — cloudClientLoadFailed distinguishes "env vars
+    // present but the client failed to load" from the plain "not
+    // configured" case (env vars genuinely absent) — same slot, same
+    // testid, accurate text either way.
     return (
       <span className={styles.wrap}>
         <span className={styles.guestBadge} data-testid="guest-mode-badge">
@@ -73,9 +77,9 @@ export function AuthButton() {
         <span
           className={styles.notConfiguredNotice}
           data-testid="auth-not-configured"
-          title={he.authNotConfiguredMessage}
+          title={cloudClientLoadFailed ? he.authCloudLoadFailedMessage : he.authNotConfiguredMessage}
         >
-          {he.authNotConfiguredShortLabel}
+          {cloudClientLoadFailed ? he.authCloudLoadFailedShortLabel : he.authNotConfiguredShortLabel}
         </span>
       </span>
     )

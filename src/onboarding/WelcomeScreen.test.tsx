@@ -101,6 +101,16 @@ describe('WelcomeScreen — auth unconfigured (Supabase env vars absent, the rea
     expect(screen.getByTestId('welcome-guest-label')).toHaveTextContent(he.guestModeLabel)
     expect(screen.getByTestId('welcome-auth-not-configured')).toHaveTextContent(he.authNotConfiguredMessage)
   })
+
+  // Playtest fix pass — env vars present but the client failed to load is a
+  // distinct condition, and used to incorrectly show this exact same
+  // "missing env vars" text.
+  it('shows the accurate "cloud service failed to load" message instead, when cloudClientLoadFailed is true', () => {
+    renderScreen({}, { configured: false, cloudClientLoadFailed: true })
+    const notice = screen.getByTestId('welcome-auth-not-configured')
+    expect(notice).toHaveTextContent(he.authCloudLoadFailedMessage)
+    expect(notice).not.toHaveTextContent(he.authNotConfiguredMessage)
+  })
 })
 
 describe('WelcomeScreen — auth configured, signed out', () => {

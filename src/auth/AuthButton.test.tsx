@@ -45,6 +45,22 @@ describe('AuthButton', () => {
     expect(screen.getByTestId('guest-mode-badge')).toHaveTextContent(he.guestModeLabel)
   })
 
+  // Playtest fix pass — env vars present but the client failed to load is a
+  // distinct condition from genuinely unconfigured, and used to incorrectly
+  // show the exact same "missing env vars" text either way.
+  it('shows an accurate "cloud service failed to load" notice — not the "missing env vars" one — when cloudClientLoadFailed is true', () => {
+    render(
+      <AuthContext.Provider value={{ ...BASE_AUTH, configured: false, cloudClientLoadFailed: true }}>
+        <AuthButton />
+      </AuthContext.Provider>,
+    )
+    const notice = screen.getByTestId('auth-not-configured')
+    expect(notice).toHaveTextContent(he.authCloudLoadFailedShortLabel)
+    expect(notice).toHaveAttribute('title', he.authCloudLoadFailedMessage)
+    expect(notice).not.toHaveTextContent(he.authNotConfiguredShortLabel)
+    expect(notice).not.toHaveAttribute('title', he.authNotConfiguredMessage)
+  })
+
   it('still shows the Guest badge alongside the normal sign-in controls once Supabase is configured', () => {
     renderButton({ status: 'signed-out' })
     expect(screen.getByTestId('guest-mode-badge')).toHaveTextContent(he.guestModeLabel)

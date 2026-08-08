@@ -83,6 +83,9 @@ export function WelcomeScreen({
 
   const preset = getPlayerAvatarPreset(playerAvatarId)
   const configured = auth?.configured ?? false
+  // Playtest fix pass — distinguishes "env vars present but the client
+  // failed to load" from the plain "not configured" case, same slot below.
+  const cloudClientLoadFailed = auth?.cloudClientLoadFailed ?? false
   const status = auth?.status
   // Only presented as a real choice when there's something to choose
   // between — an unconfigured deployment (today's real state) has no
@@ -228,7 +231,7 @@ export function WelcomeScreen({
 
         {!configured && isGuestState && (
           <p className={styles.authNotConfiguredNotice} data-testid="welcome-auth-not-configured">
-            {he.authNotConfiguredMessage}
+            {cloudClientLoadFailed ? he.authCloudLoadFailedMessage : he.authNotConfiguredMessage}
           </p>
         )}
 

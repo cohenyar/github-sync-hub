@@ -303,6 +303,14 @@ export const he = {
   authNotConfiguredShortLabel: 'התחברות לא הוגדרה',
   authNotConfiguredMessage:
     'התחברות עדיין לא הוגדרה בסביבה הזו — חסרים משתני הסביבה VITE_SUPABASE_URL ו-VITE_SUPABASE_PUBLISHABLE_KEY. אפשר להמשיך לשחק במצב אורח בינתיים.',
+  // Playtest fix pass — a distinct, accurate message for when the Cloud env
+  // vars ARE present but the generated client still failed to load (see
+  // AuthContextValue.cloudClientLoadFailed) — this used to incorrectly
+  // reuse authNotConfiguredMessage, which claims the env vars are missing
+  // even when they aren't.
+  authCloudLoadFailedShortLabel: 'טעינת ההתחברות נכשלה',
+  authCloudLoadFailedMessage:
+    'שירות ההתחברות לענן נכשל בטעינה בסביבה הזו — זו אינה בעיית הגדרה. אפשר לנסות לרענן את הדף, ובינתיים אפשר להמשיך לשחק במצב אורח.',
   signOutErrorMessage: 'ההתנתקות נכשלה. אפשר לנסות שוב.',
 
   // Auth Phase 2 — the dedicated /auth and /reset-password pages (Lovable

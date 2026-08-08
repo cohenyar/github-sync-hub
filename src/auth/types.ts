@@ -27,6 +27,17 @@ export interface AuthContextValue {
   /** False when the Cloud env vars are absent — sign-in is hidden, guest play is unaffected. */
   configured: boolean
   /**
+   * True specifically when the Cloud env vars ARE present but the
+   * generated client still failed to load after every retry (see
+   * supabaseClient.loadCloudClient) — distinct from the plain `!configured`
+   * case (env vars genuinely absent), so the UI can show an accurate
+   * message instead of always blaming missing configuration. Optional so
+   * every existing test fixture/mock that builds an AuthContextValue
+   * literal keeps compiling unchanged; undefined is treated as false
+   * (the historical, still-correct default) by every consumer.
+   */
+  cloudClientLoadFailed?: boolean
+  /**
    * Local-only flag: the player explicitly chose to keep playing without a
    * Cloud account. Never affects the local Meridian save — it only tells the
    * UI to stop nudging toward sign-in.

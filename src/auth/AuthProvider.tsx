@@ -287,6 +287,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // stays null if it failed to initialise — the UI must then explain itself
     // rather than pretend sign-in works.
     configured: isSupabaseConfigured && supabase !== null,
+    // Playtest fix pass — distinguishes "env vars genuinely absent" from
+    // "env vars present but the client failed to load" so AuthButton/
+    // WelcomeScreen can stop claiming missing configuration when that
+    // isn't actually what happened.
+    cloudClientLoadFailed: isSupabaseConfigured && supabase === null,
     isGuest,
     continueAsGuest,
     signInWithGoogle,
