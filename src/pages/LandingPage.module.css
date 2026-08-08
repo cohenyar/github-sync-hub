@@ -76,7 +76,8 @@
   gap: 4px;
   margin-inline-start: auto;
 }
-@media (min-width: 900px) {
+/* Nav links only once there is room beside the auth actions. */
+@media (min-width: 1024px) {
   .navLinks { display: inline-flex; }
 }
 .navLink {
