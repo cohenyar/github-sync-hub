@@ -462,6 +462,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signUpWithEmail,
     signInWithEmail,
     sendPasswordReset,
+    resendConfirmationEmail,
+
     updatePassword,
     signOut,
   }
