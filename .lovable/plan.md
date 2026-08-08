@@ -1,73 +1,82 @@
-# Preview provisioning audit — platform diagnosis
+# Preview environment — corrected diagnosis and next step
 
-## Root cause
+## Correction to my previous plan
 
-The hosted Preview is in a **split provisioning state**:
+My previous plan claimed a "split provisioning state" between the hosted Preview and the
+Editor workspace, and recommended a full Preview reprovision. That conclusion was
+overstated and I am withdrawing it. Two things about it were wrong:
 
-- The project workspace is correctly attached to the existing Lovable Cloud backend.
-- The backend is active and healthy.
-- The workspace `.env` has the correct public Cloud URL, publishable key, and project identifier.
-- A newly started local Preview process receives those values and initializes the generated Cloud client successfully.
-- The externally hosted `id-preview--714988df-6b13-49ae-88a2-1134a0178761.lovable.app` session nevertheless serves a build/runtime context in which both Vite values are absent.
+1. I cannot perform a hosted Preview reprovision. No tool available to me discards a
+   Preview deployment snapshot, creates a fresh one, or regenerates the auth-bridge
+   session binding. Those are Lovable control-plane operations. I should have said this
+   instead of writing a plan that implied I could execute it.
+2. I treated the `302 -> lovable.dev/auth-bridge` response as evidence of a broken
+   binding. It is not. My request carried no Lovable session cookie, so the access gate
+   correctly redirected it. That redirect is the expected behaviour for an
+   unauthenticated request to a private Preview, not a fault.
 
-Therefore the missing values are **not caused by app code, the backend, an incorrect key, browser cache, or a second backend**. The hosted Preview deployment/session was not reprovisioned with the current Cloud attachment. The Editor workspace and hosted Preview are currently resolving different environment snapshots.
+## What is actually measured right now
 
-## Auth-bridge finding
-
-The Preview URL first redirects to Lovable's access gate:
+Re-checked this turn, against the process that serves your Preview:
 
 ```text
-https://lovable.dev/auth-bridge?project_id=lovp_2qzjvkr5s19q8bfhf321za4nbr
+[meridian][auth-diagnostic] Cloud client load starting
+  {isSupabaseConfigured: true, urlPresent: true, keyPresent: true}
+[meridian][auth-diagnostic] Cloud client import succeeded {attempt: 1, hasClient: true}
 ```
 
-The `project_id` here is Lovable's internal Preview/access-control identifier, not the Cloud backend identifier. It is normal for those identifiers to differ.
+Also confirmed:
 
-The browser's `auth-bridge` / `postMessage` origin errors show that the access-gate session is not completing for the `id-preview--…lovable.app` child origin. Because the problem reproduces in a fresh browser, this is not an expired-tab artifact. The hosted Preview's bridge/session binding is stale or inconsistent with its current project deployment.
+- `.env` holds the Cloud URL, publishable key, and project id.
+- The Preview server process started after `.env` was written, so it picked those values up.
+- Lovable Cloud backend is up and healthy, project `pntmkkwrxjkjaadooxpj`, managed by Lovable.
+- The app creates exactly one Cloud client; nothing in Meridian's code references `auth-bridge`.
 
-This bridge failure and the missing environment values have the same platform boundary: the hosted Preview instance/access session, not Meridian's React authentication layer.
+So the code path that produces your error message resolves to `configured` on the build
+being served. I cannot reproduce `urlPresent: false` from inside the sandbox.
 
-## Exact configuration/state that is wrong
+## Honest statement of the gap
 
-The wrong state is the **hosted Preview deployment record and its auth-bridge session binding**:
+You report the failure in a fresh incognito session, which rules out tab cache. I cannot
+observe your browser's session, and I cannot reach the hosted Preview origin as an
+authenticated user. So there is a real, unexplained difference between what the server
+serves and what your browser executes, and I do not currently have evidence that names
+its cause. I am not going to invent one again.
 
-1. Its frontend environment snapshot does not include the Cloud attachment's public Vite variables.
-2. Its Preview access-gate session is not establishing a valid parent/child origin handshake.
-3. The project workspace and Cloud backend attachment themselves are healthy and point to the correct existing backend.
+Two candidates remain, and they are distinguishable by one piece of evidence:
 
-The evidence does not support changing Google provider configuration. Managed Google is bound to the existing Cloud project, but it cannot work in this Preview until the Cloud client exists and the Preview bridge is healthy.
+- **A** — your browser is executing a different (older) deployment of the app.
+- **B** — your browser is executing the current deployment and the values genuinely are
+  absent for the hosted origin only.
 
-## Required action
+## What I need from you to separate them
 
-Perform a **full Lovable hosted Preview reprovision**, not an app rebuild and not a backend replacement. The reprovision must:
+In the failing incognito Preview tab, open devtools and report:
 
-1. discard the current hosted Preview deployment/environment snapshot;
-2. create a fresh Preview deployment from the current project workspace;
-3. reattach that Preview deployment to the project's existing Lovable Cloud backend;
-4. regenerate the Preview access-gate/auth-bridge session binding for the exact `id-preview--714988df-6b13-49ae-88a2-1134a0178761.lovable.app` origin;
-5. retain the current backend and managed Google provider unchanged.
+1. The full `[meridian][auth-diagnostic] Cloud client load starting` line.
+2. The **Network** tab, JS document request: the value of the `x-deployment-id` response
+   header on the Preview page itself.
+3. Whether the console shows `Cloud client import succeeded` or the
+   `generated client failed to load` warning with its `stage` field.
 
-There is no application-code change or self-service backend operation that can repair this split state. Restarting the database/auth backend would not help because it is already healthy. Rotating keys, adding hardcoded values, creating another client, or creating another backend would mask the provisioning fault and must not be done.
+Item 2 is the decisive one. It tells us which deployment your browser actually ran, which
+settles A vs B without further speculation.
 
-This requires Lovable's Preview control plane to reprovision the project. If closing/reopening the editor does not allocate a fresh Preview instance, escalate to Lovable Support with:
+## What to do about the reprovision request
+
+A Preview reprovision has to be triggered from Lovable's side. If you want to proceed with
+it regardless of the evidence above, raise it with Lovable Support with these details:
 
 - Lovable project ID: `714988df-6b13-49ae-88a2-1134a0178761`
 - Preview host: `id-preview--714988df-6b13-49ae-88a2-1134a0178761.lovable.app`
-- auth-bridge project identifier: `lovp_2qzjvkr5s19q8bfhf321za4nbr`
-- symptom: workspace has Cloud env values, hosted Preview reports both absent
-- symptom: auth-bridge/postMessage origin handshake fails in a fresh session
-- request: reprovision the hosted Preview environment and regenerate its bridge/origin binding without replacing the existing Cloud backend
+- Access-gate identifier seen in the redirect: `lovp_2qzjvkr5s19q8bfhf321za4nbr`
+- Symptom: hosted Preview reports both `VITE_SUPABASE_*` values absent in a fresh
+  incognito session, while the project workspace has them and the Cloud backend is healthy
+- Request: reprovision the hosted Preview environment and regenerate its bridge/origin
+  binding, keeping the existing Cloud backend and keys unchanged
 
-## Acceptance check after reprovision
+## Not doing
 
-Before testing Google or email authentication, the real hosted Preview must show:
-
-```text
-urlPresent: true
-keyPresent: true
-isSupabaseConfigured: true
-Cloud client import succeeded
-```
-
-It must also complete the Preview auth-bridge handshake without an origin/postMessage error.
-
-No Meridian source file should be changed for this repair.
+No new backend, no key rotation, no second auth client, no hardcoded credentials, and no
+changes to `AuthProvider`, `LandingAuth`, `AuthPage`, `supabaseClient`, the generated
+client, gameplay, or `meridian:save`.
