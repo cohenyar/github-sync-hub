@@ -61,6 +61,22 @@ describe('AuthButton', () => {
     expect(notice).not.toHaveAttribute('title', he.authNotConfiguredMessage)
   })
 
+  // Auth-state race fix pass — the actual bug reported from Lovable
+  // Preview: `configured` is false for the ENTIRE time the Cloud client
+  // hasn't settled yet, not just once confirmed unavailable. This used to
+  // be checked before the loading check, so a page load where the client
+  // just hadn't resolved by render time incorrectly showed "unavailable"
+  // instead of the neutral loading state.
+  it('shows the neutral loading state, never the unavailable notice, while status is still \'loading\' (the pending window)', () => {
+    render(
+      <AuthContext.Provider value={{ ...BASE_AUTH, status: 'loading', configured: false, cloudClientPending: true }}>
+        <AuthButton />
+      </AuthContext.Provider>,
+    )
+    expect(screen.getByTestId('auth-loading')).toHaveTextContent(he.authLoadingMessage)
+    expect(screen.queryByTestId('auth-not-configured')).not.toBeInTheDocument()
+  })
+
   it('still shows the Guest badge alongside the normal sign-in controls once Supabase is configured', () => {
     renderButton({ status: 'signed-out' })
     expect(screen.getByTestId('guest-mode-badge')).toHaveTextContent(he.guestModeLabel)

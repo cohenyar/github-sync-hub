@@ -15,7 +15,7 @@ import { useAuth } from './useAuth'
 
 vi.mock('./supabaseClient', () => ({
   isSupabaseConfigured: false,
-  supabase: null,
+  cloudClientPromise: Promise.resolve(null),
 }))
 
 function Probe() {

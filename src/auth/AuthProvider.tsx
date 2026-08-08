@@ -1,10 +1,10 @@
-import type { Session } from '@supabase/supabase-js'
+import type { Session, SupabaseClient } from '@supabase/supabase-js'
 import { createContext, useEffect, useState, type ReactNode } from 'react'
 import { markBootStage } from '../bootDiagnostics'
 import { he } from '../i18n'
 import { translateAuthError } from './authErrorMessages'
 import { isLocalDevRuntime } from './runtimeEnvironment'
-import { isSupabaseConfigured, supabase } from './supabaseClient'
+import { cloudClientPromise, isSupabaseConfigured } from './supabaseClient'
 import type { AuthActionResult, AuthContextValue, AuthStatus, AuthUser, Role } from './types'
 
 const VALID_ROLES: readonly Role[] = ['student', 'admin']
@@ -34,17 +34,19 @@ function isValidRole(value: unknown): value is Role {
  * admin access" here — none of them can ever resolve to 'admin'. It also
  * fails OPEN for startup: a hanging profiles request resolves to null after
  * 6s instead of leaving the session stuck in 'loading' forever.
+ *
+ * Takes the already-resolved client as a parameter rather than reading a
+ * module-level binding — see the auth-state race fix pass note on
+ * cloudClientPromise in supabaseClient.ts for why.
  */
-async function fetchRole(userId: string): Promise<Role | null> {
-  if (!supabase) return null
+async function fetchRole(client: SupabaseClient, userId: string): Promise<Role | null> {
   const query: Promise<Role | null> = Promise.resolve(
-    supabase.from('profiles').select('role').eq('id', userId).single(),
+    client.from('profiles').select('role').eq('id', userId).single(),
   )
     .then(({ data, error }) => (error || !data || !isValidRole(data.role) ? null : (data.role as Role)))
     .catch(() => null)
   const timeout = new Promise<null>((resolve) => window.setTimeout(() => resolve(null), 6000))
   return Promise.race([query, timeout])
-
 }
 
 
@@ -85,43 +87,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [role, setRole] = useState<Role | null>(null)
   const [authError, setAuthError] = useState<string | null>(null)
   const [isGuest, setIsGuest] = useState<boolean>(readGuestFlag)
+  // Auth-state race fix pass — the one real fix this pass adds: a genuine,
+  // reactive third state. Previously `configured`/`cloudClientLoadFailed`
+  // were derived from `supabase`, a plain module constant assigned once via
+  // a top-level `await` — meaning there was no way to ever represent "still
+  // resolving," and (see the bug this replaces) the code path for "client
+  // resolved to null" didn't exist at all, leaving `status` stuck at
+  // 'loading' forever in that case. This state is tracked explicitly here,
+  // driven by cloudClientPromise settling — independent of whatever
+  // module-import timing Lovable Preview's specific hosting produces.
+  const [cloudClientState, setCloudClientState] = useState<'pending' | 'ready' | 'unavailable'>(
+    isSupabaseConfigured ? 'pending' : 'unavailable',
+  )
 
   useEffect(() => {
     markBootStage('auth-init-started')
-    if (!isSupabaseConfigured || !supabase) {
+    if (!isSupabaseConfigured) {
       markBootStage('auth-skipped-unconfigured')
       return
     }
 
     let cancelled = false
-
-    async function resolveSession(session: Session | null) {
-      markBootStage(session ? 'auth-session-resolved' : 'auth-session-resolved-none')
-      if (!session) {
-        if (!cancelled) {
-          setUser(null)
-          setRole(null)
-          setAuthError(null)
-          setStatus('signed-out')
-        }
-        return
-      }
-      if (!cancelled) setUser(toAuthUser(session))
-      const resolvedRole = await fetchRole(session.user.id)
-      markBootStage('auth-profile-resolved')
-      if (cancelled) return
-      setRole(resolvedRole)
-      setAuthError(resolvedRole ? null : he.authProfileErrorMessage)
-      setStatus('signed-in')
-    }
-
-
+    let timeoutId = 0
+    let unsubscribe: (() => void) | undefined
 
     // Timeout protection: if Cloud never answers, the app must not sit in
     // 'loading' forever — it resolves to signed-out (guest still works) with
     // a non-blocking warning. Re-armed on EVERY transition into 'loading'
     // (initial load and every later auth event), never just the first one.
-    let timeoutId = 0
+    // Armed immediately, before the client is even known to have loaded —
+    // covers the whole pending window now, not just the time after it.
     function armLoadingTimeout() {
       window.clearTimeout(timeoutId)
       timeoutId = window.setTimeout(() => {
@@ -133,39 +128,83 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         })
       }, 8000)
     }
-
     armLoadingTimeout()
 
-    supabase.auth
-      .getSession()
-      .then(({ data }) => resolveSession(data.session))
-      .catch(() => {
-        if (!cancelled) {
-          setUser(null)
-          setRole(null)
-          setStatus('signed-out')
-          setAuthError(he.authUnavailableMessage)
+    cloudClientPromise.then((client) => {
+      if (cancelled) return
+      setCloudClientState(client ? 'ready' : 'unavailable')
+
+      if (!client) {
+        // Bug fix — this branch previously didn't exist: the old code
+        // returned before ever reaching a point where it could call
+        // setStatus again once it learned the client was null, leaving
+        // `status` stuck at 'loading' forever whenever env vars were
+        // present but the client failed to load (see the root-cause
+        // report). Guest mode remains fully usable either way.
+        markBootStage('auth-client-unavailable')
+        window.clearTimeout(timeoutId)
+        setStatus('signed-out')
+        return
+      }
+
+      // A separate binding, not just `client` directly — TypeScript's
+      // narrowing from the `if (!client) return` guard above doesn't
+      // extend into this nested function declaration's own closure, since
+      // it's checking "could client have changed by call time," not this
+      // specific never-reassigned binding.
+      const readyClient = client
+
+      async function resolveSession(session: Session | null) {
+        markBootStage(session ? 'auth-session-resolved' : 'auth-session-resolved-none')
+        if (!session) {
+          if (!cancelled) {
+            setUser(null)
+            setRole(null)
+            setAuthError(null)
+            setStatus('signed-out')
+          }
+          return
         }
+        if (!cancelled) setUser(toAuthUser(session))
+        const resolvedRole = await fetchRole(readyClient, session.user.id)
+        markBootStage('auth-profile-resolved')
+        if (cancelled) return
+        setRole(resolvedRole)
+        setAuthError(resolvedRole ? null : he.authProfileErrorMessage)
+        setStatus('signed-in')
+      }
+
+      client.auth
+        .getSession()
+        .then(({ data }) => resolveSession(data.session))
+        .catch(() => {
+          if (!cancelled) {
+            setUser(null)
+            setRole(null)
+            setStatus('signed-out')
+            setAuthError(he.authUnavailableMessage)
+          }
+        })
+
+      const {
+        data: { subscription },
+      } = client.auth.onAuthStateChange((_event, session) => {
+        // A session transition (sign-in, sign-out, token refresh, or a
+        // password-recovery link's temporary session) always re-enters
+        // 'loading' first, so ProtectedAdminRoute/AuthButton never render
+        // stale role/account info from the previous session while the new
+        // one resolves.
+        setStatus('loading')
+        armLoadingTimeout()
+        resolveSession(session)
       })
-
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      // A session transition (sign-in, sign-out, token refresh, or a
-      // password-recovery link's temporary session) always re-enters
-      // 'loading' first, so ProtectedAdminRoute/AuthButton never render
-      // stale role/account info from the previous session while the new
-      // one resolves.
-      setStatus('loading')
-      armLoadingTimeout()
-      resolveSession(session)
+      unsubscribe = () => subscription.unsubscribe()
     })
 
     return () => {
       cancelled = true
       window.clearTimeout(timeoutId)
-      subscription.unsubscribe()
+      unsubscribe?.()
     }
   }, [])
 
@@ -189,7 +228,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function signInWithGoogle() {
-    if (!isSupabaseConfigured || !supabase) return
+    if (!isSupabaseConfigured) return
+    // Awaits the same promise the effect above does — already settled by
+    // the time this can actually be called for real, since the Google
+    // button itself only renders once cloudClientState is 'ready' (see
+    // AuthButton.tsx/WelcomeScreen.tsx/LandingAuth.tsx). Never a second
+    // client — this is the one loadCloudClient() call from module load.
+    const client = await cloudClientPromise
+    if (!client) return
     // Lovable's managed OAuth broker (/~oauth/initiate) only exists on
     // Lovable's hosted infrastructure — on a bare Vite dev server it
     // 404s to the app's own NotFound page. Detected and stopped here,
@@ -220,8 +266,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // error) — a form needs an error tied to the submit it just made, not a
   // value that could already be stale by the time it renders.
   async function signUpWithEmail(email: string, password: string, displayName?: string): Promise<AuthActionResult> {
-    if (!supabase) return { error: he.authUnavailableMessage }
-    const { data, error } = await supabase.auth.signUp({
+    const client = await cloudClientPromise
+    if (!client) return { error: he.authUnavailableMessage }
+    const { data, error } = await client.auth.signUp({
       email,
       password,
       options: {
@@ -237,8 +284,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function signInWithEmail(email: string, password: string): Promise<AuthActionResult> {
-    if (!supabase) return { error: he.authUnavailableMessage }
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const client = await cloudClientPromise
+    if (!client) return { error: he.authUnavailableMessage }
+    const { error } = await client.auth.signInWithPassword({ email, password })
     if (error) return { error: translateAuthError(error) }
     clearGuest()
     return { error: null }
@@ -250,8 +298,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // link's own (temporary) session is picked up by the same onAuthStateChange
   // above like any other session — updatePassword below then finalizes it.
   async function sendPasswordReset(email: string): Promise<AuthActionResult> {
-    if (!supabase) return { error: he.authUnavailableMessage }
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    const client = await cloudClientPromise
+    if (!client) return { error: he.authUnavailableMessage }
+    const { error } = await client.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
     })
     if (error) return { error: translateAuthError(error) }
@@ -259,18 +308,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function updatePassword(password: string): Promise<AuthActionResult> {
-    if (!supabase) return { error: he.authUnavailableMessage }
-    const { error } = await supabase.auth.updateUser({ password })
+    const client = await cloudClientPromise
+    if (!client) return { error: he.authUnavailableMessage }
+    const { error } = await client.auth.updateUser({ password })
     if (error) return { error: translateAuthError(error) }
     return { error: null }
   }
 
   async function signOut() {
-    if (!supabase) return
+    const client = await cloudClientPromise
+    if (!client) return
     setAuthError(null)
     // Only ever clears the Cloud session — never touches meridian:save or
     // any other local progress (see src/persistence).
-    const { error } = await supabase.auth.signOut()
+    const { error } = await client.auth.signOut()
     // A failed sign-out previously failed silently — this surfaces it the
     // same way every other auth action here already does, rather than
     // leaving the UI looking signed-in with no explanation.
@@ -284,14 +335,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isAdmin: role === 'admin',
     authError,
     // Availability, not just env presence: the client is resolved lazily and
-    // stays null if it failed to initialise — the UI must then explain itself
-    // rather than pretend sign-in works.
-    configured: isSupabaseConfigured && supabase !== null,
+    // settles to null if it failed to initialise — the UI must then explain
+    // itself rather than pretend sign-in works. Derived from the reactive
+    // cloudClientState now, not a frozen module constant — see that state's
+    // own comment for why (auth-state race fix pass).
+    configured: cloudClientState === 'ready',
     // Playtest fix pass — distinguishes "env vars genuinely absent" from
     // "env vars present but the client failed to load" so AuthButton/
     // WelcomeScreen can stop claiming missing configuration when that
     // isn't actually what happened.
-    cloudClientLoadFailed: isSupabaseConfigured && supabase === null,
+    cloudClientLoadFailed: isSupabaseConfigured && cloudClientState === 'unavailable',
+    // Auth-state race fix pass — true only while genuinely still resolving;
+    // never true once cloudClientState has settled either way.
+    cloudClientPending: cloudClientState === 'pending',
     isGuest,
     continueAsGuest,
     signInWithGoogle,

@@ -28,9 +28,14 @@ vi.mock('../integrations/lovable/index', () => ({
 // AuthProviderLocalDevGoogleGuard.test.tsx.
 vi.mock('./runtimeEnvironment', () => ({ isLocalDevRuntime: false }))
 
+// cloudClientPromise, not a plain `supabase` value — AuthProvider now awaits
+// this reactively rather than reading a top-level-await-resolved constant
+// (see the auth-state race fix pass). Already resolved here since none of
+// these tests are about the pending window itself (see the dedicated
+// pending/race tests further down and in AuthProviderRace.test.tsx).
 vi.mock('./supabaseClient', () => ({
   isSupabaseConfigured: true,
-  supabase: {
+  cloudClientPromise: Promise.resolve({
     auth: {
       getSession: mocks.getSession,
       onAuthStateChange: mocks.onAuthStateChange,
@@ -40,7 +45,7 @@ vi.mock('./supabaseClient', () => ({
       signOut: mocks.signOut,
     },
     from: mocks.from,
-  },
+  }),
 }))
 
 const FAKE_SESSION = {

@@ -13,8 +13,17 @@
  * (boot splash stuck at `html-parsed`). We must not edit the generated file,
  * so instead we import it lazily and only when the env values are actually
  * present, and we swallow any import failure. Missing Cloud config now
- * degrades to `supabase === null`, which the auth layer already handles as a
+ * degrades to a resolved `null`, which the auth layer already handles as a
  * signed-out / guest-capable state.
+ *
+ * Auth-state race fix pass — this module used to also `await` its own
+ * result at the top level (`export const supabase = await loadCloudClient()`),
+ * which meant every static importer's own module evaluation (AuthProvider,
+ * transitively main.tsx) was gated on this resolving first. That's exactly
+ * backwards from what AuthProvider now needs: a way to represent "still
+ * resolving" as a real, renderable state, not a delay before anything can
+ * render at all. `cloudClientPromise` is exported un-awaited — AuthProvider
+ * tracks its resolution itself, reactively, via useState/useEffect.
  */
 import type { SupabaseClient } from '@supabase/supabase-js'
 
@@ -150,4 +159,4 @@ export async function loadCloudClient(
   return null
 }
 
-export const supabase: SupabaseClient | null = await loadCloudClient()
+export const cloudClientPromise: Promise<SupabaseClient | null> = loadCloudClient()

@@ -13,7 +13,7 @@ import { passEntryGates } from './test/renderGameApp'
 // Guest-visitor routing: no Cloud session in these tests, so the auth
 // client is stubbed as unconfigured — AuthProvider resolves synchronously to
 // signed-out/guest and no network call is made.
-vi.mock('./auth/supabaseClient', () => ({ isSupabaseConfigured: false, supabase: null }))
+vi.mock('./auth/supabaseClient', () => ({ isSupabaseConfigured: false, cloudClientPromise: Promise.resolve(null) }))
 
 vi.mock('./db/database', async () => {
   const { createTestDatabase } = await import('./verifier/testDb')

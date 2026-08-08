@@ -64,6 +64,25 @@ export function AuthButton() {
   if (!auth) return null
   const { status, user, authError, configured, cloudClientLoadFailed, signInWithGoogle, signOut } = auth
 
+  // Auth-state race fix pass — checked BEFORE `!configured` now (it used to
+  // be the other way around). `configured` is false for the entire time the
+  // Cloud client hasn't settled yet, not just once it's confirmed
+  // unavailable — checking it first meant this showed the "unavailable"
+  // notice during the pending window too, on every refresh where the
+  // client just hadn't resolved yet by render time. `status` stays exactly
+  // 'loading' for that whole window (see AuthProvider's cloudClientState),
+  // so checking it first covers pending and the post-load session-check
+  // with the same honest, neutral message.
+  if (status === 'loading') {
+    return (
+      <span className={styles.wrap}>
+        <span className={styles.status} data-testid="auth-loading">
+          {he.authLoadingMessage}
+        </span>
+      </span>
+    )
+  }
+
   if (!configured) {
     // Playtest fix pass — cloudClientLoadFailed distinguishes "env vars
     // present but the client failed to load" from the plain "not
@@ -80,16 +99,6 @@ export function AuthButton() {
           title={cloudClientLoadFailed ? he.authCloudLoadFailedMessage : he.authNotConfiguredMessage}
         >
           {cloudClientLoadFailed ? he.authCloudLoadFailedShortLabel : he.authNotConfiguredShortLabel}
-        </span>
-      </span>
-    )
-  }
-
-  if (status === 'loading') {
-    return (
-      <span className={styles.wrap}>
-        <span className={styles.status} data-testid="auth-loading">
-          {he.authLoadingMessage}
         </span>
       </span>
     )

@@ -20,10 +20,10 @@ vi.mock('./runtimeEnvironment', () => ({ isLocalDevRuntime: true }))
 
 vi.mock('./supabaseClient', () => ({
   isSupabaseConfigured: true,
-  supabase: {
+  cloudClientPromise: Promise.resolve({
     auth: { getSession: mocks.getSession, onAuthStateChange: mocks.onAuthStateChange },
     from: vi.fn(),
-  },
+  }),
 }))
 
 function Probe() {

@@ -38,6 +38,18 @@ export interface AuthContextValue {
    */
   cloudClientLoadFailed?: boolean
   /**
+   * True only during the genuine window between "env vars confirmed
+   * present" and "the Cloud client has settled one way or the other"
+   * (success or failure, including retries — see supabaseClient.
+   * loadCloudClient). Consumers must show a neutral loading state here,
+   * never the unavailable notice — `configured`/`cloudClientLoadFailed`
+   * are both false during this window simply because neither outcome is
+   * known yet, not because either is true. Optional for the same reason
+   * as cloudClientLoadFailed: existing test fixtures keep compiling
+   * unchanged; undefined is treated as false (not pending) everywhere.
+   */
+  cloudClientPending?: boolean
+  /**
    * Local-only flag: the player explicitly chose to keep playing without a
    * Cloud account. Never affects the local Meridian save — it only tells the
    * UI to stop nudging toward sign-in.

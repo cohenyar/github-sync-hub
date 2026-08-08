@@ -113,6 +113,21 @@ describe('WelcomeScreen — auth unconfigured (Supabase env vars absent, the rea
   })
 })
 
+describe('WelcomeScreen — Cloud client still resolving (auth-state race fix pass)', () => {
+  it('shows a neutral pending note, never the unavailable notice, and hides Google/Email until the client settles', () => {
+    renderScreen({}, { status: 'loading', configured: false, cloudClientPending: true })
+    expect(screen.getByTestId('welcome-auth-pending')).toHaveTextContent(he.authLoadingMessage)
+    expect(screen.queryByTestId('welcome-auth-not-configured')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('welcome-google-signin-button')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('welcome-guest-button')).not.toBeInTheDocument()
+  })
+
+  it('shows no pending note once the client has settled (either outcome)', () => {
+    renderScreen({}, { status: 'signed-out', configured: true, cloudClientPending: false })
+    expect(screen.queryByTestId('welcome-auth-pending')).not.toBeInTheDocument()
+  })
+})
+
 describe('WelcomeScreen — auth configured, signed out', () => {
   it('offers Sign in with Google and Continue as Guest as distinct choices', () => {
     const props = renderScreen({}, { status: 'signed-out' })

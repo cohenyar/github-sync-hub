@@ -86,6 +86,12 @@ export function WelcomeScreen({
   // Playtest fix pass — distinguishes "env vars present but the client
   // failed to load" from the plain "not configured" case, same slot below.
   const cloudClientLoadFailed = auth?.cloudClientLoadFailed ?? false
+  // Auth-state race fix pass — true only during the genuine window between
+  // "env vars confirmed present" and "the Cloud client has settled" (see
+  // AuthProvider's cloudClientState). Shown as its own small, neutral note
+  // instead of nothing at all — requirement was an explicit loading state,
+  // not just the absence of the (wrong, during this window) unavailable one.
+  const cloudClientPending = auth?.cloudClientPending ?? false
   const status = auth?.status
   // Only presented as a real choice when there's something to choose
   // between — an unconfigured deployment (today's real state) has no
@@ -221,6 +227,12 @@ export function WelcomeScreen({
               </Button>
             </div>
           </div>
+        )}
+
+        {cloudClientPending && (
+          <p className={styles.guestLabel} data-testid="welcome-auth-pending">
+            {he.authLoadingMessage}
+          </p>
         )}
 
         {isGuestState && (
