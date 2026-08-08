@@ -378,6 +378,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Auth-state race fix pass — true only while genuinely still resolving;
     // never true once cloudClientState has settled either way.
     cloudClientPending: cloudClientState === 'pending',
+    retryCloudConnection,
     isGuest,
     continueAsGuest,
     signInWithGoogle,
