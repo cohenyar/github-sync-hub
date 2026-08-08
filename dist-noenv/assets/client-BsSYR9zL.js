@@ -1,1 +1,0 @@
-import{t as e}from"./client-3o6GGBs_.js";export{e as supabase};

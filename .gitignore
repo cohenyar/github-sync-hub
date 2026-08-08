@@ -10,6 +10,9 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+# Catches ad-hoc debug builds too (e.g. dist-noenv/, committed by mistake
+# once already — a manual "build without .env" output, not a real target).
+dist-*/
 *.local
 
 # Playwright

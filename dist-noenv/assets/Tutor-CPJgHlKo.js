@@ -1,1 +1,0 @@
-import{t as e}from"./jsx-runtime-n5LQ9ujS.js";import{a as t}from"./auth-Cqfyj_8I.js";import{t as n}from"./PagePlaceholder-BFeLDTsI.js";var r=e();function i(){return(0,r.jsx)(n,{title:t.navTutorLabel})}export{i as Tutor};
