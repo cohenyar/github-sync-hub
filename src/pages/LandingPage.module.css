@@ -106,7 +106,7 @@
   gap: 32px;
   align-items: center;
 }
-@media (min-width: 960px) {
+@media (min-width: 900px) {
   .hero {
     grid-template-columns: 1.05fr 1fr;
     gap: 56px;
@@ -381,7 +381,7 @@
   gap: 8px;
   margin-inline: 40px;
 }
-@media (min-width: 960px) {
+@media (min-width: 900px) {
   .statsBar { margin-inline: auto; width: calc(100% - 80px); }
 }
 .stat {

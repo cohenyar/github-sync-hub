@@ -176,7 +176,8 @@
   opacity: 0.7;
 }
 
-@media (max-width: 480px) {
+/* Shared mobile breakpoint (matches LandingAuth/LandingPage). */
+@media (max-width: 520px) {
   .page {
     padding: 1rem 0.75rem;
   }
