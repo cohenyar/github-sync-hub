@@ -1,55 +1,84 @@
-# Hosted Preview environment injection — definitive finding
+# Hosted Preview environment — supported mechanism and repair
 
-## Exact comparison
+## Confirmed supported mechanism
 
-- Hosted Preview source revision: `3cd7a3fbd3fb1a1cf05f9b720d87923d9d00ba83`
-- Internal healthy Preview source revision: `3cd7a3fbd3fb1a1cf05f9b720d87923d9d00ba83`
-- The revisions are identical and contain the latest auth/env handling.
-- The root `.env` exists in the editor workspace, so the internal Vite process reads it and reports all values present.
-- The same `.env` is **not tracked by Git** and does **not exist in revision `3cd7a3f…`**.
-- That revision's `.gitignore` explicitly excludes both `.env` and `.env.*`.
+For a classic Vite project on Lovable, the **only** supported way to expose
+`VITE_*` values to a repository-backed hosted Preview build is the Lovable-generated
+root `.env` being present in the project revision.
 
-## Root cause
+Lovable's own documentation states this directly: `.env` must **not** be gitignored in a
+Lovable project, because Lovable needs it in the repository so build-time `VITE_*` values
+exist when generating Preview and published builds; gitignoring it breaks the Preview.
 
-The externally hosted Preview builds from the project revision. That revision has no `.env`, so Vite receives neither `VITE_SUPABASE_URL` nor `VITE_SUPABASE_PUBLISHABLE_KEY` at build time.
+There is no alternative supported channel. The Secrets manager is explicitly **not** it:
+secrets are runtime values for backend/edge functions and are never injected into a
+client-side Vite build. There is no per-Preview environment panel for `VITE_*` values.
 
-The internal Preview process is healthy only because its editor workspace has an out-of-revision `.env` provisioned locally. This creates the observed result:
+## Why this project fails
 
-```text
-same source revision + different available build environment
-```
+Measured on the affected revision `3cd7a3fbd3fb1a1cf05f9b720d87923d9d00ba83`:
 
-This is not an `AuthProvider`, client architecture, Google-provider, backend-health, or stale-revision problem. It also explains why building the revision without `.env` reproduces the hosted failure exactly.
+- `.env` exists in the editor workspace, so the internal process reports all values present.
+- `.env` is untracked and absent from the revision itself.
+- `.gitignore` lines 35-36 exclude `.env` and `.env.*`.
 
-## Required repair
+The hosted build therefore compiles the same source with no environment at all, producing
+`urlPresent: false`, `keyPresent: false`, `isSupabaseConfigured: false`. This matches the
+independent finding that building this source without `.env` reproduces the failure exactly.
 
-Lovable's official guidance for classic Vite projects is that the generated root `.env` must be available to the repository-backed hosted build; it must not be excluded by `.gitignore`. The Cloud URL and publishable browser key are intentionally public build-time values. The service-role key must never be placed there.
+## About the "no general-purpose .env in source control" concern
 
-Repair requires:
+Your concern is correct for a normal repository, but it does not apply to these three values:
 
-1. Remove the `.env` exclusion that prevents the generated Lovable Cloud environment file from being included in the project revision.
-2. Have Lovable resync/regenerate the existing Cloud project's root `.env` into the repository-backed project state.
-3. Produce a new hosted Preview revision/build from that state.
-4. Keep the existing Lovable Cloud backend, keys, generated client, and managed Google provider unchanged.
+- `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, and `VITE_SUPABASE_PROJECT_ID` are
+  public browser values. They are compiled into the JavaScript bundle and are already
+  visible to anyone who opens the app. Committing them reveals nothing new.
+- Data protection comes from Row Level Security, not from hiding the publishable key.
+- The service-role key and database password are **not** in this file, are not available to
+  a frontend project, and must never be placed there.
+- This is not a general-purpose `.env`: it is the Lovable-generated Cloud env file.
 
-No Meridian auth or gameplay code needs modification.
+If you still prefer no committed env file, the hosted Preview cannot receive these values,
+and that is a platform constraint rather than something app code can work around.
 
-## Can I complete it with the available tools?
+## Proposed change (one file, no app code)
 
-Not completely. I can plan the `.gitignore` correction, but I am prohibited from editing the auto-generated `.env`, and the available tools do not expose a hosted-Preview environment resync/reprovision action or allow me to force an ignored generated file into the repository revision.
+Edit `.gitignore` only:
 
-Therefore the final environment resync now requires **Lovable Support/control-plane intervention** unless the editor automatically regenerates and tracks `.env` after its ignore rule is removed.
+- Remove the blanket `.env` and `.env.*` exclusions.
+- Keep private local overrides ignored: `.env.local` and `.env.*.local`.
+- Keep `!.env.example`.
 
-Support request:
+Net effect: the generated Lovable Cloud `.env` (public values only) becomes part of the
+revision, so the hosted Preview build receives it. Personal local overrides stay ignored.
+
+Files touched: `.gitignore`. Nothing else.
+
+## Explicitly not doing
+
+No changes to `AuthProvider`, `supabaseClient`, `AuthPage`, `LandingAuth`, the generated
+client, gameplay, or `meridian:save`. No new backend, no second auth client, no key
+rotation, no hardcoded credentials. The existing Cloud backend and managed Google provider
+stay exactly as they are.
+
+## Limits of what I can execute
+
+I can make the `.gitignore` change. I cannot edit or force-add the auto-generated `.env`
+myself, and I have no tool that reprovisions the hosted Preview. After the ignore rule is
+removed, the generated `.env` must be included in a new revision by Lovable's normal sync,
+and a fresh hosted Preview build must be produced from it. If the `.env` still does not
+appear in the revision after that, the remaining step is Lovable Support / control-plane:
 
 - Project: `714988df-6b13-49ae-88a2-1134a0178761`
-- Affected revision: `3cd7a3fbd3fb1a1cf05f9b720d87923d9d00ba83`
-- Finding: root `.env` exists in the editor workspace but is ignored, untracked, and absent from the hosted Preview revision
-- Request: resync the existing Lovable Cloud public Vite environment into the repository-backed hosted Preview build; do not create a backend or rotate keys
+- Revision: `3cd7a3fbd3fb1a1cf05f9b720d87923d9d00ba83`
+- Finding: generated root `.env` present in workspace, absent from the repository revision
+- Request: sync the existing Cloud public Vite env into the repository-backed hosted build;
+  do not create a backend or rotate keys
 
-## Success check
+## Verification (external Preview only)
 
-Verification must be performed against the external `id-preview--…lovable.app` environment, not localhost/internal Preview:
+Checked at `https://id-preview--714988df-6b13-49ae-88a2-1134a0178761.lovable.app/`, never
+localhost or the internal process:
 
 ```text
 urlPresent: true
@@ -57,3 +86,5 @@ keyPresent: true
 isSupabaseConfigured: true
 Cloud client import succeeded
 ```
+
+Google and email auth get tested only after that passes.
