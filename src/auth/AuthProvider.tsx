@@ -312,13 +312,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function signInWithGoogle() {
     if (!isSupabaseConfigured) return
-    // Awaits the same promise the effect above does — already settled by
-    // the time this can actually be called for real, since the Google
-    // button itself only renders once cloudClientState is 'ready' (see
-    // AuthButton.tsx/WelcomeScreen.tsx/LandingAuth.tsx). Never a second
-    // client — this is the one loadCloudClient() call from module load.
-    const client = await cloudClientPromise
-    if (!client) return
     setAuthError(null)
     clearGuest()
     // Managed Google sign-in through Lovable Cloud.
@@ -328,17 +321,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // the user on a guarded route — or a 404 — before the session exists.
     // The intended page is remembered separately and restored by the app once
     // the session is hydrated.
-    // Imported lazily: the generated Cloud modules throw at module-evaluation
-    // time when Cloud env values are missing, and that must never happen
-    // before React mounts.
     try {
       sessionStorage.setItem(POST_AUTH_PATH_KEY, window.location.pathname + window.location.search)
     } catch {
       /* private mode — we simply return to the origin instead */
     }
     try {
-      const { lovable } = await import('../integrations/lovable/index')
+      // Preloaded above whenever possible — calling it with zero awaits in
+      // front keeps the click's user activation alive so the OAuth popup is
+      // not blocked (a blocked popup degrades to an in-iframe redirect that
+      // Google refuses to render inside Lovable Preview).
+      const preloaded = lovableModuleRef.current
+      const { lovable } = preloaded ?? (await import('../integrations/lovable/index'))
       const result = await lovable.auth.signInWithOAuth('google', { redirect_uri: window.location.origin })
+
 
       // Raw SDK/provider text is English and rarely actionable; classify it
       // into a specific Hebrew instruction the player can act on.
