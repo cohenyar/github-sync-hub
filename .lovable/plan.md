@@ -41,18 +41,47 @@ Your concern is correct for a normal repository, but it does not apply to these 
 If you still prefer no committed env file, the hosted Preview cannot receive these values,
 and that is a platform constraint rather than something app code can work around.
 
+## Safety pre-check (already performed, names only)
+
+The generated root `.env` was inspected for variable NAMES only; no values were read,
+printed, or logged. It contains exactly three keys, all public frontend config:
+
+```text
+VITE_SUPABASE_URL
+VITE_SUPABASE_PUBLISHABLE_KEY
+VITE_SUPABASE_PROJECT_ID
+```
+
+No service-role key, no database password, no private API key, no backend secret, no
+non-public credential. The safety gate passes, so the change may proceed.
+
 ## Proposed change (one file, no app code)
 
-Edit `.gitignore` only:
+Edit `.gitignore` lines 34-37 only:
 
-- Remove the blanket `.env` and `.env.*` exclusions.
-- Keep private local overrides ignored: `.env.local` and `.env.*.local`.
-- Keep `!.env.example`.
+```text
+# Environment
+.env
+.env.*          -> removed
+!.env.example
+```
+
+becomes
+
+```text
+# Environment
+.env.local
+.env.*.local
+!.env.example
+```
+
+(`*.local` on line 16 already covers local overrides; the explicit lines are kept for clarity.)
 
 Net effect: the generated Lovable Cloud `.env` (public values only) becomes part of the
 revision, so the hosted Preview build receives it. Personal local overrides stay ignored.
 
 Files touched: `.gitignore`. Nothing else.
+
 
 ## Explicitly not doing
 
