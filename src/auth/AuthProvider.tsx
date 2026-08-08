@@ -142,8 +142,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // On the first pass this is the original module-load promise; a
     // user-initiated retry re-runs the same loader (never a second client).
-    const retry = (supabaseClientModule as { retryCloudClient?: () => Promise<SupabaseClient | null> })
-      .retryCloudClient
+    let retry: (() => Promise<SupabaseClient | null>) | undefined
+    try {
+      // Guarded: Vitest's module mocks THROW on access to an export their
+      // factory doesn't define, so this must never be a bare property read.
+      retry = (supabaseClientModule as { retryCloudClient?: () => Promise<SupabaseClient | null> }).retryCloudClient
+    } catch {
+      retry = undefined
+    }
     const clientPromise = retryAttempt > 0 && retry ? retry() : cloudClientPromise
 
     clientPromise.then((client) => {
