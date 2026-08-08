@@ -242,6 +242,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setRetryAttempt((n) => n + 1)
   }
 
+  // Preview self-heal: inside Lovable Preview's sandboxed iframe the client
+  // chunk can fail to load on the very first paint (cold chunk / hiccup),
+  // which used to leave the auth bar showing "unavailable" until the user
+  // pressed Retry. Auto-retry a bounded number of times so Google/Email
+  // sign-in appear on their own. Only when the build IS configured.
+  const AUTO_RETRY_LIMIT = 2
+  useEffect(() => {
+    if (!isSupabaseConfigured) return
+    if (cloudClientState !== 'unavailable') return
+    if (retryAttempt >= AUTO_RETRY_LIMIT) return
+    const id = window.setTimeout(() => {
+      setAuthError(null)
+      setCloudClientState('pending')
+      setStatus('loading')
+      setRetryAttempt((n) => n + 1)
+    }, 800)
+    return () => window.clearTimeout(id)
+  }, [cloudClientState, retryAttempt])
+
+
+
 
   function continueAsGuest() {
     try {
