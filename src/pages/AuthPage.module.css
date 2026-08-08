@@ -138,6 +138,10 @@
 .error {
   background: rgba(255, 99, 99, 0.14);
   color: #ffb3b3;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  line-height: 1.45;
 }
 
 .guest {
