@@ -22,6 +22,11 @@ const VALID_ROLES: readonly Role[] = ['student', 'admin']
  * clearing it never touches progress, and signing out never clears progress.
  */
 const GUEST_KEY = 'meridian:guest'
+/**
+ * Where the user was when they pressed "sign in with Google" — sessionStorage
+ * only, so it never touches `meridian:save` or any persisted game state.
+ */
+export const POST_AUTH_PATH_KEY = 'meridian:post-auth-path'
 
 function readGuestFlag(): boolean {
   try {
@@ -301,15 +306,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     setAuthError(null)
     clearGuest()
-    // Managed Google sign-in through Lovable Cloud. The redirect target is
-    // the full current URL, so signing in from /world or /dashboard returns
-    // there after the OAuth round trip.
+    // Managed Google sign-in through Lovable Cloud.
+    // redirect_uri MUST be the plain public origin: for the full-page browser
+    // flow the SDK sets window.location.href before it can hand the session
+    // back, so a deep/protected URL (the old window.location.href) can land
+    // the user on a guarded route — or a 404 — before the session exists.
+    // The intended page is remembered separately and restored by the app once
+    // the session is hydrated.
     // Imported lazily: the generated Cloud modules throw at module-evaluation
     // time when Cloud env values are missing, and that must never happen
     // before React mounts.
     try {
+      sessionStorage.setItem(POST_AUTH_PATH_KEY, window.location.pathname + window.location.search)
+    } catch {
+      /* private mode — we simply return to the origin instead */
+    }
+    try {
       const { lovable } = await import('../integrations/lovable/index')
-      const result = await lovable.auth.signInWithOAuth('google', { redirect_uri: window.location.href })
+      const result = await lovable.auth.signInWithOAuth('google', { redirect_uri: window.location.origin })
+
       // Raw SDK/provider text is English and rarely actionable; classify it
       // into a specific Hebrew instruction the player can act on.
       if (result.error) setAuthError(googleAuthErrorMessage(result.error))
