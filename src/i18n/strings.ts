@@ -289,6 +289,19 @@ export const he = {
   authErrorWeakPassword: 'הסיסמה חלשה מדי. יש לבחור סיסמה ארוכה יותר.',
   authErrorGeneric: 'משהו השתבש. אפשר לנסות שוב.',
 
+  // Google OAuth failures are almost always browser-side and fixable by the
+  // player (blocked popup, third-party cookies off) — each gets a specific,
+  // actionable message instead of one generic failure line.
+  authGoogleErrorPopupBlocked:
+    'חלון ההתחברות של Google נחסם על ידי הדפדפן. יש לאשר חלונות קופצים (popups) לאתר הזה ולנסות שוב, או להתחבר עם אימייל וסיסמה.',
+  authGoogleErrorPopupClosed: 'חלון ההתחברות של Google נסגר לפני סיום. אפשר לנסות שוב.',
+  authGoogleErrorCookiesBlocked:
+    'הדפדפן חוסם קובצי Cookie של צד שלישי, ולכן התחברות Google לא הושלמה. יש לאפשר קובצי Cookie של צד שלישי לאתר הזה (או לצאת ממצב גלישה פרטית) ולנסות שוב.',
+  authGoogleErrorNetwork: 'החיבור לשירות ההתחברות נכשל. כדאי לבדוק את חיבור האינטרנט ולנסות שוב.',
+  authGoogleErrorUnknown:
+    'ההתחברות עם Google נכשלה. אפשר לנסות שוב, לוודא שחלונות קופצים וקובצי Cookie מאופשרים, או להתחבר עם אימייל וסיסמה.',
+  authRetryCta: 'ניסיון נוסף',
+
   // Guest → Account migration messaging — reassurance only, no new
   // persistence: the local save was never touched by auth to begin with
   // (see AuthProvider.tsx), this just says so out loud.
