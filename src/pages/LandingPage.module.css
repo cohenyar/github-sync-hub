@@ -420,7 +420,7 @@
   .navWrap { padding: 16px; }
   /* Wrap instead of overflowing: at narrow widths the auth actions move to
      their own row so no control can sit outside the viewport. */
-  .navBar { padding: 10px 12px; flex-wrap: wrap; gap: 12px; border-radius: 22px; }
+  .navBar { padding: 8px 10px; flex-wrap: wrap; gap: 10px; border-radius: 28px; }
   .hero { padding: 24px 20px 20px; }
   .features { padding: 8px 20px 20px; }
   .statsBar { margin-inline: 20px; padding: 16px; }
