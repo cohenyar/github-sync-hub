@@ -30,7 +30,6 @@ export function LandingAuth() {
     signInWithGoogle,
     signOut,
     cloudClientPending,
-    retryCloudConnection,
   } = auth
 
   if (status === 'loading' || cloudClientPending) {
@@ -46,11 +45,6 @@ export function LandingAuth() {
   if (!configured) {
     return (
       <div className={styles.wrap} data-testid="landing-auth">
-        {retryCloudConnection && (
-          <button type="button" className={styles.ghost} data-testid="auth-retry-button" onClick={retryCloudConnection}>
-            {he.authRetryCta}
-          </button>
-        )}
         <Link to="/auth" className={styles.ghost} data-testid="auth-page-link">
           {he.authGoToSignIn}
         </Link>
@@ -100,9 +94,6 @@ export function LandingAuth() {
       {authError && (
         <div className={styles.errorBox} role="alert" data-testid="auth-error">
           <span>{authError}</span>
-          <button type="button" className={styles.retry} onClick={() => void signInWithGoogle()}>
-            {he.authRetryCta}
-          </button>
         </div>
       )}
     </div>
