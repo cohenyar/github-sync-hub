@@ -42,6 +42,47 @@ function delay(ms: number): Promise<void> {
 }
 
 /**
+ * Playtest diagnosis pass — classifies a caught import failure from
+ * observable error characteristics only (name/message), never an
+ * assumption. Never touches the generated file — pure inference from the
+ * outside, using facts every major browser engine already puts in these
+ * specific error messages, plus the generated file's own fixed, unchanged
+ * guard text.
+ *
+ * - 'chunk-fetch-failed': the browser's own dynamic-import fetch failed
+ *   (network/CDN/CSP) — Chromium/Firefox/WebKit all name the failed
+ *   chunk's URL in this exact message shape, extracted below. The
+ *   generated module's own top-level code never started executing.
+ * - 'generated-module-env-guard': the generated file's own throw fired,
+ *   verbatim (see src/integrations/supabase/client.ts, unedited) — proof
+ *   the module DID start evaluating, and ITS OWN import.meta.env lookup
+ *   was falsy at that moment — even if isSupabaseConfigured (computed the
+ *   same way, in this file) said otherwise. A genuine, reportable
+ *   divergence if it ever appears.
+ * - 'other': neither of the above — the module was reached and evaluation
+ *   proceeded past its own env guard. The generated file's only remaining
+ *   throw-capable statement after that guard is the createClient(...)
+ *   call itself, so this stage very likely means createClient() was
+ *   reached and threw — reported as "likely," since we don't instrument
+ *   the generated file to confirm it directly.
+ */
+type CloudClientFailureStage = 'chunk-fetch-failed' | 'generated-module-env-guard' | 'other'
+
+function classifyCloudClientFailure(error: unknown): { stage: CloudClientFailureStage; chunkUrl: string | null } {
+  const message = error instanceof Error ? error.message : String(error)
+  const fetchFailureMatch = message.match(
+    /(?:Failed to fetch dynamically imported module|error loading dynamically imported module|Importing a module script failed)[:\s]*(\S+)/i,
+  )
+  if (fetchFailureMatch) {
+    return { stage: 'chunk-fetch-failed', chunkUrl: fetchFailureMatch[1] ?? null }
+  }
+  if (message.includes('Missing VITE_SUPABASE_URL or VITE_SUPABASE_PUBLISHABLE_KEY')) {
+    return { stage: 'generated-module-env-guard', chunkUrl: null }
+  }
+  return { stage: 'other', chunkUrl: null }
+}
+
+/**
  * Both parameters are injectable purely so a test can drive this
  * deterministically — every real caller uses the defaults (the true
  * env-derived isSupabaseConfigured, and a real dynamic import). A real
@@ -54,6 +95,16 @@ export async function loadCloudClient(
   importClientModule: () => Promise<{ supabase: unknown }> = () => import('../integrations/supabase/client'),
   configured: boolean = isSupabaseConfigured,
 ): Promise<SupabaseClient | null> {
+  // Playtest diagnosis pass — logged unconditionally, success or failure,
+  // so the exact failure stage is visible in Preview's own devtools console
+  // without needing the 8s boot-stall fallback UI (this path resolves fast;
+  // the app boots normally either way today). Presence only, never values.
+  console.info('[meridian][auth-diagnostic] Cloud client load starting', {
+    isSupabaseConfigured: configured,
+    urlPresent: Boolean(import.meta.env.VITE_SUPABASE_URL),
+    keyPresent: Boolean(import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY),
+  })
+
   if (!configured) {
     console.warn(
       '[meridian] Lovable Cloud env values (VITE_SUPABASE_URL / VITE_SUPABASE_PUBLISHABLE_KEY) are missing from this build — continuing in guest mode.',
@@ -63,6 +114,10 @@ export async function loadCloudClient(
   for (let attempt = 1; attempt <= CLOUD_CLIENT_LOAD_ATTEMPTS; attempt += 1) {
     try {
       const mod = await importClientModule()
+      console.info('[meridian][auth-diagnostic] Cloud client import succeeded', {
+        attempt,
+        hasClient: Boolean((mod as { supabase?: unknown } | undefined)?.supabase),
+      })
       return mod.supabase as unknown as SupabaseClient
     } catch (error) {
       const isLastAttempt = attempt === CLOUD_CLIENT_LOAD_ATTEMPTS
@@ -77,6 +132,18 @@ export async function loadCloudClient(
           (isLastAttempt ? ' — continuing in guest mode.' : ', retrying…'),
         error,
       )
+      const { stage, chunkUrl } = classifyCloudClientFailure(error)
+      console.warn('[meridian][auth-diagnostic] Cloud client import failed', {
+        attempt,
+        totalAttempts: CLOUD_CLIENT_LOAD_ATTEMPTS,
+        stage,
+        chunkUrl,
+        generatedModuleReached: stage !== 'chunk-fetch-failed',
+        likelyReachedCreateClient: stage === 'other',
+        errorName: error instanceof Error ? error.name : typeof error,
+        errorMessage: error instanceof Error ? error.message : String(error),
+        willRetry: !isLastAttempt,
+      })
       if (!isLastAttempt) await delay(CLOUD_CLIENT_RETRY_DELAY_MS)
     }
   }
