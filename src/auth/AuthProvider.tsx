@@ -106,6 +106,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [cloudClientState, setCloudClientState] = useState<'pending' | 'ready' | 'unavailable'>(
     isSupabaseConfigured ? 'pending' : 'unavailable',
   )
+  // Bumped by retryCloudConnection() — re-runs the whole session-wiring
+  // effect below, so a failed client load is recoverable without a reload.
+  const [retryAttempt, setRetryAttempt] = useState(0)
 
   useEffect(() => {
     markBootStage('auth-init-started')
