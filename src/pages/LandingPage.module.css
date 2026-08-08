@@ -76,7 +76,8 @@
   gap: 4px;
   margin-inline-start: auto;
 }
-@media (min-width: 900px) {
+/* Nav links only once there is room beside the auth actions. */
+@media (min-width: 1024px) {
   .navLinks { display: inline-flex; }
 }
 .navLink {
@@ -106,7 +107,7 @@
   gap: 32px;
   align-items: center;
 }
-@media (min-width: 960px) {
+@media (min-width: 900px) {
   .hero {
     grid-template-columns: 1.05fr 1fr;
     gap: 56px;
@@ -381,7 +382,7 @@
   gap: 8px;
   margin-inline: 40px;
 }
-@media (min-width: 960px) {
+@media (min-width: 900px) {
   .statsBar { margin-inline: auto; width: calc(100% - 80px); }
 }
 .stat {
