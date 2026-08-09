@@ -50,6 +50,12 @@ export interface AuthContextValue {
    */
   cloudClientPending?: boolean
   /**
+   * Re-attempts the Cloud client load after it failed, without a page
+   * reload. Optional so existing AuthContextValue fixtures keep compiling;
+   * consumers must treat it as absent-safe.
+   */
+  retryCloudConnection?: () => void
+  /**
    * Local-only flag: the player explicitly chose to keep playing without a
    * Cloud account. Never affects the local Meridian save — it only tells the
    * UI to stop nudging toward sign-in.
@@ -61,6 +67,9 @@ export interface AuthContextValue {
   signInWithEmail: (email: string, password: string) => Promise<AuthActionResult>
   /** Sends a password-reset email; does not touch the current session. */
   sendPasswordReset: (email: string) => Promise<AuthActionResult>
+  /** Re-sends the sign-up confirmation email. Optional so existing fixtures keep compiling. */
+  resendConfirmationEmail?: (email: string) => Promise<AuthActionResult>
   updatePassword: (password: string) => Promise<AuthActionResult>
+
   signOut: () => Promise<void>
 }

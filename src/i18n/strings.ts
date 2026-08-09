@@ -289,6 +289,19 @@ export const he = {
   authErrorWeakPassword: 'הסיסמה חלשה מדי. יש לבחור סיסמה ארוכה יותר.',
   authErrorGeneric: 'משהו השתבש. אפשר לנסות שוב.',
 
+  // Google OAuth failures are almost always browser-side and fixable by the
+  // player (blocked popup, third-party cookies off) — each gets a specific,
+  // actionable message instead of one generic failure line.
+  authGoogleErrorPopupBlocked:
+    'חלון ההתחברות של Google נחסם על ידי הדפדפן. יש לאשר חלונות קופצים (popups) לאתר הזה ולנסות שוב, או להתחבר עם אימייל וסיסמה.',
+  authGoogleErrorPopupClosed: 'חלון ההתחברות של Google נסגר לפני סיום. אפשר לנסות שוב.',
+  authGoogleErrorCookiesBlocked:
+    'הדפדפן חוסם קובצי Cookie של צד שלישי, ולכן התחברות Google לא הושלמה. יש לאפשר קובצי Cookie של צד שלישי לאתר הזה (או לצאת ממצב גלישה פרטית) ולנסות שוב.',
+  authGoogleErrorNetwork: 'החיבור לשירות ההתחברות נכשל. כדאי לבדוק את חיבור האינטרנט ולנסות שוב.',
+  authGoogleErrorUnknown:
+    'ההתחברות עם Google נכשלה. אפשר לנסות שוב, לוודא שחלונות קופצים וקובצי Cookie מאופשרים, או להתחבר עם אימייל וסיסמה.',
+  authRetryCta: 'ניסיון נוסף',
+
   // Guest → Account migration messaging — reassurance only, no new
   // persistence: the local save was never touched by auth to begin with
   // (see AuthProvider.tsx), this just says so out loud.
@@ -340,7 +353,38 @@ export const he = {
   authSignedInAs: 'מחובר/ת כ־',
   authPasswordTooShort: 'הסיסמה חייבת להכיל לפחות 6 תווים.',
   authMissingFields: 'יש למלא אימייל וסיסמה.',
-  authGoToSignIn: 'התחברות / הרשמה',
+  authGoToSignIn: 'התחברות / הרשמה באימייל',
+
+  // Complete auth pass — explicit availability state model (A–D), a clearly
+  // separate Sign In vs Sign Up experience, and a dedicated confirmation screen.
+  authConnectingMessage: 'מתחבר/ת לשירות החשבון…',
+  authEnvMissingInline: 'התחברות לא הוגדרה בסביבה הזו',
+  authCloudFailedInline: 'שירות ההתחברות נכשל בטעינה',
+  authRetryShortCta: 'נסו שוב',
+  authSignInTitle: 'התחברות',
+  authSignUpTitle: 'יצירת חשבון',
+  authSignInSubtitle: 'התחברות לחשבון הענן של מרידיאן.',
+  authSignUpSubtitle: 'חשבון חדש שומר את הזהות שלך במרידיאן.',
+  authConfirmPasswordLabel: 'אימות סיסמה',
+  authPasswordRequirements: 'לפחות 6 תווים, כולל אות ומספר.',
+  authShowPassword: 'הצגת סיסמה',
+  authHidePassword: 'הסתרת סיסמה',
+  authErrorPasswordsMismatch: 'הסיסמאות אינן תואמות.',
+  authErrorInvalidEmail: 'כתובת האימייל אינה תקינה.',
+  authErrorNetwork: 'לא הצלחנו להתחבר כרגע. נסו שוב.',
+  authNoAccountPrompt: 'אין לך חשבון? הרשמה',
+  authHaveAccountPrompt: 'כבר יש לך חשבון? התחברות',
+  authConfirmSentTitle: 'החשבון נוצר בהצלחה',
+  authConfirmSentBody: 'שלחנו קישור אימות אל:',
+  authConfirmSentHint: 'יש לאשר את כתובת האימייל לפני ההתחברות.',
+  authResendConfirmation: 'שליחה מחדש של מייל אימות',
+  authResendSent: 'מייל האימות נשלח שוב.',
+  authChangeEmailCta: 'שינוי כתובת אימייל',
+  authGoToSignInCta: 'מעבר להתחברות',
+  authForgotSentTitle: 'נשלח קישור לאיפוס',
+  authForgotSentBody: 'אם קיים חשבון עם הכתובת הזו, ישלח אליה קישור לאיפוס הסיסמה.',
+  authResetConfirmLabel: 'אימות סיסמה חדשה',
+
 
   // Onboarding — first-time boot sequence (see src/onboarding/BootSequence.tsx).
   bootLogInitializing: 'מאתחל את מרידיאן…',

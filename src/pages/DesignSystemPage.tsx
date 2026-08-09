@@ -1,5 +1,6 @@
 import { AppShell, type AppShellNavItem } from '../platform/shell/AppShell'
 import { Badge, Button, Card, Pill } from '../platform/ui'
+import SocialAuthCard from '../components/ui/SocialAuthCard'
 
 /**
  * Hidden QA route (/dev/design-system). Not linked from any user-facing
@@ -165,8 +166,23 @@ export function DesignSystemPage() {
           </code>
         </div>
       </section>
+
+      <section style={{ marginBlockStart: 'var(--ds-space-10)' }}>
+        <h2
+          style={{
+            fontSize: 'var(--ds-text-2xl)',
+            color: 'var(--ds-text-strong)',
+            letterSpacing: 'var(--ds-tracking-tight)',
+            margin: '0 0 var(--ds-space-4)',
+          }}
+        >
+          כרטיס התחברות חברתית
+        </h2>
+        <SocialAuthCard />
+      </section>
     </AppShell>
   )
 }
+
 
 export default DesignSystemPage

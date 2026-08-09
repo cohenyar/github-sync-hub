@@ -76,7 +76,8 @@
   gap: 4px;
   margin-inline-start: auto;
 }
-@media (min-width: 900px) {
+/* Nav links only once there is room beside the auth actions. */
+@media (min-width: 1024px) {
   .navLinks { display: inline-flex; }
 }
 .navLink {
@@ -106,7 +107,7 @@
   gap: 32px;
   align-items: center;
 }
-@media (min-width: 960px) {
+@media (min-width: 900px) {
   .hero {
     grid-template-columns: 1.05fr 1fr;
     gap: 56px;
@@ -381,7 +382,7 @@
   gap: 8px;
   margin-inline: 40px;
 }
-@media (min-width: 960px) {
+@media (min-width: 900px) {
   .statsBar { margin-inline: auto; width: calc(100% - 80px); }
 }
 .stat {
@@ -418,9 +419,12 @@
 /* --- Mobile tweaks -------------------------------------------------- */
 @media (max-width: 720px) {
   .navWrap { padding: 16px; }
-  .navBar { padding: 8px 10px 8px 14px; }
+  /* Wrap instead of overflowing: at narrow widths the auth actions move to
+     their own row so no control can sit outside the viewport. */
+  .navBar { padding: 8px 10px; flex-wrap: wrap; gap: 10px; border-radius: 28px; }
   .hero { padding: 24px 20px 20px; }
   .features { padding: 8px 20px 20px; }
   .statsBar { margin-inline: 20px; padding: 16px; }
   .ctaPrimary, .ctaSecondary { flex: 1; padding: 16px 20px; font-size: 15px; }
 }
+

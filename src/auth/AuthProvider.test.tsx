@@ -252,9 +252,14 @@ describe('AuthProvider — fail-closed role resolution', () => {
     screen.getByTestId('sign-in').click()
 
     await waitFor(() => expect(mocks.lovableSignInWithOAuth).toHaveBeenCalledTimes(1))
+    // The public origin, never a deep/protected URL: the full-page OAuth
+    // flow returns before a session exists, so the intended path is restored
+    // separately (PostAuthRedirect) once the session is hydrated.
     expect(mocks.lovableSignInWithOAuth).toHaveBeenCalledWith('google', {
-      redirect_uri: window.location.href,
+      redirect_uri: window.location.origin,
     })
+    expect(sessionStorage.getItem('meridian:post-auth-path')).toBe(window.location.pathname)
+
   })
 
   it('signUpWithEmail resolves cleanly on success, with no confirmation needed when a session comes back', async () => {

@@ -1,10 +1,16 @@
 import type { Session, SupabaseClient } from '@supabase/supabase-js'
-import { createContext, useEffect, useState, type ReactNode } from 'react'
+import { createContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import { markBootStage } from '../bootDiagnostics'
 import { he } from '../i18n'
 import { translateAuthError } from './authErrorMessages'
-import { isLocalDevRuntime } from './runtimeEnvironment'
+import { googleAuthErrorMessage } from './googleAuthErrorMessages'
 import { cloudClientPromise, isSupabaseConfigured } from './supabaseClient'
+// Namespace import on purpose: `retryCloudClient` is a newer export, and every
+// existing test mocks './supabaseClient' with a factory that only provides
+// `isSupabaseConfigured` / `cloudClientPromise`. Reading it off the namespace
+// keeps those mocks valid (the binding is simply undefined there) instead of
+// failing at module link time on a missing named export.
+import * as supabaseClientModule from './supabaseClient'
 import type { AuthActionResult, AuthContextValue, AuthStatus, AuthUser, Role } from './types'
 
 const VALID_ROLES: readonly Role[] = ['student', 'admin']
@@ -15,6 +21,19 @@ const VALID_ROLES: readonly Role[] = ['student', 'admin']
  * clearing it never touches progress, and signing out never clears progress.
  */
 const GUEST_KEY = 'meridian:guest'
+/**
+ * Where the user was when they pressed "sign in with Google" — sessionStorage
+ * only, so it never touches `meridian:save` or any persisted game state.
+ */
+export const POST_AUTH_PATH_KEY = 'meridian:post-auth-path'
+
+// Start fetching the managed OAuth helper as soon as this safe wrapper module
+// is evaluated. This does not block React startup and is still guarded by the
+// env check, but unlike the previous cloudClientState-dependent preload it is
+// ready before the user can reach and click the Google button in Preview.
+const lovableModulePromise = isSupabaseConfigured
+  ? import('../integrations/lovable/index').catch(() => null)
+  : Promise.resolve(null)
 
 function readGuestFlag(): boolean {
   try {
@@ -99,6 +118,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [cloudClientState, setCloudClientState] = useState<'pending' | 'ready' | 'unavailable'>(
     isSupabaseConfigured ? 'pending' : 'unavailable',
   )
+  // Bumped by retryCloudConnection() — re-runs the whole session-wiring
+  // effect below, so a failed client load is recoverable without a reload.
+  const [retryAttempt, setRetryAttempt] = useState(0)
 
   useEffect(() => {
     markBootStage('auth-init-started')
@@ -130,7 +152,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     armLoadingTimeout()
 
-    cloudClientPromise.then((client) => {
+    // On the first pass this is the original module-load promise; a
+    // user-initiated retry re-runs the same loader (never a second client).
+    let retry: (() => Promise<SupabaseClient | null>) | undefined
+    try {
+      // Guarded: Vitest's module mocks THROW on access to an export their
+      // factory doesn't define, so this must never be a bare property read.
+      retry = (supabaseClientModule as { retryCloudClient?: () => Promise<SupabaseClient | null> }).retryCloudClient
+    } catch {
+      retry = undefined
+    }
+    const clientPromise = retryAttempt > 0 && retry ? retry() : cloudClientPromise
+
+    clientPromise.then((client) => {
       if (cancelled) return
       setCloudClientState(client ? 'ready' : 'unavailable')
 
@@ -206,7 +240,60 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       window.clearTimeout(timeoutId)
       unsubscribe?.()
     }
+  }, [retryAttempt])
+
+  /**
+   * User-initiated recovery from "auth unavailable": puts the UI back into a
+   * neutral resolving state and re-runs the client load + session wiring.
+   */
+  function retryCloudConnection() {
+    if (!isSupabaseConfigured) return
+    setAuthError(null)
+    setCloudClientState('pending')
+    setStatus('loading')
+    setRetryAttempt((n) => n + 1)
+  }
+
+  // Preview self-heal: inside Lovable Preview's sandboxed iframe the client
+  // chunk can fail to load on the very first paint (cold chunk / hiccup),
+  // which used to leave the auth bar showing "unavailable" until the user
+  // pressed Retry. Auto-retry a bounded number of times so Google/Email
+  // sign-in appear on their own. Only when the build IS configured.
+  const AUTO_RETRY_LIMIT = 2
+  useEffect(() => {
+    if (!isSupabaseConfigured) return
+    if (cloudClientState !== 'unavailable') return
+    if (retryAttempt >= AUTO_RETRY_LIMIT) return
+    const id = window.setTimeout(() => {
+      setAuthError(null)
+      setCloudClientState('pending')
+      setStatus('loading')
+      setRetryAttempt((n) => n + 1)
+    }, 800)
+    return () => window.clearTimeout(id)
+  }, [cloudClientState, retryAttempt])
+
+  // Popup-blocker fix: the managed Google helper opens a popup window. Browsers
+  // only allow that inside the user-activation window of the click itself — any
+  // `await` before it (dynamic import, client promise) drops the activation, the
+  // popup is blocked, and the SDK falls back to a full-page redirect, which in
+  // Lovable Preview happens *inside the iframe* where Google refuses to render.
+  // So we preload the module up-front and call it synchronously on click.
+  const lovableModuleRef = useRef<typeof import('../integrations/lovable/index') | null>(null)
+  useEffect(() => {
+    let cancelled = false
+    void lovableModulePromise
+      .then((mod) => {
+        if (!cancelled) lovableModuleRef.current = mod
+      })
+    return () => {
+      cancelled = true
+    }
   }, [])
+
+
+
+
 
 
   function continueAsGuest() {
@@ -227,38 +314,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsGuest(false)
   }
 
-  async function signInWithGoogle() {
-    if (!isSupabaseConfigured) return
-    // Awaits the same promise the effect above does — already settled by
-    // the time this can actually be called for real, since the Google
-    // button itself only renders once cloudClientState is 'ready' (see
-    // AuthButton.tsx/WelcomeScreen.tsx/LandingAuth.tsx). Never a second
-    // client — this is the one loadCloudClient() call from module load.
-    const client = await cloudClientPromise
-    if (!client) return
-    // Lovable's managed OAuth broker (/~oauth/initiate) only exists on
-    // Lovable's hosted infrastructure — on a bare Vite dev server it
-    // 404s to the app's own NotFound page. Detected and stopped here,
-    // before ever navigating, rather than letting the SDK redirect first.
-    if (isLocalDevRuntime) {
-      setAuthError(he.authGoogleLocalDevMessage)
-      return
-    }
+  function signInWithGoogle(): Promise<void> {
+    if (!isSupabaseConfigured) return Promise.resolve()
     setAuthError(null)
     clearGuest()
-    // Managed Google sign-in through Lovable Cloud. The redirect target is
-    // the full current URL, so signing in from /world or /dashboard returns
-    // there after the OAuth round trip.
-    // Imported lazily: the generated Cloud modules throw at module-evaluation
-    // time when Cloud env values are missing, and that must never happen
-    // before React mounts.
+    // Managed Google sign-in through Lovable Cloud.
+    // redirect_uri MUST be the plain public origin: for the full-page browser
+    // flow the SDK sets window.location.href before it can hand the session
+    // back, so a deep/protected URL (the old window.location.href) can land
+    // the user on a guarded route — or a 404 — before the session exists.
+    // The intended page is remembered separately and restored by the app once
+    // the session is hydrated.
     try {
-      const { lovable } = await import('../integrations/lovable/index')
-      const result = await lovable.auth.signInWithOAuth('google', { redirect_uri: window.location.href })
-      if (result.error) setAuthError(result.error.message ?? he.authUnavailableMessage)
+      sessionStorage.setItem(POST_AUTH_PATH_KEY, window.location.pathname + window.location.search)
     } catch {
-      setAuthError(he.authUnavailableMessage)
+      /* private mode — we simply return to the origin instead */
     }
+    const preloaded = lovableModuleRef.current
+    if (!preloaded) {
+      setAuthError(he.authLoadingMessage)
+      void lovableModulePromise.then((mod) => {
+        if (mod) lovableModuleRef.current = mod
+      })
+      return Promise.resolve()
+    }
+
+    // This call is deliberately made synchronously in the click stack. Any
+    // dynamic import/await before it causes Preview browsers to block the
+    // OAuth popup and attempt an unusable in-iframe Google navigation.
+    return preloaded.lovable.auth
+      .signInWithOAuth('google', { redirect_uri: window.location.origin })
+      .then((result) => {
+        if (result.error) setAuthError(googleAuthErrorMessage(result.error))
+      })
+      .catch((error) => setAuthError(googleAuthErrorMessage(error)))
   }
 
   // Email/password sign-up. Deliberately returns its own scoped result
@@ -307,6 +396,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: null, needsEmailConfirmation: true }
   }
 
+  /**
+   * Re-sends the sign-up confirmation email. Uses the same client and the
+   * same redirect target as signUpWithEmail — no new session, no new client.
+   */
+  async function resendConfirmationEmail(email: string): Promise<AuthActionResult> {
+    const client = await cloudClientPromise
+    if (!client) return { error: he.authUnavailableMessage }
+    const { error } = await client.auth.resend({
+      type: 'signup',
+      email,
+      options: { emailRedirectTo: `${window.location.origin}/` },
+    })
+    if (error) return { error: translateAuthError(error) }
+    return { error: null, needsEmailConfirmation: true }
+  }
+
+
+
   async function updatePassword(password: string): Promise<AuthActionResult> {
     const client = await cloudClientPromise
     if (!client) return { error: he.authUnavailableMessage }
@@ -348,12 +455,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Auth-state race fix pass — true only while genuinely still resolving;
     // never true once cloudClientState has settled either way.
     cloudClientPending: cloudClientState === 'pending',
+    retryCloudConnection,
     isGuest,
     continueAsGuest,
     signInWithGoogle,
     signUpWithEmail,
     signInWithEmail,
     sendPasswordReset,
+    resendConfirmationEmail,
+
     updatePassword,
     signOut,
   }

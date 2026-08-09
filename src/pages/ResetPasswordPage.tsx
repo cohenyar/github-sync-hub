@@ -13,6 +13,8 @@ export function ResetPasswordPage() {
   const auth = useAuth()
   const navigate = useNavigate()
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -23,6 +25,10 @@ export function ResetPasswordPage() {
     setMessage(null)
     if (password.length < 6) {
       setError(he.authPasswordTooShort)
+      return
+    }
+    if (password !== confirmPassword) {
+      setError(he.authErrorPasswordsMismatch)
       return
     }
     setBusy(true)
@@ -47,7 +53,7 @@ export function ResetPasswordPage() {
             {he.authNewPasswordLabel}
             <input
               className={styles.input}
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               required
               autoComplete="new-password"
               data-testid="reset-password-input"
@@ -55,10 +61,33 @@ export function ResetPasswordPage() {
               onChange={(e) => setPassword(e.target.value)}
             />
           </label>
+          <label className={styles.field}>
+            {he.authResetConfirmLabel}
+            <input
+              className={styles.input}
+              type={showPassword ? 'text' : 'password'}
+              required
+              autoComplete="new-password"
+              data-testid="reset-confirm-password-input"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+            />
+          </label>
+          <button
+            type="button"
+            className={styles.linkButton}
+            data-testid="reset-toggle-password"
+            aria-pressed={showPassword}
+            onClick={() => setShowPassword((v) => !v)}
+          >
+            {showPassword ? he.authHidePassword : he.authShowPassword}
+          </button>
+          <p className={styles.guestNote}>{he.authPasswordRequirements}</p>
           <button className={styles.submit} type="submit" disabled={busy} data-testid="reset-password-submit">
             {he.authResetAction}
           </button>
         </form>
+
         {error && (
           <p className={styles.error} role="alert">
             {error}

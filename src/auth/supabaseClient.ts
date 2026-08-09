@@ -159,4 +159,25 @@ export async function loadCloudClient(
   return null
 }
 
-export const cloudClientPromise: Promise<SupabaseClient | null> = loadCloudClient()
+let latestCloudClientPromise: Promise<SupabaseClient | null> = loadCloudClient()
+
+export const cloudClientPromise: Promise<SupabaseClient | null> = latestCloudClientPromise
+
+/**
+ * Re-attempts the one-shot client load after it settled to null.
+ *
+ * A failed module load used to latch for the whole session: the auth UI
+ * collapsed to "unavailable" and nothing could ever bring it back short of a
+ * full page reload. This lets a user-initiated retry re-run exactly the same
+ * loader (still one client, still no createClient anywhere else) so a
+ * transient CDN/network blip inside Preview is recoverable in place.
+ */
+export function retryCloudClient(): Promise<SupabaseClient | null> {
+  latestCloudClientPromise = loadCloudClient()
+  return latestCloudClientPromise
+}
+
+/** The most recent load attempt — the initial one, or the latest retry. */
+export function getCloudClient(): Promise<SupabaseClient | null> {
+  return latestCloudClientPromise
+}

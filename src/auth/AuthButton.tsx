@@ -3,6 +3,7 @@ import { he } from '../i18n'
 import { Button } from '../platform/ui'
 import styles from './AuthButton.module.css'
 import { EmailPasswordForm } from './EmailPasswordForm'
+import { GoogleIcon } from './GoogleIcon'
 import { useOptionalAuth } from './useAuth'
 
 /**
@@ -189,8 +190,10 @@ export function AuthButton() {
         aria-label={he.authMobileMenuLabel}
       >
         <Button variant="primary" size="md" data-testid="google-sign-in-button" onClick={() => void signInWithGoogle()}>
+          <GoogleIcon />
           {he.signInWithGoogle}
         </Button>
+
         {/* Plain anchor, not <Link>: AuthButton is dropped into chrome that
             isn't always inside a Router (GameControlBar in existing tests). */}
         <a className={styles.authLink} href="/auth" data-testid="auth-page-link">
