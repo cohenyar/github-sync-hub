@@ -36,7 +36,15 @@ export function LandingAuth() {
   } = auth
 
   const guestButton = (
-    <button type="button" className={styles.ghost} data-testid="continue-as-guest-button" onClick={continueAsGuest}>
+    <button
+      type="button"
+      className={styles.ghost}
+      data-testid="continue-as-guest-button"
+      onClick={() => {
+        continueAsGuest()
+        navigate('/world')
+      }}
+    >
       {he.authContinueAsGuest}
     </button>
   )
