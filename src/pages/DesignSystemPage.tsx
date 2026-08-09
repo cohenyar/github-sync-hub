@@ -1,5 +1,6 @@
 import { AppShell, type AppShellNavItem } from '../platform/shell/AppShell'
 import { Badge, Button, Card, Pill } from '../platform/ui'
+import SocialAuthCard from '../components/ui/SocialAuthCard'
 
 /**
  * Hidden QA route (/dev/design-system). Not linked from any user-facing
