@@ -14,13 +14,20 @@ async function passProfileCreationIfShown(page: Page, name = 'אורח/ת'): Pro
 
 /**
  * Playtest fix pass (issue 1) — H1 (localhost Google sign-in 404) plus the
- * Guest/Continue Journey/signed-in differentiation. This suite runs
- * against the real local Vite dev server (npm run test:e2e's own webServer,
- * not a Lovable-hosted deployment), which is exactly the case
- * AuthProvider.signInWithGoogle now detects (see runtimeEnvironment.ts) —
- * so every test here exercises the real, undetected-before-this-fix path.
+ * Guest/Continue Journey/signed-in differentiation. This suite runs against
+ * the real local Vite dev server (npm run test:e2e's own webServer, not a
+ * Lovable-hosted deployment), reached at `localhost` — exactly the hostname
+ * AuthProvider.signInWithGoogle now checks for (see runtimeEnvironment.ts).
+ *
+ * The check was briefly `import.meta.env.DEV`-based, then dropped entirely
+ * by an unrelated OAuth-preload refactor, which silently reintroduced H1: a
+ * real click here navigated straight to `/~oauth/initiate` and 404'd. It's
+ * hostname-based now specifically because DEV can't tell this bare dev
+ * server apart from Lovable Preview, which also runs in Vite dev mode but
+ * has the managed broker and must keep working — every test in this file is
+ * exactly the regression coverage for that history.
  */
-test.describe('Google sign-in on localhost/Vite dev never reaches the generic 404 (H1)', () => {
+test.describe('Google sign-in on a true local host never reaches the generic 404 (H1)', () => {
   test('clicking Google on the Welcome Screen shows the local-dev explanation and never navigates away from /world', async ({
     page,
   }) => {

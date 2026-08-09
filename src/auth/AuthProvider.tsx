@@ -4,6 +4,7 @@ import { markBootStage } from '../bootDiagnostics'
 import { he } from '../i18n'
 import { translateAuthError } from './authErrorMessages'
 import { googleAuthErrorMessage } from './googleAuthErrorMessages'
+import { isLocalDevRuntime } from './runtimeEnvironment'
 import { cloudClientPromise, isSupabaseConfigured } from './supabaseClient'
 // Namespace import on purpose: `retryCloudClient` is a newer export, and every
 // existing test mocks './supabaseClient' with a factory that only provides
@@ -318,6 +319,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!isSupabaseConfigured) return Promise.resolve()
     setAuthError(null)
     clearGuest()
+
+    // Local-dev guard — restored after being silently dropped by the
+    // popup-blocker/preload refactor above, which let this reach the real
+    // OAuth call unconditionally. The managed broker at `/~oauth/initiate`
+    // only exists on Lovable's hosted infrastructure (Preview included);
+    // calling it from a true local machine 404s instead of failing usefully.
+    // Hostname-based (see runtimeEnvironment.ts), not import.meta.env.DEV —
+    // Preview itself runs in Vite dev mode too, so DEV can't tell them apart.
+    if (isLocalDevRuntime) {
+      setAuthError(he.authGoogleLocalDevMessage)
+      return Promise.resolve()
+    }
+
     // Managed Google sign-in through Lovable Cloud.
     // redirect_uri MUST be the plain public origin: for the full-page browser
     // flow the SDK sets window.location.href before it can hand the session
