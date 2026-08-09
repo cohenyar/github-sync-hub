@@ -165,8 +165,23 @@ export function DesignSystemPage() {
           </code>
         </div>
       </section>
+
+      <section style={{ marginBlockStart: 'var(--ds-space-10)' }}>
+        <h2
+          style={{
+            fontSize: 'var(--ds-text-2xl)',
+            color: 'var(--ds-text-strong)',
+            letterSpacing: 'var(--ds-tracking-tight)',
+            margin: '0 0 var(--ds-space-4)',
+          }}
+        >
+          כרטיס התחברות חברתית
+        </h2>
+        <SocialAuthCard />
+      </section>
     </AppShell>
   )
 }
+
 
 export default DesignSystemPage
