@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { he } from '../i18n'
 import { useOptionalAuth } from '../auth/useAuth'
 import { GoogleIcon } from '../auth/GoogleIcon'
@@ -19,6 +19,7 @@ import styles from './LandingAuth.module.css'
  */
 export function LandingAuth() {
   const auth = useOptionalAuth()
+  const navigate = useNavigate()
   if (!auth) return null
 
   const {
@@ -36,7 +37,15 @@ export function LandingAuth() {
   } = auth
 
   const guestButton = (
-    <button type="button" className={styles.ghost} data-testid="continue-as-guest-button" onClick={continueAsGuest}>
+    <button
+      type="button"
+      className={styles.ghost}
+      data-testid="continue-as-guest-button"
+      onClick={() => {
+        continueAsGuest()
+        navigate('/world')
+      }}
+    >
       {he.authContinueAsGuest}
     </button>
   )
