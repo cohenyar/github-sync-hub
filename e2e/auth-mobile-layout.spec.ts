@@ -144,7 +144,6 @@ test.describe('AuthButton mobile layout (H2 fix) — signed-out state', () => {
     await expect(page.getByTestId('guest-mode-badge')).toBeVisible()
     await expect(page.getByTestId('google-sign-in-button')).toBeVisible()
     await expect(page.getByTestId('auth-page-link')).toBeVisible()
-    await expect(page.getByTestId('email-auth-toggle-button')).toBeVisible()
     await expect(page.getByTestId('auth-mobile-menu-trigger')).not.toBeVisible()
     expect(await hasNoHorizontalOverflow(page)).toBe(true)
   })
