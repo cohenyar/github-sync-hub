@@ -1,7 +1,9 @@
 import { defaultCampaign, type GameCampaign } from '../../campaign'
 import { he } from '../../i18n'
 import { lessonRegistry } from '../../learning/lessonRegistry'
-import type { PlayerProgress } from '../types'
+import type { DifficultyLevel, PlayerProgress } from '../types'
+
+const VALID_DIFFICULTY_LEVELS: readonly DifficultyLevel[] = [1, 2, 3]
 
 export function getCurrentMissionId(progress: PlayerProgress): string | null {
   return progress.campaignProgress.currentMissionId
@@ -150,4 +152,17 @@ export function getNpcFamiliarityLabel(tier: NpcFamiliarityTier): string {
  */
 export function hasLocalPlayerProfile(progress: PlayerProgress): boolean {
   return Boolean(progress.playerName && progress.playerName.trim().length > 0)
+}
+
+/**
+ * First Mission UX pass — the one place difficultyLevel's "default safely to
+ * 1" guarantee actually lives. Also treats a corrupted/out-of-range stored
+ * value (never producible by setDifficultyLevel itself, but a save file is
+ * user-editable storage) the same as an absent one, rather than passing it
+ * through unchecked.
+ */
+export function getDifficultyLevel(progress: PlayerProgress): DifficultyLevel {
+  return VALID_DIFFICULTY_LEVELS.includes(progress.difficultyLevel as DifficultyLevel)
+    ? (progress.difficultyLevel as DifficultyLevel)
+    : 1
 }

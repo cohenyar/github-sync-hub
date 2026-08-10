@@ -17,6 +17,7 @@ function renderMenu(overrides: Partial<SettingsMenuProps> = {}) {
     onToggleWorldScene: vi.fn(),
     onToggleMuted: vi.fn(),
     onEditProfile: vi.fn(),
+    onSelectDifficulty: vi.fn(),
     ...overrides,
   }
   render(<SettingsMenu {...props} />)
@@ -89,6 +90,7 @@ describe('SettingsMenu', () => {
         onToggleWorldScene={vi.fn()}
         onToggleMuted={vi.fn()}
         onEditProfile={vi.fn()}
+        onSelectDifficulty={vi.fn()}
       />,
     )
     fireEvent.click(screen.getByTestId('settings-menu-button'))
@@ -110,6 +112,7 @@ describe('SettingsMenu', () => {
         onToggleWorldScene={vi.fn()}
         onToggleMuted={vi.fn()}
         onEditProfile={vi.fn()}
+        onSelectDifficulty={vi.fn()}
       />,
     )
     expect(screen.getByTestId('reset-confirm-prompt')).toBeInTheDocument()
@@ -139,6 +142,32 @@ describe('SettingsMenu', () => {
       fireEvent.click(row, { detail: 1 })
       expect(onEditProfile).toHaveBeenCalledTimes(1)
       expect(screen.queryByRole('menu')).not.toBeInTheDocument()
+    })
+  })
+
+  describe('First Mission UX pass — difficulty selector', () => {
+    it('defaults to level 1 selected when no difficultyLevel is given (matches getDifficultyLevel\'s own default)', () => {
+      renderMenu()
+      fireEvent.click(screen.getByTestId('settings-menu-button'))
+      expect(screen.getByTestId('difficulty-level-1-button')).toHaveAttribute('aria-checked', 'true')
+      expect(screen.getByTestId('difficulty-level-2-button')).toHaveAttribute('aria-checked', 'false')
+    })
+
+    it('reflects the current difficultyLevel prop', () => {
+      renderMenu({ difficultyLevel: 3 })
+      fireEvent.click(screen.getByTestId('settings-menu-button'))
+      expect(screen.getByTestId('difficulty-level-3-button')).toHaveAttribute('aria-checked', 'true')
+      expect(screen.getByTestId('difficulty-level-1-button')).toHaveAttribute('aria-checked', 'false')
+    })
+
+    it('calls onSelectDifficulty with the chosen level, and never touches Save/Load/New Game', () => {
+      const onSelectDifficulty = vi.fn()
+      renderMenu({ difficultyLevel: 1, onSelectDifficulty })
+      fireEvent.click(screen.getByTestId('settings-menu-button'))
+      fireEvent.click(screen.getByTestId('difficulty-level-2-button'))
+
+      expect(onSelectDifficulty).toHaveBeenCalledTimes(1)
+      expect(onSelectDifficulty).toHaveBeenCalledWith(2)
     })
   })
 })

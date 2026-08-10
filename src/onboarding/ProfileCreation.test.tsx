@@ -37,7 +37,7 @@ describe('ProfileCreation — first-time (create) mode', () => {
     expect(screen.queryByTestId('profile-name-error')).not.toBeInTheDocument()
   })
 
-  it('submits the trimmed name and the selected avatar id', () => {
+  it('submits the trimmed name, the selected avatar id, and the default (Easy) difficulty level', () => {
     const onSubmit = vi.fn()
     render(<ProfileCreation onSubmit={onSubmit} />)
 
@@ -45,7 +45,7 @@ describe('ProfileCreation — first-time (create) mode', () => {
     fireEvent.click(screen.getByTestId(`profile-avatar-option-${PLAYER_AVATAR_PRESETS[1].id}`))
     fireEvent.click(screen.getByTestId('profile-submit-button'))
 
-    expect(onSubmit).toHaveBeenCalledWith('נועה', PLAYER_AVATAR_PRESETS[1].id)
+    expect(onSubmit).toHaveBeenCalledWith('נועה', PLAYER_AVATAR_PRESETS[1].id, 1)
   })
 
   it('submits on pressing Enter in the name field, not just the submit button', () => {
@@ -54,7 +54,25 @@ describe('ProfileCreation — first-time (create) mode', () => {
     const input = screen.getByTestId('profile-name-input')
     fireEvent.change(input, { target: { value: 'נועה' } })
     fireEvent.submit(input.closest('form')!)
-    expect(onSubmit).toHaveBeenCalledWith('נועה', PLAYER_AVATAR_PRESETS[0].id)
+    expect(onSubmit).toHaveBeenCalledWith('נועה', PLAYER_AVATAR_PRESETS[0].id, 1)
+  })
+
+  describe('First Mission UX pass — difficulty selector', () => {
+    it('defaults to level 1 (Easy) selected', () => {
+      render(<ProfileCreation onSubmit={vi.fn()} />)
+      expect(screen.getByTestId('difficulty-option-1')).toHaveAttribute('aria-checked', 'true')
+    })
+
+    it('submits the chosen difficulty level alongside name and avatar', () => {
+      const onSubmit = vi.fn()
+      render(<ProfileCreation onSubmit={onSubmit} />)
+
+      fireEvent.change(screen.getByTestId('profile-name-input'), { target: { value: 'נועה' } })
+      fireEvent.click(screen.getByTestId('difficulty-option-3'))
+      fireEvent.click(screen.getByTestId('profile-submit-button'))
+
+      expect(onSubmit).toHaveBeenCalledWith('נועה', PLAYER_AVATAR_PRESETS[0].id, 3)
+    })
   })
 })
 
@@ -65,6 +83,7 @@ describe('ProfileCreation — edit mode', () => {
       <ProfileCreation
         initialName="דניאל"
         initialAvatarId={PLAYER_AVATAR_PRESETS[2].id}
+        initialDifficultyLevel={2}
         onSubmit={vi.fn()}
         onCancel={onCancel}
       />,
@@ -76,6 +95,7 @@ describe('ProfileCreation — edit mode', () => {
       'data-selected',
       'true',
     )
+    expect(screen.getByTestId('difficulty-option-2')).toHaveAttribute('aria-checked', 'true')
 
     fireEvent.click(screen.getByTestId('profile-cancel-button'))
     expect(onCancel).toHaveBeenCalledTimes(1)

@@ -120,7 +120,7 @@ describe('TerminalView', () => {
     expect(screen.getByTestId('terminal-destination-label')).toHaveTextContent('1/1')
   })
 
-  it('shows the quest title in the Archive intro, ahead of the reused mission panel', () => {
+  it('shows the quest title in the Archive intro', () => {
     render(<TerminalView {...baseProps()} />)
     expect(screen.getByTestId('archive-intro-quest-title')).toHaveTextContent('First Contact')
   })

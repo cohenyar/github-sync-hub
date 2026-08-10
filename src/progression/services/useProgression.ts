@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { defaultCampaign, type GameCampaign } from '../../campaign'
-import type { PlayerProgress } from '../types'
+import type { DifficultyLevel, PlayerProgress } from '../types'
 import { createInitialPlayerProgress } from './createInitialPlayerProgress'
 import { recordArchivePageFound as applyArchivePageFound } from './recordArchivePageFound'
 import { recordLessonCompletion as applyLessonCompletion } from './recordLessonCompletion'
 import { recordMissionCompletion } from './recordMissionCompletion'
 import { recordNpcConversation as applyNpcConversation } from './recordNpcConversation'
+import { setDifficultyLevel as applySetDifficultyLevel } from './setDifficultyLevel'
 import { setPlayerProfile as applySetPlayerProfile } from './setPlayerProfile'
 
 export interface UseProgressionResult {
@@ -19,6 +20,8 @@ export interface UseProgressionResult {
   recordArchivePageFound: (pageId: string) => void
   /** Meridian 1.4 — Player Identity MVP; sets the local profile's name + chosen avatar preset. */
   setPlayerProfile: (name: string, avatarId: string) => void
+  /** First Mission UX pass; sets the local profile's learning difficulty — scaffolding only, never a different campaign. */
+  setDifficultyLevel: (level: DifficultyLevel) => void
   restoreProgress: (progress: PlayerProgress) => void
 }
 
@@ -57,6 +60,10 @@ export function useProgression(
     setProgress((current) => applySetPlayerProfile(current, name, avatarId))
   }
 
+  function setDifficultyLevel(level: DifficultyLevel) {
+    setProgress((current) => applySetDifficultyLevel(current, level))
+  }
+
   function restoreProgress(next: PlayerProgress) {
     setProgress(next)
   }
@@ -68,6 +75,7 @@ export function useProgression(
     recordNpcConversation,
     recordArchivePageFound,
     setPlayerProfile,
+    setDifficultyLevel,
     restoreProgress,
   }
 }

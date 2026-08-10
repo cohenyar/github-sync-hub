@@ -27,11 +27,13 @@ import {
 import { clearSavedGame, loadCurrentGame, saveCurrentGame } from './persistence'
 import {
   createInitialPlayerProgress,
+  getDifficultyLevel,
   getExplorerRank,
   getNpcFamiliarityTier,
   getPlayerProgressSummary,
   hasLocalPlayerProfile,
   useProgression,
+  type DifficultyLevel,
   type PlayerProgress,
 } from './progression'
 import { getMissionContentStatus, getUnlockedNpcIds } from './unlocks'
@@ -177,9 +179,14 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
     recordNpcConversation,
     recordArchivePageFound,
     setPlayerProfile,
+    setDifficultyLevel,
     restoreProgress,
   } = useProgression(defaultCampaign, bootSave?.playerProgress)
   const completedLessonIds = playerProgress.completedLessonIds ?? []
+  // First Mission UX pass — scaffolding/help only, never a different
+  // campaign; resolved fresh from progress every render, same
+  // default-safely convention as every other optional PlayerProgress field.
+  const difficultyLevel = getDifficultyLevel(playerProgress)
   // Meridian 1.3 — Core Loop §04: resolved fresh from progress every render, same fallback-to-empty convention as completedLessonIds.
   const collectedArchivePages = (playerProgress.collectedArchivePageIds ?? [])
     .map((pageId) => getArchivePageById(pageId))
@@ -346,7 +353,13 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
     // /world), since showBootSequence's initializer re-reads this flag.
     clearOnboardingFlag()
 
-    const freshProgress = createInitialPlayerProgress(defaultCampaign)
+    // First Mission UX pass — difficultyLevel is a learning-preference
+    // setting, not gameplay progression: unlike every other field here
+    // (missions, lessons, campaign progress, and — separately — profile
+    // identity), it deliberately survives this reset. Carried forward
+    // explicitly rather than changed at its source (createInitialPlayerProgress
+    // stays unset-by-default for a genuinely fresh save/first-time player).
+    const freshProgress = { ...createInitialPlayerProgress(defaultCampaign), difficultyLevel }
     setWorld(initialWorldState)
     restoreProgress(freshProgress)
     resetUnlockBaseline(freshProgress)
@@ -382,8 +395,9 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
   // passed to ProfileCreation) and the reopenable editor for an existing
   // profile (showProfileEditor) — setPlayerProfile always overwrites, so
   // there is no separate "create" vs "update" branch to keep in sync.
-  function handleProfileSubmit(name: string, avatarId: string) {
+  function handleProfileSubmit(name: string, avatarId: string, difficultyLevel: DifficultyLevel) {
     setPlayerProfile(name, avatarId)
+    setDifficultyLevel(difficultyLevel)
     setShowProfileEditor(false)
   }
 
@@ -656,8 +670,14 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
 
   // A first-time player (no local profile yet) must set one before anything
   // else — no onCancel, so there's no way to dismiss without submitting.
+  // First Mission UX pass — this gate also reappears right after New Game
+  // (which clears identity but preserves difficultyLevel, see
+  // handleConfirmNewGame); initialDifficultyLevel pre-selects the preserved
+  // value here so a plain name+submit doesn't silently reset it back to 1.
+  // A genuinely first-time player's own progress already defaults this to 1,
+  // so nothing changes for that case.
   if (!hasProfile) {
-    return <ProfileCreation onSubmit={handleProfileSubmit} />
+    return <ProfileCreation initialDifficultyLevel={difficultyLevel} onSubmit={handleProfileSubmit} />
   }
 
   if (showBootSequence) {
@@ -670,6 +690,7 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
         <ProfileCreation
           initialName={playerProgress.playerName}
           initialAvatarId={playerProgress.playerAvatarId}
+          initialDifficultyLevel={difficultyLevel}
           onSubmit={handleProfileSubmit}
           onCancel={() => setShowProfileEditor(false)}
         />
@@ -689,6 +710,8 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
         onCancelNewGame={() => setConfirmingNewGame(false)}
         onToggleWorldScene={() => setShowWorldScene((current) => !current)}
         onToggleMuted={toggleMuted}
+        difficultyLevel={difficultyLevel}
+        onSelectDifficulty={setDifficultyLevel}
         playerName={playerProgress.playerName}
         playerAvatarId={playerProgress.playerAvatarId}
         onEditProfile={() => setShowProfileEditor(true)}
@@ -718,6 +741,7 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
               onReturnToWorld={() => setSceneState(exitTerminal)}
               npc={companion}
               npcMessage={companionMessage}
+              difficultyLevel={difficultyLevel}
             />
           ) : (
             <>
@@ -829,9 +853,10 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
                   completionPercentage={progressSummary.completionPercentage}
                   contentStatus={contentStatus}
                   onContinue={handleContinue}
+                  difficultyLevel={difficultyLevel}
                 />
               }
-              terminal={<SqlEditorPanel status={status} onRun={run} onRetry={retry} />}
+              terminal={<SqlEditorPanel status={status} onRun={run} onRetry={retry} difficultyLevel={difficultyLevel} />}
             />
           }
           questTrack={

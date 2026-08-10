@@ -56,6 +56,12 @@ export const he = {
   retryDatabaseSetup: 'נסה/י שוב',
   sqlErrorPrefix: 'שגיאת SQL: ',
 
+  // First Mission UX pass — the objective/instruction pair every mission
+  // screen leads with, ahead of any secondary metadata (see MissionPanel.tsx).
+  missionGoalLabel: 'מטרה: ',
+  missionInstructionLabel: 'מה עושים: ',
+  missionMoreDetailsLabel: 'פרטים נוספים',
+
   // Mission panel
   missionPanelTitle: 'משימה',
   phaseLoading: 'מתכונן…',
@@ -434,6 +440,18 @@ export const he = {
   profileEditSubmitCta: 'שמור/שמרי שינויים',
   profileEditButtonLabel: 'ערוך/ערכי פרופיל',
   currentPlayerLabel: 'המשתמש/ת שלך',
+
+  // First Mission UX pass — learning difficulty. A scaffolding/help level,
+  // never a different campaign: same missions, same story, same world (see
+  // src/progression/services/setDifficultyLevel.ts).
+  difficultySelectorTitle: 'בחר/י רמת קושי',
+  difficultyLevel1Label: '1 — קל',
+  difficultyLevel1Description: 'הוראות מפורטות, דוגמה גלויה, ורמז זמין תמיד.',
+  difficultyLevel2Label: '2 — בינוני',
+  difficultyLevel2Description: 'הוראות רגילות, בלי דוגמה קבועה, ורמז לפי בקשה.',
+  difficultyLevel3Label: '3 — קשה',
+  difficultyLevel3Description: 'הוראות תמציתיות, בלי דוגמה, ורמזים מצומצמים.',
+  difficultySettingsLabel: 'רמת קושי',
 
   // Meridian 1.4 — Welcome Screen (src/onboarding/WelcomeScreen.tsx), the
   // game's title screen. "Meridian" itself stays untranslated (a proper

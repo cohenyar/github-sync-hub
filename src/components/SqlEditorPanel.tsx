@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { he } from '../i18n'
 import type { MissionStatus } from '../missions/missionManager'
+import type { DifficultyLevel } from '../progression/types'
 import { QueryResultTable } from './QueryResultTable'
 import { VerdictBanner } from './VerdictBanner'
 import styles from './Panel.module.css'
@@ -10,6 +11,13 @@ export interface SqlEditorPanelProps {
   onRun: (sql: string) => void
   /** Re-attempts mission database preparation after a setup failure. Omitted entirely if no retry path exists. */
   onRetry?: () => void
+  /**
+   * First Mission UX pass — Easy (1) shows the static syntax example;
+   * Medium/Hard (2/3, and the default when omitted entirely — every
+   * existing caller/test that predates this prop) hide it, matching the
+   * "no example shown by default" / "no example" spec for those levels.
+   */
+  difficultyLevel?: DifficultyLevel
 }
 
 /**
@@ -18,7 +26,7 @@ export interface SqlEditorPanelProps {
  * (useMissionManager). This component only owns the textarea's text and
  * renders whatever status it's given.
  */
-export function SqlEditorPanel({ status, onRun, onRetry }: SqlEditorPanelProps) {
+export function SqlEditorPanel({ status, onRun, onRetry, difficultyLevel }: SqlEditorPanelProps) {
   const [sql, setSql] = useState('')
   const canRun = status.phase === 'active' || status.phase === 'completed'
 
@@ -34,14 +42,23 @@ export function SqlEditorPanel({ status, onRun, onRetry }: SqlEditorPanelProps) 
         value={sql}
         onChange={(event) => setSql(event.target.value)}
         placeholder={he.sqlPlaceholder}
-        rows={8}
+        // First Mission UX pass — was 8; every real query in this campaign
+        // is one or two lines, and the textarea already supports
+        // resize:vertical for anyone who wants more room. A shorter default
+        // leaves more of the first viewport for the actual Run button.
+        rows={4}
       />
       {/* Playtest fix pass (issue 5) — one static, generic (non-spoiler)
           syntax example, since the screen previously offered no example or
-          hint of any kind before the player's first attempt. */}
-      <p className={styles.hint} data-testid="sql-example-hint" dir="ltr">
-        {he.sqlExampleHint}
-      </p>
+          hint of any kind before the player's first attempt. First Mission
+          UX pass — now Easy-only; Medium/Hard hide it by default (the
+          player can still write correct SQL without it; Ask Odin's hint
+          stays available at every level). */}
+      {difficultyLevel === 1 && (
+        <p className={styles.hint} data-testid="sql-example-hint" dir="ltr">
+          {he.sqlExampleHint}
+        </p>
+      )}
       <button
         type="button"
         className={styles.runButton}
@@ -77,7 +94,7 @@ export function SqlEditorPanel({ status, onRun, onRetry }: SqlEditorPanelProps) 
 
       {status.lastResult?.kind === 'verdict' && (
         <div className={styles.result}>
-          <VerdictBanner verdict={status.lastResult.verdict} />
+          <VerdictBanner verdict={status.lastResult.verdict} difficultyLevel={difficultyLevel} />
           <QueryResultTable rows={status.lastResult.verdict.actual} />
         </div>
       )}

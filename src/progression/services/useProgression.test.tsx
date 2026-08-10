@@ -80,6 +80,17 @@ describe('useProgression', () => {
     expect(result.current.progress.completedLessonIds).toEqual(['lesson:math-001'])
   })
 
+  it('updates difficultyLevel when setDifficultyLevel is called, without touching mission/lesson state (First Mission UX pass)', () => {
+    const { result } = renderHook(() => useProgression(twoStageCampaign))
+    const before = result.current.progress
+
+    act(() => result.current.setDifficultyLevel(3))
+
+    expect(result.current.progress.difficultyLevel).toBe(3)
+    expect(result.current.progress.completedMissionIds).toEqual(before.completedMissionIds)
+    expect(result.current.progress.campaignProgress).toEqual(before.campaignProgress)
+  })
+
   it('replaces progress wholesale when restoreProgress is called', () => {
     const { result } = renderHook(() => useProgression(twoStageCampaign))
     act(() => result.current.recordCompletion('a'))

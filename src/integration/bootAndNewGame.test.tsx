@@ -314,6 +314,58 @@ describe('New Game reset', () => {
     expect(saved.playerProgress.npcFamiliarity ?? {}).toEqual({})
   })
 
+  // First Mission UX pass — difficultyLevel is a learning-preference
+  // setting, not gameplay progression, so unlike every field the tests
+  // above cover (missions, world, Archive Pages, NPC familiarity — and
+  // separately, profile identity, which New Game does still clear), it
+  // deliberately SURVIVES this reset (see handleConfirmNewGame in
+  // GameApp.tsx). The reappearing Profile Creation gate (mandatory once
+  // identity is cleared) pre-selects the preserved level via
+  // initialDifficultyLevel, so a plain name+submit — exactly what
+  // newGame()'s passEntryGates() does — carries it forward rather than
+  // silently resetting it to the picker's own unrelated default.
+  it('preserves the selected difficultyLevel across New Game, even though missions/lessons/campaign progress reset', async () => {
+    const progressed = recordMissionCompletion(
+      { ...createInitialPlayerProgress(defaultCampaign), difficultyLevel: 3 as const },
+      'first-contact',
+      defaultCampaign,
+    )
+    saveCurrentGame(createWorldState(initialDistricts), progressed)
+
+    renderGameApp()
+    await readyRunButton()
+    ensureSettingsMenuOpen()
+    expect(screen.getByTestId('difficulty-level-3-button')).toHaveAttribute('aria-checked', 'true')
+    expect(screen.getByTestId('progress-badge')).toHaveAttribute('data-percentage', ONE_MISSION_PERCENTAGE.toString())
+
+    newGame()
+
+    // Gameplay progress reset, same as every other New Game test in this file.
+    expect(screen.getByTestId('progress-badge')).toHaveAttribute('data-percentage', '0')
+
+    // Difficulty did not reset — still level 3, both live and in the save.
+    ensureSettingsMenuOpen()
+    expect(screen.getByTestId('difficulty-level-3-button')).toHaveAttribute('aria-checked', 'true')
+    expect(screen.getByTestId('difficulty-level-1-button')).toHaveAttribute('aria-checked', 'false')
+
+    fireEvent.click(screen.getByTestId('save-button'))
+    const saved = JSON.parse(window.localStorage.getItem(SAVE_KEY)!)
+    expect(saved.playerProgress.difficultyLevel).toBe(3)
+    expect(saved.playerProgress.completedMissionIds).toEqual([])
+  })
+
+  it('a fresh save with no prior difficultyLevel still defaults to 1 after New Game', async () => {
+    renderGameApp()
+    await readyRunButton()
+    ensureSettingsMenuOpen()
+    expect(screen.getByTestId('difficulty-level-1-button')).toHaveAttribute('aria-checked', 'true')
+
+    newGame()
+
+    ensureSettingsMenuOpen()
+    expect(screen.getByTestId('difficulty-level-1-button')).toHaveAttribute('aria-checked', 'true')
+  })
+
   it('does nothing until the reset is confirmed, and Cancel dismisses the prompt without resetting', async () => {
     renderGameApp()
     const runButton = await readyRunButton()

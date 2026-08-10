@@ -81,11 +81,21 @@
   font-size: var(--ds-text-xs);
 }
 
+/*
+ * First Mission UX pass — the actual bug was TerminalView's own .scrollArea
+ * capping the WHOLE action area (mission brief + SQL input) at 60vh/520px;
+ * this is the fix applied at its original, stated intent: only the result
+ * table can grow unboundedly long, so only it gets a bounded, scrollable
+ * frame. Ordinary result sets (a handful of rows) never approach this
+ * height, so this changes nothing for the common case.
+ */
 .result {
   margin-top: var(--ds-space-3);
   display: flex;
   flex-direction: column;
   gap: var(--ds-space-1);
+  max-height: min(50vh, 420px);
+  overflow-y: auto;
 }
 
 .goal {
@@ -96,12 +106,74 @@
   line-height: var(--ds-leading-normal);
 }
 
+/* First Mission UX pass — the small "מטרה:" / "מה עושים:" eyebrow label
+   prefixing the goal/instruction text, inline so both stay one compact
+   line/paragraph instead of a separate heading each. */
+.actionLabel {
+  font-weight: 700;
+  color: var(--ds-text-strong);
+}
+
+.instruction {
+  margin: 0 0 var(--ds-space-3);
+  font-size: var(--ds-text-md);
+  font-weight: 600;
+  color: var(--ds-text-strong);
+  line-height: var(--ds-leading-normal);
+}
+
+/* Easy difficulty only — the mission's own hint, shown inline instead of
+   requiring Ask Odin. Visually a quieter note, not another instruction. */
+.inlineHint {
+  margin: 0 0 var(--ds-space-3);
+  padding: var(--ds-space-2) var(--ds-space-3);
+  border-inline-start: 2px solid var(--ds-accent);
+  background: var(--ds-accent-soft);
+  color: var(--ds-text-muted);
+  font-size: var(--ds-text-sm);
+  line-height: var(--ds-leading-normal);
+}
+
 .flavor {
   margin: 0 0 var(--ds-space-3);
   white-space: pre-line;
   color: var(--ds-text-muted);
   font-size: var(--ds-text-sm);
   line-height: var(--ds-leading-normal);
+}
+
+/*
+ * First Mission UX pass — everything that isn't the actionable brief
+ * (progress dots, the full narrative prompt, status badges, the next-mission
+ * line) collapses behind a disclosure so it never visually competes with
+ * goal/instruction/input/button for the first viewport, while staying one
+ * click away — nothing is removed, only de-emphasized (see MissionPanel.tsx).
+ */
+.secondaryDetails {
+  margin-top: var(--ds-space-2);
+  border-top: 1px solid var(--ds-border);
+  padding-top: var(--ds-space-2);
+}
+
+.secondarySummary {
+  cursor: pointer;
+  font-size: var(--ds-text-xs);
+  font-weight: 600;
+  color: var(--ds-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  /* 44px touch target for the summary's own clickable row, same convention
+     as every other tappable control in this UI. */
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.secondaryContent {
+  padding-top: var(--ds-space-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-2);
 }
 
 .metaRow {

@@ -70,3 +70,24 @@ describe('deserializeSaveGame — completedLessonIds (Batch 3A.4B)', () => {
     expect(deserializeSaveGame(json)).toBeNull()
   })
 })
+
+describe('deserializeSaveGame — difficultyLevel (First Mission UX pass)', () => {
+  it('round-trips a save that includes difficultyLevel', () => {
+    const world = createWorldState([])
+    const withDifficulty: PlayerProgress = { ...playerProgress, difficultyLevel: 3 }
+    const json = serializeSaveGame({ world, playerProgress: withDifficulty })
+
+    expect(deserializeSaveGame(json)).toEqual({ version: CURRENT_SAVE_VERSION, world, playerProgress: withDifficulty })
+  })
+
+  it('loads a save with no difficultyLevel field at all (a save from before this field existed) without rejecting it', () => {
+    const world = createWorldState([])
+    // playerProgress (above) has no difficultyLevel field — the exact shape
+    // every save written before this pass would have.
+    const json = serializeSaveGame({ world, playerProgress })
+
+    const loaded = deserializeSaveGame(json)
+    expect(loaded).not.toBeNull()
+    expect(loaded?.playerProgress.difficultyLevel).toBeUndefined()
+  })
+})

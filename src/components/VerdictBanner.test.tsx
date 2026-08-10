@@ -66,4 +66,41 @@ describe('VerdictBanner', () => {
       screen.getByText('ציפינו ל-2 שורות, התקבלו 2. חסרות 1, 1 מיותרות — בדוק/י את תנאי הסינון.'),
     ).toBeInTheDocument()
   })
+
+  describe('First Mission UX pass — difficulty-gated feedback specificity', () => {
+    const missingOnly = verdict({
+      missing: [{ id: 2 }, { id: 3 }, { id: 4 }],
+      expected: [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }],
+      actual: [{ id: 1 }],
+    })
+
+    it('Easy adds an encouraging line to the normal (Medium) count-based guidance', () => {
+      render(<VerdictBanner verdict={missingOnly} difficultyLevel={1} />)
+      expect(
+        screen.getByText(
+          'ציפינו ל-4 שורות, התקבלו 1. חסרות 3 שורות — ייתכן שהתנאי מצומצם מדי. אפשר לנסות שוב — כל ניסיון מקרב אותך לתשובה.',
+        ),
+      ).toBeInTheDocument()
+    })
+
+    it('Medium (an explicit 2) matches the default, count-based guidance exactly', () => {
+      render(<VerdictBanner verdict={missingOnly} difficultyLevel={2} />)
+      expect(
+        screen.getByText('ציפינו ל-4 שורות, התקבלו 1. חסרות 3 שורות — ייתכן שהתנאי מצומצם מדי.'),
+      ).toBeInTheDocument()
+    })
+
+    it('Hard identifies the mistake type only, without exact row counts', () => {
+      render(<VerdictBanner verdict={missingOnly} difficultyLevel={3} />)
+      expect(screen.queryByText(/ציפינו/)).not.toBeInTheDocument()
+      expect(screen.queryByText(/\d/)).not.toBeInTheDocument()
+      expect(screen.getByText('התוצאה חלקית — ייתכן שהתנאי מצומצם מדי.')).toBeInTheDocument()
+    })
+
+    it('Hard identifies a too-broad result the same way, without exact counts', () => {
+      const extraOnly = verdict({ extra: [{ id: 5 }], expected: [{ id: 1 }], actual: [{ id: 1 }, { id: 5 }] })
+      render(<VerdictBanner verdict={extraOnly} difficultyLevel={3} />)
+      expect(screen.getByText('התוצאה רחבה מדי — ייתכן שהתנאי רחב מדי.')).toBeInTheDocument()
+    })
+  })
 })

@@ -22,19 +22,23 @@
 }
 
 /*
- * A bounded "room," not an open-ended page — the Core's own long query
- * results scroll inside this frame instead of pushing the whole document
- * taller. Keeps the header (with the live status pill) always in view, and
- * keeps the world-level Odin subtitle from ever landing on top of content
- * that would otherwise grow past the viewport.
+ * First Mission UX pass — this used to be a bounded, independently
+ * scrolling box (overflow-y: auto; max-height: min(60vh, 520px)) wrapping
+ * BOTH the mission brief and the SQL input/Run button. The stated intent
+ * (see the removed comment) was only ever to keep long query RESULTS from
+ * pushing the page taller — but the cap applied to everything inside,
+ * including the mission title/goal/instruction and the input itself, which
+ * routinely pushed them below the fold of an easy-to-miss *inner*
+ * scrollbar while the outer card and page scrolled normally above it (a
+ * classic nested-scroll trap). The bounded scroll region now lives only
+ * around the actual result table, at its original intent, in
+ * Panel.module.css's .result — this is a plain flex column, so the mission
+ * brief and SQL editor flow with the page's own natural scroll instead.
  */
 .scrollArea {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  overflow-y: auto;
-  max-height: min(60vh, 520px);
-  padding-inline-end: 4px;
 }
 
 @keyframes coreAmbientPulse {

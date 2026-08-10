@@ -8,6 +8,7 @@ import { recordNpcConversation } from '../services/recordNpcConversation'
 import {
   getCompletionPercentage,
   getCurrentMissionId,
+  getDifficultyLevel,
   getExplorerRank,
   getExplorerRankLabel,
   getNpcConversationCount,
@@ -243,5 +244,27 @@ describe('hasLocalPlayerProfile (Meridian 1.4)', () => {
 
   it('treats a whitespace-only name the same as no name', () => {
     expect(hasLocalPlayerProfile({ ...createInitialPlayerProgress(), playerName: '   ' })).toBe(false)
+  })
+})
+
+describe('getDifficultyLevel (First Mission UX pass)', () => {
+  it('defaults to 1 (Easy) for a fresh save with no value set yet', () => {
+    expect(getDifficultyLevel(createInitialPlayerProgress())).toBe(1)
+  })
+
+  it('defaults to 1 for an old save from before this field existed (no property at all)', () => {
+    const { difficultyLevel: _omit, ...withoutField } = { ...createInitialPlayerProgress(), difficultyLevel: 2 as const }
+    expect(getDifficultyLevel(withoutField)).toBe(1)
+  })
+
+  it.each([1, 2, 3] as const)('returns a stored value of %i as-is', (level) => {
+    expect(getDifficultyLevel({ ...createInitialPlayerProgress(), difficultyLevel: level })).toBe(level)
+  })
+
+  it('defaults to 1 for a corrupted/out-of-range stored value, never crashing', () => {
+    const corrupted = { ...createInitialPlayerProgress(), difficultyLevel: 7 } as unknown as ReturnType<
+      typeof createInitialPlayerProgress
+    >
+    expect(getDifficultyLevel(corrupted)).toBe(1)
   })
 })

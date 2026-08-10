@@ -49,4 +49,15 @@ describe('createInitialPlayerProgress', () => {
   it('defaults to the real campaign when none is given', () => {
     expect(createInitialPlayerProgress().campaignProgress.campaignId).toBe(defaultCampaign.id)
   })
+
+  // First Mission UX pass — deliberately leaves difficultyLevel unset here,
+  // the same as playerName/playerAvatarId: getDifficultyLevel treats an
+  // absent value as 1 (Easy) everywhere it's read, so there is nothing to
+  // initialize. This is also what makes New Game's existing full-replace
+  // reset difficulty to the default, matching how it already resets
+  // identity — see GameApp.test / bootAndNewGame.test.tsx.
+  it('leaves difficultyLevel unset, matching the identity fields (playerName/playerAvatarId)', () => {
+    const progress = createInitialPlayerProgress(threeStageCampaign)
+    expect(progress.difficultyLevel).toBeUndefined()
+  })
 })

@@ -29,11 +29,59 @@ function summary(overrides: Partial<CampaignSummary> = {}): CampaignSummary {
 }
 
 describe('MissionPanel', () => {
-  it('renders the mission title, goal, and prompt', () => {
+  it('renders the mission title and goal (labeled as the objective) immediately, ahead of everything else', () => {
     render(<MissionPanel mission={mission} />)
     expect(screen.getByText('First Contact')).toBeInTheDocument()
-    expect(screen.getByText('Bring the Records Core online.')).toBeInTheDocument()
+    expect(screen.getByTestId('mission-goal')).toHaveTextContent('Bring the Records Core online.')
+    expect(screen.getByTestId('mission-goal')).toHaveTextContent(he.missionGoalLabel.trim())
+  })
+
+  it('renders the full prompt/narrative inside the collapsed secondary details, not above the fold', () => {
+    render(<MissionPanel mission={mission} />)
     expect(screen.getByText('Query the citizens registry.')).toBeInTheDocument()
+    expect(screen.getByTestId('mission-secondary-details')).toContainElement(
+      screen.getByText('Query the citizens registry.'),
+    )
+  })
+
+  it('renders no instruction line when the mission has none authored', () => {
+    render(<MissionPanel mission={mission} />)
+    expect(screen.queryByTestId('mission-instruction')).not.toBeInTheDocument()
+  })
+
+  it('renders the instruction line when the mission has one authored, ahead of the secondary details', () => {
+    const withInstruction: MissionConfig = { ...mission, instructionHe: 'כתבו פקודת SQL שמציגה את רשימת התושבים.' }
+    render(<MissionPanel mission={withInstruction} />)
+    const instruction = screen.getByTestId('mission-instruction')
+    expect(instruction).toHaveTextContent('כתבו פקודת SQL שמציגה את רשימת התושבים.')
+    expect(screen.queryByTestId('mission-secondary-details')).not.toContainElement(instruction)
+  })
+
+  describe('First Mission UX pass — inline hint (Easy only)', () => {
+    const withHint: MissionConfig = { ...mission, hintHe: 'רמז: נסה/י SELECT *.' }
+
+    it('shows no inline hint when difficultyLevel is omitted (every existing caller/test)', () => {
+      render(<MissionPanel mission={withHint} />)
+      expect(screen.queryByTestId('mission-inline-hint')).not.toBeInTheDocument()
+    })
+
+    it('shows no inline hint at Medium or Hard', () => {
+      render(<MissionPanel mission={withHint} difficultyLevel={2} />)
+      expect(screen.queryByTestId('mission-inline-hint')).not.toBeInTheDocument()
+      const { unmount } = render(<MissionPanel mission={withHint} difficultyLevel={3} />)
+      expect(screen.queryAllByTestId('mission-inline-hint')).toHaveLength(0)
+      unmount()
+    })
+
+    it('shows the mission\'s own hint inline at Easy', () => {
+      render(<MissionPanel mission={withHint} difficultyLevel={1} />)
+      expect(screen.getByTestId('mission-inline-hint')).toHaveTextContent('רמז: נסה/י SELECT *.')
+    })
+
+    it('shows no inline hint at Easy when the mission has no hint authored', () => {
+      render(<MissionPanel mission={mission} difficultyLevel={1} />)
+      expect(screen.queryByTestId('mission-inline-hint')).not.toBeInTheDocument()
+    })
   })
 
   it('renders no status line when no phase is given', () => {

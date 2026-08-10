@@ -4,6 +4,7 @@ import { MissionPanel, SqlEditorPanel } from '../../components'
 import type { MissionPhase, MissionStatus } from '../../missions/missionManager'
 import type { MissionConfig } from '../../missions/types'
 import type { NpcConfig } from '../../npcs'
+import type { DifficultyLevel } from '../../progression/types'
 import type { ContentStatus } from '../../unlocks'
 import { he } from '../../i18n'
 import type { DistrictStatus } from '../../worldState'
@@ -32,6 +33,8 @@ export interface TerminalViewProps {
   npc?: NpcConfig
   /** The companion's own authored greeting/context line, reused as-is when present. */
   npcMessage?: string
+  /** First Mission UX pass — threaded to MissionPanel/SqlEditorPanel unchanged; see their own prop docs. */
+  difficultyLevel?: DifficultyLevel
 }
 
 /** How long the completion beat plays — short enough to feel snappy, long enough to register as an event. */
@@ -99,6 +102,7 @@ export function TerminalView({
   onReturnToWorld,
   npc,
   npcMessage,
+  difficultyLevel,
 }: TerminalViewProps) {
   const glowColor = getDistrictStatusColor(coreStatus)
   const isCelebrating = useCompletionCelebration(status.phase)
@@ -140,7 +144,6 @@ export function TerminalView({
           {destinationProgress.completed}/{destinationProgress.total}
         </span>
       </div>
-      <ArchiveIntro mission={mission} npc={npc} npcMessage={npcMessage} />
       <div className={styles.scrollArea}>
         <MissionPanel
           mission={mission}
@@ -152,8 +155,15 @@ export function TerminalView({
           completionPercentage={completionPercentage}
           contentStatus={contentStatus}
           onContinue={onContinue}
+          difficultyLevel={difficultyLevel}
         />
-        <SqlEditorPanel status={status} onRun={onRun} onRetry={onRetry} />
+        <SqlEditorPanel status={status} onRun={onRun} onRetry={onRetry} difficultyLevel={difficultyLevel} />
+        {/* First Mission UX pass — Mera's greeting is real story, but it's
+            also the "long lore copy" the first-mission UX fix specifically
+            calls out to de-emphasize: it moved from ahead of the action to
+            after it, so it never competes with goal/instruction/input/Run
+            for the first viewport. Still fully present, just not first. */}
+        <ArchiveIntro mission={mission} npc={npc} npcMessage={npcMessage} />
       </div>
     </div>
   )

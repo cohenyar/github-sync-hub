@@ -1,13 +1,22 @@
 import { useState, type CSSProperties, type FormEvent } from 'react'
 import { he } from '../i18n'
 import { Button } from '../platform/ui'
+import type { DifficultyLevel } from '../progression/types'
 import { PLAYER_AVATAR_PRESETS } from '../worldScene/logic/playerAppearance'
 import styles from './ProfileCreation.module.css'
+
+const DIFFICULTY_OPTIONS: ReadonlyArray<{ level: DifficultyLevel; label: string; description: string }> = [
+  { level: 1, label: he.difficultyLevel1Label, description: he.difficultyLevel1Description },
+  { level: 2, label: he.difficultyLevel2Label, description: he.difficultyLevel2Description },
+  { level: 3, label: he.difficultyLevel3Label, description: he.difficultyLevel3Description },
+]
 
 export interface ProfileCreationProps {
   initialName?: string
   initialAvatarId?: string
-  onSubmit: (name: string, avatarId: string) => void
+  /** First Mission UX pass — defaults to 1 (Easy), the same safe default used everywhere else a save has no stored value yet (see getDifficultyLevel). */
+  initialDifficultyLevel?: DifficultyLevel
+  onSubmit: (name: string, avatarId: string, difficultyLevel: DifficultyLevel) => void
   /** Present only in "edit" mode (reopened from the settings/account menu for an existing profile) — first-time creation has no way to dismiss without submitting. */
   onCancel?: () => void
 }
@@ -20,9 +29,16 @@ export interface ProfileCreationProps {
  * same optional-field-with-fallback convention as every other Meridian 1.3
  * addition, so this is purely additive to the save shape.
  */
-export function ProfileCreation({ initialName = '', initialAvatarId, onSubmit, onCancel }: ProfileCreationProps) {
+export function ProfileCreation({
+  initialName = '',
+  initialAvatarId,
+  initialDifficultyLevel,
+  onSubmit,
+  onCancel,
+}: ProfileCreationProps) {
   const [name, setName] = useState(initialName)
   const [avatarId, setAvatarId] = useState(initialAvatarId ?? PLAYER_AVATAR_PRESETS[0].id)
+  const [difficultyLevel, setDifficultyLevel] = useState<DifficultyLevel>(initialDifficultyLevel ?? 1)
   const [showError, setShowError] = useState(false)
   const isEditing = Boolean(onCancel)
 
@@ -33,7 +49,7 @@ export function ProfileCreation({ initialName = '', initialAvatarId, onSubmit, o
       setShowError(true)
       return
     }
-    onSubmit(trimmed, avatarId)
+    onSubmit(trimmed, avatarId, difficultyLevel)
   }
 
   return (
@@ -80,6 +96,25 @@ export function ProfileCreation({ initialName = '', initialAvatarId, onSubmit, o
               onClick={() => setAvatarId(preset.id)}
               aria-label={preset.label}
             />
+          ))}
+        </div>
+
+        <span className={styles.fieldLabel}>{he.difficultySelectorTitle}</span>
+        <div className={styles.difficultyColumn} role="radiogroup" aria-label={he.difficultySelectorTitle}>
+          {DIFFICULTY_OPTIONS.map((option) => (
+            <button
+              key={option.level}
+              type="button"
+              role="radio"
+              aria-checked={difficultyLevel === option.level}
+              data-testid={`difficulty-option-${option.level}`}
+              data-selected={difficultyLevel === option.level}
+              className={styles.difficultyOption}
+              onClick={() => setDifficultyLevel(option.level)}
+            >
+              <span className={styles.difficultyOptionLabel}>{option.label}</span>
+              <span className={styles.difficultyOptionDescription}>{option.description}</span>
+            </button>
           ))}
         </div>
 

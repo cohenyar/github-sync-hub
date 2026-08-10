@@ -38,4 +38,7 @@ export const firstContactMission: MissionConfig = {
     'מוקד הרשומות עיוור. במרידיאן יש תושבים, אך העיר עדיין לא רואה אותם.\n' +
     'שאל/י את מרשם התושבים והעלה/י את האות הראשון.',
   hintHe: 'רמז: תצטרך/י להביא את כל השורות מטבלת citizens.',
+  // First Mission UX pass — the concrete, literal action, distinct from the
+  // narrative goal/prompt above: exactly what to type, not just why.
+  instructionHe: 'כתבו פקודת SQL שמציגה את רשימת התושבים.',
 }

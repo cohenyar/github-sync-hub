@@ -109,13 +109,30 @@ describe('SqlEditorPanel', () => {
     expect(screen.getByText(he.fail)).toBeInTheDocument()
   })
 
-  // Playtest fix pass (issue 5) — a generic, non-spoiler syntax example is
-  // always visible before the player's first attempt, not only after a
-  // failure.
-  it('always shows a generic syntax example hint, distinct from the mission\'s own reference query', () => {
-    render(<SqlEditorPanel status={status()} onRun={vi.fn()} />)
+  // Playtest fix pass (issue 5) — a generic, non-spoiler syntax example.
+  // First Mission UX pass — now Easy-only (difficultyLevel 1); see the
+  // difficulty describe block below for Medium/Hard/omitted.
+  it('shows the generic syntax example hint at Easy difficulty, distinct from the mission\'s own reference query', () => {
+    render(<SqlEditorPanel status={status()} onRun={vi.fn()} difficultyLevel={1} />)
     const hint = screen.getByTestId('sql-example-hint')
     expect(hint).toHaveTextContent(he.sqlExampleHint)
     expect(hint).not.toHaveTextContent(mission.referenceSql)
+  })
+
+  describe('First Mission UX pass — difficulty-gated example visibility', () => {
+    it('hides the example hint at Medium difficulty', () => {
+      render(<SqlEditorPanel status={status()} onRun={vi.fn()} difficultyLevel={2} />)
+      expect(screen.queryByTestId('sql-example-hint')).not.toBeInTheDocument()
+    })
+
+    it('hides the example hint at Hard difficulty', () => {
+      render(<SqlEditorPanel status={status()} onRun={vi.fn()} difficultyLevel={3} />)
+      expect(screen.queryByTestId('sql-example-hint')).not.toBeInTheDocument()
+    })
+
+    it('hides the example hint when no difficultyLevel is given (every existing caller predating this prop)', () => {
+      render(<SqlEditorPanel status={status()} onRun={vi.fn()} />)
+      expect(screen.queryByTestId('sql-example-hint')).not.toBeInTheDocument()
+    })
   })
 })

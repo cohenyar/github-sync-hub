@@ -1,8 +1,15 @@
 import { useEffect, useRef, useState, type CSSProperties, type MouseEvent } from 'react'
 import { he } from '../i18n'
 import { Button } from '../platform/ui'
+import type { DifficultyLevel } from '../progression/types'
 import { getPlayerAvatarPreset } from '../worldScene/logic/playerAppearance'
 import styles from './SettingsMenu.module.css'
+
+const DIFFICULTY_BUTTONS: ReadonlyArray<{ level: DifficultyLevel; label: string }> = [
+  { level: 1, label: he.difficultyLevel1Label },
+  { level: 2, label: he.difficultyLevel2Label },
+  { level: 3, label: he.difficultyLevel3Label },
+]
 
 /**
  * Browsers set MouseEvent.detail to 0 for a click synthesized by a keyboard
@@ -36,6 +43,9 @@ export interface SettingsMenuProps {
   playerName?: string
   playerAvatarId?: string
   onEditProfile: () => void
+  /** First Mission UX pass — defaults to 1 (Easy) when omitted, same as everywhere else a save has no stored value (see getDifficultyLevel). */
+  difficultyLevel?: DifficultyLevel
+  onSelectDifficulty: (level: DifficultyLevel) => void
 }
 
 /**
@@ -58,6 +68,8 @@ export function SettingsMenu({
   playerName,
   playerAvatarId,
   onEditProfile,
+  difficultyLevel,
+  onSelectDifficulty,
 }: SettingsMenuProps) {
   const [isOpen, setIsOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -138,6 +150,30 @@ export function SettingsMenu({
               <span className={styles.profileEditLabel}>{he.profileEditButtonLabel}</span>
             </button>
           )}
+
+          {/* First Mission UX pass — always changeable here, independent of
+              where it was first chosen (Profile Creation). Never resets
+              progress: onSelectDifficulty only ever touches difficultyLevel. */}
+          <div className={styles.difficultyRow} role="radiogroup" aria-label={he.difficultySettingsLabel}>
+            <span className={styles.difficultyRowLabel}>{he.difficultySettingsLabel}</span>
+            <div className={styles.difficultyOptions}>
+              {DIFFICULTY_BUTTONS.map((option) => (
+                <button
+                  key={option.level}
+                  type="button"
+                  role="radio"
+                  aria-checked={(difficultyLevel ?? 1) === option.level}
+                  data-testid={`difficulty-level-${option.level}-button`}
+                  data-selected={(difficultyLevel ?? 1) === option.level}
+                  className={styles.difficultyButton}
+                  onClick={() => onSelectDifficulty(option.level)}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <Button
             variant="ghost"
             size="md"

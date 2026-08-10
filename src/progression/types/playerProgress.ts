@@ -2,6 +2,9 @@ import type { CampaignProgressState } from './campaignProgressState'
 import type { MissionCompletionRecord } from './missionCompletionRecord'
 import type { UnlockState } from './unlockState'
 
+/** Learning difficulty — scaffolding/help only, never a different campaign (see setDifficultyLevel / getDifficultyLevel). */
+export type DifficultyLevel = 1 | 2 | 3
+
 /**
  * The Progression Service's single source of truth for campaign advancement.
  * completedMissionIds is kept alongside completions as a flattened
@@ -49,4 +52,13 @@ export interface PlayerProgress {
    * id resolves to the default preset, never a crash.
    */
   playerAvatarId?: string
+  /**
+   * First Mission UX pass — learning difficulty (scaffolding/help amount),
+   * never a different campaign: same missions, same progression order, same
+   * unlock rules, same story. Optional, same fallback-to-default convention
+   * as every other field on this type — absent (an old save, or a save from
+   * before this field existed) resolves to 1 everywhere via
+   * getDifficultyLevel, never a crash or a required migration step.
+   */
+  difficultyLevel?: DifficultyLevel
 }

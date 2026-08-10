@@ -21,4 +21,12 @@ export interface MissionConfig {
    * "תן לי רמז" button. Deliberately never the referenceSql itself.
    */
   hintHe?: string
+  /**
+   * First Mission UX pass — a short, always-visible, literally actionable
+   * instruction ("what to actually type"), distinct from `promptHe` (scene-
+   * setting narrative) and `hintHe` (an on-demand nudge). Optional: a mission
+   * without one simply renders no instruction line, unchanged from before
+   * this field existed.
+   */
+  instructionHe?: string
 }
