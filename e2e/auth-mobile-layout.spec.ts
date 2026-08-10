@@ -58,10 +58,9 @@ test.describe('AuthButton mobile layout (H2 fix) — signed-out state', () => {
     await expect(trigger).toBeVisible()
     await expect(trigger).toHaveAttribute('aria-expanded', 'false')
 
-    // Collapsed by default — the three actions exist but are not shown.
+    // Collapsed by default — the two actions exist but are not shown.
     await expect(page.getByTestId('google-sign-in-button')).not.toBeVisible()
     await expect(page.getByTestId('auth-page-link')).not.toBeVisible()
-    await expect(page.getByTestId('email-auth-toggle-button')).not.toBeVisible()
     // The guest badge is never collapsed — it's a status, not an action.
     await expect(page.getByTestId('guest-mode-badge')).toBeVisible()
 
@@ -79,30 +78,19 @@ test.describe('AuthButton mobile layout (H2 fix) — signed-out state', () => {
 
     const google = page.getByTestId('google-sign-in-button')
     const authLink = page.getByTestId('auth-page-link')
-    const emailToggle = page.getByTestId('email-auth-toggle-button')
     await expect(google).toBeVisible()
     await expect(authLink).toBeVisible()
-    await expect(emailToggle).toBeVisible()
 
-    // Touch targets: the two buttons meet 44px; the plain text link is an
-    // inline affordance next to them (same as desktop), not a primary CTA.
+    // Touch target: the Google button meets 44px; the plain text link is an
+    // inline affordance next to it (same as desktop), not a primary CTA.
     expect((await google.boundingBox())!.height).toBeGreaterThanOrEqual(44)
-    expect((await emailToggle.boundingBox())!.height).toBeGreaterThanOrEqual(44)
 
     // Nothing revealed sits off-screen at the narrowest required width.
-    for (const control of [google, authLink, emailToggle]) {
+    for (const control of [google, authLink]) {
       const box = (await control.boundingBox())!
       expect(box.x).toBeGreaterThanOrEqual(0)
       expect(box.x + box.width).toBeLessThanOrEqual(320)
     }
-
-    // The email toggle still opens the real sign-in/sign-up form, nested
-    // inside the same popover — auth logic itself is untouched by this fix.
-    await emailToggle.click()
-    await expect(page.getByTestId('email-password-form')).toBeVisible()
-    const formBox = (await page.getByTestId('email-password-form').boundingBox())!
-    expect(formBox.x).toBeGreaterThanOrEqual(0)
-    expect(formBox.x + formBox.width).toBeLessThanOrEqual(320)
   })
 
   test('does not overlap the settings, archive, or HUD controls sharing the same corner', async ({ page }) => {
@@ -156,7 +144,6 @@ test.describe('AuthButton mobile layout (H2 fix) — signed-out state', () => {
     await expect(page.getByTestId('guest-mode-badge')).toBeVisible()
     await expect(page.getByTestId('google-sign-in-button')).toBeVisible()
     await expect(page.getByTestId('auth-page-link')).toBeVisible()
-    await expect(page.getByTestId('email-auth-toggle-button')).toBeVisible()
     await expect(page.getByTestId('auth-mobile-menu-trigger')).not.toBeVisible()
     expect(await hasNoHorizontalOverflow(page)).toBe(true)
   })

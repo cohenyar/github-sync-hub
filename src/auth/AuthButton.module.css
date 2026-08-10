@@ -137,20 +137,6 @@
   transform: scale(0.98);
 }
 
-.emailToggle {
-  display: inline-flex;
-  align-items: center;
-  /* Mobile UX pass — grows the tap area to 44px without growing the visible
-     link text (padding is invisible on this transparent-background control). */
-  min-height: 44px;
-  padding: 0;
-  border: none;
-  background: none;
-  color: var(--text-muted);
-  font-size: 0.78rem;
-  text-decoration: underline;
-  cursor: pointer;
-}
 
 .error {
   color: var(--danger);
@@ -224,7 +210,7 @@
   text-decoration: underline;
 }
 
-/* Mobile UX pass — H2: the signed-out Google/auth-link/email-toggle row,
+/* Mobile UX pass — H2: the signed-out Google/auth-link row,
    already fine on desktop, has no room to sit inline on a narrow viewport
    alongside the guest badge plus the archive/settings buttons sharing this
    same HUD corner. Desktop keeps exactly the current inline row (this rule
