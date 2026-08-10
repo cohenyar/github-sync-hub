@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import { he } from '../i18n'
 import { Button } from '../platform/ui'
 import styles from './AuthButton.module.css'
-import { EmailPasswordForm } from './EmailPasswordForm'
 import { GoogleIcon } from './GoogleIcon'
 import { useOptionalAuth } from './useAuth'
 
