@@ -198,21 +198,6 @@ export function AuthButton() {
         <a className={styles.authLink} href="/auth" data-testid="auth-page-link">
           {he.authGoToSignIn}
         </a>
-        <button
-          type="button"
-          className={styles.emailToggle}
-          data-testid="email-auth-toggle-button"
-          aria-haspopup="menu"
-          aria-expanded={isMenuOpen}
-          onClick={() => setIsMenuOpen((open) => !open)}
-        >
-          {he.emailAuthToggleLabel}
-        </button>
-        {isMenuOpen && (
-          <div className={styles.menu} role="menu" aria-label={he.emailAuthToggleLabel}>
-            <EmailPasswordForm onSuccess={() => setIsMenuOpen(false)} />
-          </div>
-        )}
       </div>
       {authError && (
         <span role="alert" className={styles.error} data-testid="auth-error">
