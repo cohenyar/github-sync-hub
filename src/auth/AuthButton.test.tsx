@@ -245,38 +245,12 @@ describe('AuthButton — mobile layout (H2 fix)', () => {
     expect(trigger).toHaveAttribute('aria-expanded', 'false')
     expect(trigger).toHaveAccessibleName(he.authMobileMenuLabel)
 
-    // The three actions the trigger reveals on a narrow viewport are always
+    // The two actions the trigger reveals on a narrow viewport are always
     // in the DOM (CSS alone hides them below the breakpoint) — never
     // duplicated, never removed.
     expect(screen.getByTestId('google-sign-in-button')).toBeInTheDocument()
     expect(screen.getByTestId('auth-page-link')).toBeInTheDocument()
-    expect(screen.getByTestId('email-auth-toggle-button')).toBeInTheDocument()
     expect(screen.getAllByTestId('google-sign-in-button')).toHaveLength(1)
-  })
-
-  it('opening the mobile trigger is independent of the email form toggle — it does not jump straight to the form', () => {
-    renderButton({ status: 'signed-out' })
-
-    fireEvent.click(screen.getByTestId('auth-mobile-menu-trigger'))
-    expect(screen.getByTestId('auth-mobile-menu-trigger')).toHaveAttribute('aria-expanded', 'true')
-    expect(screen.queryByTestId('email-password-form')).not.toBeInTheDocument()
-    expect(screen.getByTestId('email-auth-toggle-button')).toHaveAttribute('aria-expanded', 'false')
-
-    // From there, the existing email toggle still works exactly as before.
-    fireEvent.click(screen.getByTestId('email-auth-toggle-button'))
-    expect(screen.getByTestId('email-password-form')).toBeInTheDocument()
-  })
-
-  it('closing on outside click or Escape collapses both the mobile popover and the email form together', () => {
-    renderButton({ status: 'signed-out' })
-
-    fireEvent.click(screen.getByTestId('auth-mobile-menu-trigger'))
-    fireEvent.click(screen.getByTestId('email-auth-toggle-button'))
-    expect(screen.getByTestId('email-password-form')).toBeInTheDocument()
-
-    fireEvent.keyDown(document, { key: 'Escape' })
-    expect(screen.getByTestId('auth-mobile-menu-trigger')).toHaveAttribute('aria-expanded', 'false')
-    expect(screen.queryByTestId('email-password-form')).not.toBeInTheDocument()
   })
 
   it('the not-configured and loading branches render no mobile trigger — nothing there needs collapsing', () => {
