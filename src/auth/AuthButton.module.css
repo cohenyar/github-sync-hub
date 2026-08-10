@@ -137,20 +137,6 @@
   transform: scale(0.98);
 }
 
-.emailToggle {
-  display: inline-flex;
-  align-items: center;
-  /* Mobile UX pass — grows the tap area to 44px without growing the visible
-     link text (padding is invisible on this transparent-background control). */
-  min-height: 44px;
-  padding: 0;
-  border: none;
-  background: none;
-  color: var(--text-muted);
-  font-size: 0.78rem;
-  text-decoration: underline;
-  cursor: pointer;
-}
 
 .error {
   color: var(--danger);
