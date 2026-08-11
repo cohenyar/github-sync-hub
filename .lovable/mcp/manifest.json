@@ -1,0 +1,188 @@
+{
+  "version": 1,
+  "sdk_version": "0.26.2",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://pntmkkwrxjkjaadooxpj.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "github-sync-hub",
+      "version": "0.1.0",
+      "title": "GitHub Sync Hub"
+    },
+    "tools": [
+      {
+        "name": "get_my_profile",
+        "title": "Get my profile",
+        "description": "Return the signed-in Meridian player profile (email, role, created date).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_courses",
+        "title": "List courses",
+        "description": "List Meridian courses visible to the signed-in user, ordered by display order.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "status": {
+              "description": "Filter by course status. Drafts are admin-only.",
+              "type": "string",
+              "enum": [
+                "active",
+                "draft"
+              ]
+            },
+            "limit": {
+              "default": 50,
+              "description": "Maximum number of courses to return.",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_lessons",
+        "title": "List lessons",
+        "description": "List the lessons of one Meridian course, ordered by display order.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "course_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "description": "The course whose lessons should be listed."
+            },
+            "status": {
+              "description": "Filter by lesson status. Drafts are admin-only.",
+              "type": "string",
+              "enum": [
+                "active",
+                "draft"
+              ]
+            }
+          },
+          "required": [
+            "course_id"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_missions",
+        "title": "List missions",
+        "description": "List the missions of one Meridian lesson, including objective, task and hints.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "lesson_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "description": "The lesson whose missions should be listed."
+            },
+            "status": {
+              "description": "Filter by mission status. Drafts are admin-only.",
+              "type": "string",
+              "enum": [
+                "active",
+                "draft"
+              ]
+            }
+          },
+          "required": [
+            "lesson_id"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_course",
+        "title": "Create course",
+        "description": "Create a new Meridian course. Requires an admin account; other users are rejected by the database.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Course title, in Hebrew for player-facing content."
+            },
+            "subject": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Subject area, e.g. history, math, english."
+            },
+            "description": {
+              "description": "Short course description.",
+              "type": "string"
+            },
+            "status": {
+              "default": "draft",
+              "description": "Publish state. Defaults to draft.",
+              "type": "string",
+              "enum": [
+                "draft",
+                "active"
+              ]
+            },
+            "display_order": {
+              "default": 0,
+              "description": "Ordering position in course lists.",
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            }
+          },
+          "required": [
+            "title",
+            "subject"
+          ]
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
