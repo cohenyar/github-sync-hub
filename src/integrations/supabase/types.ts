@@ -14,6 +14,142 @@ export type Database = {
   }
   public: {
     Tables: {
+      courses: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_order: number
+          id: string
+          status: string
+          subject: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          status?: string
+          subject: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          status?: string
+          subject?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      lessons: {
+        Row: {
+          content: string | null
+          course_id: string
+          created_at: string
+          display_order: number
+          id: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content?: string | null
+          course_id: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string | null
+          course_id?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lessons_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      missions: {
+        Row: {
+          answer_config: Json | null
+          created_at: string
+          display_order: number
+          guidance_level_1: string | null
+          guidance_level_2: string | null
+          guidance_level_3: string | null
+          hint: string | null
+          id: string
+          instructions: string | null
+          lesson_id: string
+          objective: string
+          status: string
+          task: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          answer_config?: Json | null
+          created_at?: string
+          display_order?: number
+          guidance_level_1?: string | null
+          guidance_level_2?: string | null
+          guidance_level_3?: string | null
+          hint?: string | null
+          id?: string
+          instructions?: string | null
+          lesson_id: string
+          objective: string
+          status?: string
+          task?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          answer_config?: Json | null
+          created_at?: string
+          display_order?: number
+          guidance_level_1?: string | null
+          guidance_level_2?: string | null
+          guidance_level_3?: string | null
+          hint?: string | null
+          id?: string
+          instructions?: string | null
+          lesson_id?: string
+          objective?: string
+          status?: string
+          task?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "missions_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -49,7 +185,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_admin: { Args: { uid: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
