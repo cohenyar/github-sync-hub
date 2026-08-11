@@ -1,9 +1,17 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../auth'
+import { POST_AUTH_PATH_KEY } from '../auth/AuthProvider'
 import { he } from '../i18n'
 import { GoogleIcon } from '../auth/GoogleIcon'
 import styles from './AuthPage.module.css'
+
+/** Same-origin relative path only — never an absolute or protocol URL. */
+function safeNextPath(value: string | null): string | null {
+  if (!value || !value.startsWith('/') || value.startsWith('//')) return null
+  return value
+}
+
 
 type Mode = 'sign-in' | 'sign-up' | 'forgot'
 type Screen = 'form' | 'confirm-sent' | 'forgot-sent'
