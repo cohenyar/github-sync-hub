@@ -77,7 +77,7 @@ export function AppRoutes() {
         <Route path="/progress" element={<Progress />} />
         <Route path="/profile" element={<Profile />} />
         <Route
-          path="/admin"
+          path="/admin/*"
           element={
             <ProtectedAdminRoute>
               <AdminPage />

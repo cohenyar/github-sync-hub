@@ -465,6 +465,100 @@ export const he = {
   // UX diagnostic, §A/§C) — this line says so at the one place a player
   // might fear losing progress by signing out.
   signOutProgressNote: 'ההתנתקות משפיעה רק על חיבור החשבון. ההתקדמות שלך נשארת במכשיר הזה.',
+
+  // Admin CMS pass — secure admin area (src/pages/admin/**). Backend
+  // enforcement (RLS) is what actually protects the data; these strings are
+  // presentation only. Deliberately its own visual language (cleaner/more
+  // operational than the game UI), still Hebrew RTL throughout.
+  adminAreaTitle: 'אזור ניהול',
+  adminNavDashboard: 'לוח בקרה',
+  adminNavCourses: 'קורסים',
+  adminNavLessons: 'שיעורים',
+  adminNavMissions: 'משימות',
+  adminNavUsers: 'משתמשים',
+  adminNavLegacyTools: 'כלים ישנים (SQL)',
+  adminBackToGame: 'חזרה למשחק',
+  adminOpenMenuLabel: 'תפריט ניהול',
+
+  adminDashboardTitle: 'לוח בקרה',
+  adminDashboardSubtitle: 'תמונת מצב של התוכן והמשתמשים במרידיאן, מבוססת על נתונים אמיתיים בלבד.',
+  adminMetricTotalUsers: 'משתמשים רשומים',
+  adminMetricTotalCourses: 'קורסים',
+  adminMetricTotalLessons: 'שיעורים',
+  adminMetricTotalMissions: 'משימות',
+  adminMetricActiveCourses: 'קורסים פעילים',
+  adminMetricActiveLessons: 'שיעורים פעילים',
+  adminMetricActiveMissions: 'משימות פעילות',
+
+  adminLoadingMessage: 'טוען…',
+  adminRetryAction: 'ניסיון נוסף',
+  adminEmptyCourses: 'אין עדיין קורסים. אפשר להוסיף קורס ראשון.',
+  adminEmptyLessons: 'אין עדיין שיעורים בקורס הזה.',
+  adminEmptyMissions: 'אין עדיין משימות בשיעור הזה.',
+  adminEmptyUsers: 'אין משתמשים להצגה.',
+  adminSelectCoursePrompt: 'בחר/י קורס כדי לראות את השיעורים שלו.',
+  adminSelectLessonPrompt: 'בחר/י שיעור כדי לראות את המשימות שלו.',
+
+  adminAddCourse: 'קורס חדש',
+  adminAddLesson: 'שיעור חדש',
+  adminAddMission: 'משימה חדשה',
+  adminEditAction: 'עריכה',
+  adminDeleteAction: 'מחיקה',
+  adminSaveAction: 'שמירה',
+  adminCancelAction: 'ביטול',
+  adminSaveSuccessMessage: 'נשמר בהצלחה.',
+  adminSaveErrorMessage: 'השמירה נכשלה. אפשר לנסות שוב.',
+  adminDeleteConfirmTitle: 'למחוק לצמיתות?',
+  adminDeleteConfirmBody: 'הפעולה לא ניתנת לביטול.',
+  adminDeleteConfirmYes: 'כן, מחק/י',
+  adminUnsavedChangesWarning: 'יש שינויים שלא נשמרו. לצאת בכל זאת?',
+  adminUnsavedChangesBody: 'השינויים שביצעת לא יישמרו.',
+  adminUnsavedChangesStay: 'להמשיך לערוך',
+  adminUnsavedChangesLeave: 'לצאת בלי לשמור',
+
+  adminFieldTitle: 'כותרת',
+  adminFieldDescription: 'תיאור קצר',
+  adminFieldSubject: 'נושא',
+  adminFieldStatus: 'סטטוס',
+  adminStatusDraft: 'טיוטה',
+  adminStatusActive: 'פעיל',
+  adminFieldDisplayOrder: 'סדר תצוגה',
+  adminFieldContent: 'תוכן / הסבר',
+  adminFieldCourse: 'קורס',
+  adminFieldLesson: 'שיעור',
+  adminFieldObjective: 'מטרה',
+  adminFieldInstructions: 'הוראות',
+  adminFieldTask: 'שאלה / משימה',
+  adminFieldHint: 'רמז',
+  adminFieldGuidanceLevel1: 'הכוונה לרמת קושי 1 (קל)',
+  adminFieldGuidanceLevel2: 'הכוונה לרמת קושי 2 (בינוני)',
+  adminFieldGuidanceLevel3: 'הכוונה לרמת קושי 3 (קשה)',
+  adminFieldAnswerType: 'סוג בדיקה',
+  adminAnswerTypeExactText: 'תשובה טקסטואלית',
+  adminAnswerTypeMultipleChoice: 'רב-בחירה',
+  adminFieldAcceptedAnswers: 'תשובות מתקבלות (אחת בכל שורה)',
+  adminFieldChoices: 'אפשרויות (אחת בכל שורה)',
+  adminFieldCorrectChoice: 'האפשרות הנכונה',
+
+  adminValidationRequired: 'שדה זה הוא שדה חובה.',
+  adminValidationSelectCourse: 'יש לבחור קורס.',
+  adminValidationSelectLesson: 'יש לבחור שיעור.',
+  adminValidationNeedAnswer: 'יש להזין לפחות תשובה נכונה אחת.',
+  adminValidationNeedChoices: 'יש להזין לפחות שתי אפשרויות.',
+
+  adminUsersColumnName: 'שם',
+  adminUsersColumnEmail: 'אימייל',
+  adminUsersColumnRole: 'תפקיד',
+  adminUsersColumnJoined: 'תאריך הרשמה',
+  adminRoleStudent: 'תלמיד/ה',
+  adminRoleAdmin: 'מנהל/ת',
+  adminUsersProgressNote: 'התקדמות משחק נשמרת רק במכשיר של השחקן/ית ואינה זמינה לצפייה כאן.',
+
+  adminAccessDeniedMessage: 'הגישה מוגבלת למנהלי המערכת.',
+
+  // CMS API layer (src/cms/api/**) — never the raw Postgres/PostgREST message.
+  cmsGenericError: 'הפעולה נכשלה. אפשר לנסות שוב.',
+  cmsUnavailableMessage: 'לא ניתן להתחבר לשירות התוכן כרגע.',
 } as const
 
 export type HebrewStringKey = keyof typeof he

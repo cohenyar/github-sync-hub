@@ -26,6 +26,17 @@
  * tracks its resolution itself, reactively, via useState/useEffect.
  */
 import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '../integrations/supabase/types'
+
+/**
+ * Admin CMS pass — every export below now carries the generated `Database`
+ * type (it didn't before; every call site was untyped `.from(string)`).
+ * Purely a compile-time addition: the runtime client is unchanged, and
+ * `Database` already covers every existing table (`profiles`) plus the new
+ * `courses`/`lessons`/`missions`, so no existing caller's types narrow or
+ * break — they simply gain checking they didn't have.
+ */
+type CloudClient = SupabaseClient<Database>
 
 /**
  * True when Lovable Cloud env values reached this build. When false, the whole
@@ -103,7 +114,7 @@ function classifyCloudClientFailure(error: unknown): { stage: CloudClientFailure
 export async function loadCloudClient(
   importClientModule: () => Promise<{ supabase: unknown }> = () => import('../integrations/supabase/client'),
   configured: boolean = isSupabaseConfigured,
-): Promise<SupabaseClient | null> {
+): Promise<CloudClient | null> {
   // Playtest diagnosis pass — logged unconditionally, success or failure,
   // so the exact failure stage is visible in Preview's own devtools console
   // without needing the 8s boot-stall fallback UI (this path resolves fast;
@@ -127,7 +138,7 @@ export async function loadCloudClient(
         attempt,
         hasClient: Boolean((mod as { supabase?: unknown } | undefined)?.supabase),
       })
-      return mod.supabase as unknown as SupabaseClient
+      return mod.supabase as unknown as CloudClient
     } catch (error) {
       const isLastAttempt = attempt === CLOUD_CLIENT_LOAD_ATTEMPTS
       // Deliberately worded differently from the "missing" warning above —
@@ -159,9 +170,9 @@ export async function loadCloudClient(
   return null
 }
 
-let latestCloudClientPromise: Promise<SupabaseClient | null> = loadCloudClient()
+let latestCloudClientPromise: Promise<CloudClient | null> = loadCloudClient()
 
-export const cloudClientPromise: Promise<SupabaseClient | null> = latestCloudClientPromise
+export const cloudClientPromise: Promise<CloudClient | null> = latestCloudClientPromise
 
 /**
  * Re-attempts the one-shot client load after it settled to null.
@@ -172,12 +183,12 @@ export const cloudClientPromise: Promise<SupabaseClient | null> = latestCloudCli
  * loader (still one client, still no createClient anywhere else) so a
  * transient CDN/network blip inside Preview is recoverable in place.
  */
-export function retryCloudClient(): Promise<SupabaseClient | null> {
+export function retryCloudClient(): Promise<CloudClient | null> {
   latestCloudClientPromise = loadCloudClient()
   return latestCloudClientPromise
 }
 
 /** The most recent load attempt — the initial one, or the latest retry. */
-export function getCloudClient(): Promise<SupabaseClient | null> {
+export function getCloudClient(): Promise<CloudClient | null> {
   return latestCloudClientPromise
 }

@@ -1,0 +1,112 @@
+// @vitest-environment jsdom
+import { fireEvent, render, screen } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { he } from '../../i18n'
+
+const mocks = vi.hoisted(() => ({
+  create: vi.fn(async () => ({ data: null, error: null })),
+  update: vi.fn(async () => ({ data: null, error: null })),
+  remove: vi.fn(async () => ({ data: null, error: null })),
+}))
+
+const COURSE = {
+  id: 'c1',
+  title: 'קורס לדוגמה',
+  description: null,
+  subject: 'history',
+  status: 'active' as const,
+  displayOrder: 1,
+  createdAt: '2026-01-01T00:00:00Z',
+  updatedAt: '2026-01-01T00:00:00Z',
+}
+
+vi.mock('../../cms', () => ({
+  useCourses: () => ({
+    state: { status: 'ready', items: [COURSE] },
+    reload: vi.fn(),
+    create: mocks.create,
+    update: mocks.update,
+    remove: mocks.remove,
+  }),
+}))
+
+import { AdminCourses } from './AdminCourses'
+
+function renderPage() {
+  return render(
+    <MemoryRouter>
+      <AdminCourses />
+    </MemoryRouter>,
+  )
+}
+
+describe('AdminCourses', () => {
+  beforeEach(() => {
+    mocks.create.mockClear()
+    mocks.update.mockClear()
+    mocks.remove.mockClear()
+  })
+
+  it('lists existing courses with their status', () => {
+    renderPage()
+    expect(screen.getByText('קורס לדוגמה')).toBeInTheDocument()
+    expect(screen.getByText(he.adminStatusActive)).toBeInTheDocument()
+  })
+
+  it('validates the required title before calling create', async () => {
+    renderPage()
+    fireEvent.click(screen.getByText(he.adminAddCourse))
+    fireEvent.click(screen.getByText(he.adminSaveAction))
+    // Both title and subject are empty, so the same required-field message
+    // renders twice — assert presence, not a single unique match.
+    expect((await screen.findAllByText(he.adminValidationRequired)).length).toBeGreaterThan(0)
+    expect(mocks.create).not.toHaveBeenCalled()
+  })
+
+  it('creates a course once required fields are filled in', async () => {
+    renderPage()
+    fireEvent.click(screen.getByText(he.adminAddCourse))
+    fireEvent.change(screen.getByLabelText(he.adminFieldTitle), { target: { value: 'קורס חדש' } })
+    fireEvent.change(screen.getByLabelText(he.adminFieldSubject), { target: { value: 'history' } })
+    fireEvent.click(screen.getByText(he.adminSaveAction))
+    expect(mocks.create).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'קורס חדש', subject: 'history', status: 'draft' }),
+    )
+    expect(await screen.findByText(he.adminSaveSuccessMessage)).toBeInTheDocument()
+  })
+
+  it('warns before discarding unsaved changes instead of closing silently', () => {
+    renderPage()
+    fireEvent.click(screen.getByText(he.adminAddCourse))
+    fireEvent.change(screen.getByLabelText(he.adminFieldTitle), { target: { value: 'טיוטה' } })
+    fireEvent.click(screen.getByText(he.adminCancelAction))
+    expect(screen.getByText(he.adminUnsavedChangesWarning)).toBeInTheDocument()
+    expect(mocks.create).not.toHaveBeenCalled()
+  })
+
+  it('closes without a warning when there are no unsaved changes', () => {
+    renderPage()
+    fireEvent.click(screen.getByText(he.adminAddCourse))
+    fireEvent.click(screen.getByText(he.adminCancelAction))
+    expect(screen.queryByText(he.adminUnsavedChangesWarning)).not.toBeInTheDocument()
+    expect(screen.queryByTestId('course-form')).not.toBeInTheDocument()
+  })
+
+  it('asks for confirmation before deleting a course, and only deletes on confirm', () => {
+    renderPage()
+    fireEvent.click(screen.getByText(he.adminDeleteAction))
+    expect(screen.getByText(he.adminDeleteConfirmTitle)).toBeInTheDocument()
+    expect(mocks.remove).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByText(he.adminDeleteConfirmYes))
+    expect(mocks.remove).toHaveBeenCalledWith('c1')
+  })
+
+  it('links each course row to its lessons', () => {
+    renderPage()
+    expect(screen.getByRole('link', { name: he.adminNavLessons })).toHaveAttribute(
+      'href',
+      '/admin/courses/c1/lessons',
+    )
+  })
+})
