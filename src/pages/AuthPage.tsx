@@ -1,9 +1,17 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../auth'
+import { POST_AUTH_PATH_KEY } from '../auth/AuthProvider'
 import { he } from '../i18n'
 import { GoogleIcon } from '../auth/GoogleIcon'
 import styles from './AuthPage.module.css'
+
+/** Same-origin relative path only — never an absolute or protocol URL. */
+function safeNextPath(value: string | null): string | null {
+  if (!value || !value.startsWith('/') || value.startsWith('//')) return null
+  return value
+}
+
 
 type Mode = 'sign-in' | 'sign-up' | 'forgot'
 type Screen = 'form' | 'confirm-sent' | 'forgot-sent'
@@ -31,6 +39,8 @@ function passwordPolicyError(password: string): string | null {
 export function AuthPage() {
   const auth = useAuth()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const nextPath = safeNextPath(searchParams.get('next'))
   const [mode, setMode] = useState<Mode>('sign-in')
   const [screen, setScreen] = useState<Screen>('form')
   const [email, setEmail] = useState('')
@@ -42,9 +52,22 @@ export function AuthPage() {
   const [message, setMessage] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
+  // A `?next=` target (used by the OAuth consent route) has to survive the
+  // Google round trip and the email-confirmation link too, so it is stashed
+  // where PostAuthRedirect replays it once the session exists.
   useEffect(() => {
-    if (auth.status === 'signed-in') navigate('/dashboard', { replace: true })
-  }, [auth.status, navigate])
+    if (!nextPath) return
+    try {
+      sessionStorage.setItem(POST_AUTH_PATH_KEY, nextPath)
+    } catch {
+      // Storage unavailable — the in-page redirect below still works.
+    }
+  }, [nextPath])
+
+  useEffect(() => {
+    if (auth.status === 'signed-in') navigate(nextPath ?? '/dashboard', { replace: true })
+  }, [auth.status, navigate, nextPath])
+
 
   function switchMode(next: Mode) {
     setMode(next)
