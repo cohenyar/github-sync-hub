@@ -31,6 +31,8 @@ const Profile = lazy(() => import('./pages/Profile').then((m) => ({ default: m.P
 const DesignSystemPage = lazy(() =>
   import('./pages/DesignSystemPage').then((m) => ({ default: m.DesignSystemPage })),
 )
+const OAuthConsent = lazy(() => import('./pages/OAuthConsent'))
+
 
 /**
  * Batch 3A.2: the only place that reads the Dashboard's `?path=` query
@@ -70,6 +72,9 @@ export function AppRoutes() {
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        {/* OAuth 2.1 consent screen for MCP clients connecting to this app. */}
+        <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
+
         <Route path="/world" element={<WorldRoute />} />
         <Route path="/courses" element={<Courses />} />
         <Route path="/courses/:courseId" element={<CourseDetail />} />
