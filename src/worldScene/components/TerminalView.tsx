@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import type { CampaignSummary } from '../../campaign/types'
-import { MissionPanel, SqlEditorPanel } from '../../components'
-import type { MissionPhase, MissionStatus } from '../../missions/missionManager'
+import { MissionPanel, QuestionAnswerPanel } from '../../components'
 import type { MissionConfig } from '../../missions/types'
+import type { QuestionMissionPhase, QuestionMissionStatus } from '../../missions/useQuestionMission'
 import type { NpcConfig } from '../../npcs'
 import type { DifficultyLevel } from '../../progression/types'
 import type { ContentStatus } from '../../unlocks'
@@ -14,9 +14,8 @@ import styles from './TerminalView.module.css'
 
 export interface TerminalViewProps {
   mission: MissionConfig
-  status: MissionStatus
-  onRun: (sql: string) => void
-  onRetry?: () => void
+  status: QuestionMissionStatus
+  onSubmitAnswer: (answer: string) => void
   campaignSummary: CampaignSummary
   /** The active mission's own position in the campaign (1-based) — distinct from campaignSummary's furthest-incomplete pointer, which can point at a different mission once an earlier one is revisited. */
   activeMissionOrder?: number
@@ -33,7 +32,7 @@ export interface TerminalViewProps {
   npc?: NpcConfig
   /** The companion's own authored greeting/context line, reused as-is when present. */
   npcMessage?: string
-  /** First Mission UX pass — threaded to MissionPanel/SqlEditorPanel unchanged; see their own prop docs. */
+  /** First Mission UX pass — threaded to MissionPanel/QuestionAnswerPanel unchanged; see their own prop docs. */
   difficultyLevel?: DifficultyLevel
 }
 
@@ -46,7 +45,7 @@ const CELEBRATION_DURATION_MS = 1200
  * revisit shouldn't replay the beat), and not derived from status alone
  * (which stays 'completed' forever after).
  */
-function useCompletionCelebration(phase: MissionPhase): boolean {
+function useCompletionCelebration(phase: QuestionMissionPhase): boolean {
   const [isCelebrating, setIsCelebrating] = useState(false)
   const previousPhaseRef = useRef(phase)
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -72,10 +71,10 @@ function useCompletionCelebration(phase: MissionPhase): boolean {
 /**
  * Frames the Records Core's terminal as a place inside the world rather
  * than the whole application screen. Reuses MissionPanel and
- * SqlEditorPanel completely unchanged — Mission Runtime, the Verifier, and
- * every other engine behind them are untouched; only the surrounding frame
- * is new. The ambient glow and header status pill track coreStatus live —
- * if a query passes and the Core's status changes while this view is still
+ * QuestionAnswerPanel completely unchanged — Mission Runtime and every
+ * other engine behind them are untouched; only the surrounding frame is
+ * new. The ambient glow and header status pill track coreStatus live — if
+ * an answer passes and the Core's status changes while this view is still
  * open, the room itself visibly reflects it, using the same status color
  * language as the plaza's district markers and HUD.
  *
@@ -87,8 +86,7 @@ function useCompletionCelebration(phase: MissionPhase): boolean {
 export function TerminalView({
   mission,
   status,
-  onRun,
-  onRetry,
+  onSubmitAnswer,
   campaignSummary,
   activeMissionOrder,
   nextMission,
@@ -157,11 +155,11 @@ export function TerminalView({
           onContinue={onContinue}
           difficultyLevel={difficultyLevel}
         />
-        <SqlEditorPanel status={status} onRun={onRun} onRetry={onRetry} difficultyLevel={difficultyLevel} />
+        <QuestionAnswerPanel mission={mission} status={status} onSubmit={onSubmitAnswer} difficultyLevel={difficultyLevel} />
         {/* First Mission UX pass — Mera's greeting is real story, but it's
             also the "long lore copy" the first-mission UX fix specifically
             calls out to de-emphasize: it moved from ahead of the action to
-            after it, so it never competes with goal/instruction/input/Run
+            after it, so it never competes with goal/instruction/input/submit
             for the first viewport. Still fully present, just not first. */}
         <ArchiveIntro mission={mission} npc={npc} npcMessage={npcMessage} />
       </div>

@@ -6,12 +6,6 @@ export interface AdminMissionItem {
   goal: string
 }
 
-export interface AdminSqlReferenceAnswerItem {
-  missionId: string
-  missionTitle: string
-  referenceSql: string
-}
-
 export interface AdminNpcItem {
   id: string
   name: string

@@ -1,11 +1,18 @@
-import { expect, runSql, test, verdictIsPass, waitForMissionReady } from './helpers.js'
+import {
+  expect,
+  questionFeedbackIsPass,
+  submitMultipleChoiceAnswer,
+  submitShortTextAnswer,
+  test,
+  waitForQuestionPanel,
+} from './helpers.js'
 
 test.describe('NPC world map integration', () => {
   test('always-unlocked NPCs are visible from the start; the gated one appears only after its mission completes', async ({
     page,
   }) => {
     await page.goto('/world')
-    await waitForMissionReady(page)
+    await waitForQuestionPanel(page)
 
     await expect(page.locator('[data-npc-id="archivist-mera"]')).toBeVisible()
     await expect(page.locator('[data-npc-id="north-warden"]')).toBeVisible()
@@ -14,8 +21,9 @@ test.describe('NPC world map integration', () => {
     // Tomas Reyeth (east-broker) is gated behind completing First Contact — hidden at start.
     await expect(page.locator('[data-npc-id="east-broker"]')).not.toBeVisible()
 
-    await runSql(page, 'SELECT * FROM citizens;')
-    await verdictIsPass(page)
+    // First Contact: "הקיסר הראשון" — option 0 (אוגוסטוס) is correct.
+    await submitMultipleChoiceAnswer(page, 0)
+    await questionFeedbackIsPass(page)
 
     await expect(page.locator('[data-npc-id="east-broker"]')).toBeVisible()
 
@@ -27,12 +35,13 @@ test.describe('NPC world map integration', () => {
 
   test('the progression-percentage-gated NPC appears only once overall progress reaches 40%', async ({ page }) => {
     await page.goto('/world')
-    await waitForMissionReady(page)
+    await waitForQuestionPanel(page)
 
     await expect(page.locator('[data-npc-id="north-analyst"]')).not.toBeVisible()
 
-    await runSql(page, 'SELECT * FROM citizens;')
-    await verdictIsPass(page)
+    // First Contact: "הקיסר הראשון" — option 0 (אוגוסטוס) is correct.
+    await submitMultipleChoiceAnswer(page, 0)
+    await questionFeedbackIsPass(page)
     await expect(page.getByTestId('progress-badge')).toHaveAttribute('data-percentage', '17')
 
     // Still hidden at 17% — this NPC is gated behind 40%, not First Contact specifically.
@@ -42,17 +51,19 @@ test.describe('NPC world map integration', () => {
     // the 40% threshold (a percentage-relative condition, not tied to one
     // specific mission).
     await page.getByTestId('mission-option-district-ties').click()
-    await waitForMissionReady(page)
-    await runSql(page, "SELECT * FROM citizens WHERE district = 'north';")
-    await verdictIsPass(page)
+    await waitForQuestionPanel(page)
+    // District Ties: "תרגום: ספרייה" — option 0 (Library) is correct.
+    await submitMultipleChoiceAnswer(page, 0)
+    await questionFeedbackIsPass(page)
     await expect(page.getByTestId('progress-badge')).toHaveAttribute('data-percentage', '33')
     await expect(page.locator('[data-npc-id="north-analyst"]')).not.toBeVisible()
 
     // South Stability reaches 50%, the first point that crosses 40%.
     await page.getByTestId('mission-option-south-stability').click()
-    await waitForMissionReady(page)
-    await runSql(page, "SELECT * FROM district_reports WHERE district = 'south' AND severity >= 3;")
-    await verdictIsPass(page)
+    await waitForQuestionPanel(page)
+    // South Stability: "כפל: 8 × 7" — short-text answer "56" is correct.
+    await submitShortTextAnswer(page, '56')
+    await questionFeedbackIsPass(page)
     await expect(page.getByTestId('progress-badge')).toHaveAttribute('data-percentage', '50')
 
     await expect(page.locator('[data-npc-id="north-analyst"]')).toBeVisible()
@@ -62,7 +73,7 @@ test.describe('NPC world map integration', () => {
     page,
   }) => {
     await page.goto('/world')
-    await waitForMissionReady(page)
+    await waitForQuestionPanel(page)
 
     await page.locator('[data-npc-id="north-warden"]').click()
 
@@ -76,7 +87,8 @@ test.describe('NPC world map integration', () => {
     await expect(bio).not.toBeVisible()
 
     // The mission underneath is unaffected by opening/closing a bio.
-    await runSql(page, 'SELECT * FROM citizens;')
-    await verdictIsPass(page)
+    // First Contact: "הקיסר הראשון" — option 0 (אוגוסטוס) is correct.
+    await submitMultipleChoiceAnswer(page, 0)
+    await questionFeedbackIsPass(page)
   })
 })

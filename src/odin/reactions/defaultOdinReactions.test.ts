@@ -108,57 +108,6 @@ describe('defaultOdinReactions', () => {
     expect(find('campaign-completed').trigger).toEqual({ event: 'CampaignCompleted' })
   })
 
-  it('reacts to a query failing, distinguishing a SQL error from a wrong-result mismatch', () => {
-    expect(find('query-failed-sql-error').trigger).toEqual({ event: 'QueryFailed', reason: 'sql-error' })
-    expect(find('query-failed-mismatch').trigger).toEqual({ event: 'QueryFailed', reason: 'mismatch' })
-  })
-
-  it('has a mission-specific mismatch hint for each mission after First Contact', () => {
-    const missionIds = ['district-ties', 'south-stability', 'full-signal', 'linked-records', 'priority-signal']
-    for (const missionId of missionIds) {
-      const reaction = find(`${missionId}-failed-mismatch`)
-      expect(reaction.trigger).toEqual({ event: 'QueryFailed', missionId, reason: 'mismatch' })
-    }
-  })
-
-  it('does not add a mission-specific mismatch reaction for First Contact', () => {
-    expect(defaultOdinReactions.find((r) => r.id === 'first-contact-failed-mismatch')).toBeUndefined()
-  })
-
-  it('does not add any mission-specific sql-error reactions', () => {
-    const hasMissionSpecificSqlError = defaultOdinReactions.some(
-      (r) => r.trigger.event === 'QueryFailed' && r.trigger.reason === 'sql-error' && r.trigger.missionId !== undefined,
-    )
-    expect(hasMissionSpecificSqlError).toBe(false)
-  })
-
-  it('picks the mission-specific mismatch hint over the generic one for a mission that has one', () => {
-    const reaction = matchReaction(defaultOdinReactions, {
-      type: 'QueryFailed',
-      missionId: 'linked-records',
-      reason: 'mismatch',
-    })
-    expect(reaction?.id).toBe('linked-records-failed-mismatch')
-  })
-
-  it('falls back to the generic mismatch hint for First Contact, which has no specific one', () => {
-    const reaction = matchReaction(defaultOdinReactions, {
-      type: 'QueryFailed',
-      missionId: 'first-contact',
-      reason: 'mismatch',
-    })
-    expect(reaction?.id).toBe('query-failed-mismatch')
-  })
-
-  it('still falls back to the generic sql-error hint for a mission with a specific mismatch reaction', () => {
-    const reaction = matchReaction(defaultOdinReactions, {
-      type: 'QueryFailed',
-      missionId: 'linked-records',
-      reason: 'sql-error',
-    })
-    expect(reaction?.id).toBe('query-failed-sql-error')
-  })
-
   it('reacts to each of the two Batch 3A.4B lessons completing specifically, as a distinct event from MissionCompleted', () => {
     expect(find('lesson-math-completed').trigger).toEqual({ event: 'LessonCompleted', lessonId: 'lesson:math-001' })
     expect(find('lesson-english-completed').trigger).toEqual({
@@ -171,7 +120,7 @@ describe('defaultOdinReactions', () => {
     ).toBe('mission-completed-generic')
   })
 
-  it('has a generic LessonFailed fallback, distinct from QueryFailed', () => {
+  it('has a generic LessonFailed fallback', () => {
     expect(find('lesson-failed-generic').trigger).toEqual({ event: 'LessonFailed' })
   })
 
@@ -235,7 +184,7 @@ describe('defaultOdinReactions', () => {
   it("interpolates the actual mission's title into the mission-started message", () => {
     const reaction = find('mission-started')
     const event = { type: 'MissionStarted' as const, missionId: 'first-contact' }
-    expect(resolveMessage(reaction, event)).toBe('משימה חדשה מתחילה: מגע ראשון. אני מקשיב.')
+    expect(resolveMessage(reaction, event)).toBe('משימה חדשה מתחילה: הקיסר הראשון. אני מקשיב.')
 
     const secondEvent = { type: 'MissionStarted' as const, missionId: 'district-ties' }
     expect(resolveMessage(reaction, secondEvent)).not.toBe(resolveMessage(reaction, event))
@@ -245,41 +194,6 @@ describe('defaultOdinReactions', () => {
     const reaction = find('mission-started')
     const event = { type: 'MissionStarted' as const, missionId: 'does-not-exist' }
     expect(resolveMessage(reaction, event)).toBe('שאילתה חדשה ממתינה. אני מקשיב.')
-  })
-
-  // Playtest fix pass (issue 6A) — a classified SQL error wins over the
-  // plain reason-only fallback, and an unclassified ('generic') one still
-  // falls back to it, via the existing specificity rule — no new matching
-  // logic needed.
-  it('picks a specific SQL-error reaction over the generic fallback when the error is classified', () => {
-    for (const sqlErrorKind of ['unknown-table', 'unknown-column', 'syntax'] as const) {
-      const reaction = matchReaction(defaultOdinReactions, {
-        type: 'QueryFailed',
-        missionId: 'first-contact',
-        reason: 'sql-error',
-        sqlErrorKind,
-      })
-      expect(reaction?.id).toBe(`query-failed-sql-error-${sqlErrorKind}`)
-    }
-  })
-
-  it('falls back to the generic sql-error reaction for an unclassified error', () => {
-    const reaction = matchReaction(defaultOdinReactions, {
-      type: 'QueryFailed',
-      missionId: 'first-contact',
-      reason: 'sql-error',
-      sqlErrorKind: 'generic',
-    })
-    expect(reaction?.id).toBe('query-failed-sql-error')
-  })
-
-  it('falls back to the generic sql-error reaction when no classification is present at all', () => {
-    const reaction = matchReaction(defaultOdinReactions, {
-      type: 'QueryFailed',
-      missionId: 'first-contact',
-      reason: 'sql-error',
-    })
-    expect(reaction?.id).toBe('query-failed-sql-error')
   })
 
   it('reacts to a returning player with a one-time welcome-back line, distinct from WorldEntered (Meridian 1.3)', () => {

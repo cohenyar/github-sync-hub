@@ -62,7 +62,7 @@ export function getPlayerProgressSummary(
 
 /**
  * Meridian 1.3 — Core Loop §04: one shared rank across every subject, not a
- * separate meter per subject. Every SQL mission and every lesson counts
+ * separate meter per subject. Every mission and every lesson counts
  * toward the exact same number, deliberately — see the Core Loop design's
  * "one number a player can say out loud" reasoning.
  */

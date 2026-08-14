@@ -56,7 +56,7 @@ describe('AdminCourses', () => {
 
   it('validates the required title before calling create', async () => {
     renderPage()
-    fireEvent.click(screen.getByText(he.adminAddCourse))
+    fireEvent.click(screen.getByRole('button', { name: he.adminAddCourse }))
     fireEvent.click(screen.getByText(he.adminSaveAction))
     // Both title and subject are empty, so the same required-field message
     // renders twice — assert presence, not a single unique match.
@@ -66,7 +66,7 @@ describe('AdminCourses', () => {
 
   it('creates a course once required fields are filled in', async () => {
     renderPage()
-    fireEvent.click(screen.getByText(he.adminAddCourse))
+    fireEvent.click(screen.getByRole('button', { name: he.adminAddCourse }))
     fireEvent.change(screen.getByLabelText(he.adminFieldTitle), { target: { value: 'קורס חדש' } })
     fireEvent.change(screen.getByLabelText(he.adminFieldSubject), { target: { value: 'history' } })
     fireEvent.click(screen.getByText(he.adminSaveAction))
@@ -78,7 +78,7 @@ describe('AdminCourses', () => {
 
   it('warns before discarding unsaved changes instead of closing silently', () => {
     renderPage()
-    fireEvent.click(screen.getByText(he.adminAddCourse))
+    fireEvent.click(screen.getByRole('button', { name: he.adminAddCourse }))
     fireEvent.change(screen.getByLabelText(he.adminFieldTitle), { target: { value: 'טיוטה' } })
     fireEvent.click(screen.getByText(he.adminCancelAction))
     expect(screen.getByText(he.adminUnsavedChangesWarning)).toBeInTheDocument()
@@ -87,7 +87,7 @@ describe('AdminCourses', () => {
 
   it('closes without a warning when there are no unsaved changes', () => {
     renderPage()
-    fireEvent.click(screen.getByText(he.adminAddCourse))
+    fireEvent.click(screen.getByRole('button', { name: he.adminAddCourse }))
     fireEvent.click(screen.getByText(he.adminCancelAction))
     expect(screen.queryByText(he.adminUnsavedChangesWarning)).not.toBeInTheDocument()
     expect(screen.queryByTestId('course-form')).not.toBeInTheDocument()
@@ -108,5 +108,23 @@ describe('AdminCourses', () => {
       'href',
       '/admin/courses/c1/lessons',
     )
+  })
+
+  it('shows the course creation CTA up front, not hidden behind anything', () => {
+    renderPage()
+    expect(screen.getByRole('button', { name: he.adminAddCourse })).toBeVisible()
+  })
+
+  it('opens the create form as a real modal dialog, not just an inline panel', () => {
+    renderPage()
+    fireEvent.click(screen.getByRole('button', { name: he.adminAddCourse }))
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    expect(screen.getByTestId('course-form')).toBeInTheDocument()
+  })
+
+  it('shows no AI-generation entry point — the feature is deferred until a real backend exists', () => {
+    renderPage()
+    expect(screen.queryByText('✨')).not.toBeInTheDocument()
+    expect(screen.queryByText(/AI/)).not.toBeInTheDocument()
   })
 })

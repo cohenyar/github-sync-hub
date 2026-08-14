@@ -15,11 +15,6 @@ import { passEntryGates } from './test/renderGameApp'
 // signed-out/guest and no network call is made.
 vi.mock('./auth/supabaseClient', () => ({ isSupabaseConfigured: false, cloudClientPromise: Promise.resolve(null) }))
 
-vi.mock('./db/database', async () => {
-  const { createTestDatabase } = await import('./verifier/testDb')
-  return { createDatabase: createTestDatabase }
-})
-
 // AuthProvider mirrors App.tsx's real tree. With no VITE_SUPABASE_* env vars
 // set in tests, it resolves synchronously to signed-out/guest — every route
 // below renders exactly as it did before auth existed, except /admin.
@@ -60,7 +55,11 @@ describe('Routing foundation', () => {
     passEntryGates()
     fireEvent.click(await screen.findByTestId('settings-menu-button', {}, { timeout: 15000 }))
     fireEvent.click(await screen.findByTestId('toggle-world-scene-button'))
-    expect(await screen.findByRole('button', { name: he.run })).toBeInTheDocument()
+    // SQL-removal pass — every real mission is now a question mission with
+    // no async database step, so the classic dashboard's mission UI (the
+    // question panel) is available immediately; there's no more Run button
+    // to wait on.
+    expect(await screen.findByTestId('question-panel')).toBeInTheDocument()
   }, 30000)
 
   it('renders the real game at /world?path=math too (Batch 3A.2 query param), with no crash', async () => {
@@ -74,7 +73,11 @@ describe('Routing foundation', () => {
     passEntryGates()
     fireEvent.click(await screen.findByTestId('settings-menu-button', {}, { timeout: 15000 }))
     fireEvent.click(await screen.findByTestId('toggle-world-scene-button'))
-    expect(await screen.findByRole('button', { name: he.run })).toBeInTheDocument()
+    // SQL-removal pass — every real mission is now a question mission with
+    // no async database step, so the classic dashboard's mission UI (the
+    // question panel) is available immediately; there's no more Run button
+    // to wait on.
+    expect(await screen.findByTestId('question-panel')).toBeInTheDocument()
   }, 30000)
 
 

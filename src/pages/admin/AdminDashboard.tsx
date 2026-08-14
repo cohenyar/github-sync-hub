@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { useAdminMetrics } from '../../cms'
 import { he } from '../../i18n'
 import styles from './AdminDashboard.module.css'
@@ -11,6 +12,21 @@ export function AdminDashboard() {
       <div>
         <h1 className={styles.heading}>{he.adminDashboardTitle}</h1>
         <p className={styles.subtitle}>{he.adminDashboardSubtitle}</p>
+      </div>
+
+      <div className={styles.quickActions} data-testid="admin-quick-actions">
+        {/* Only "+ קורס חדש" can jump straight into a create form — lessons
+            and missions need a parent course/lesson picked first, so their
+            quick actions land on Courses (the root of the hierarchy) too. */}
+        <Link className={styles.quickActionButton} to="/admin/courses?create=1">
+          <span aria-hidden="true">+</span> {he.adminAddCourse}
+        </Link>
+        <Link className={styles.quickActionButton} to="/admin/courses">
+          <span aria-hidden="true">+</span> {he.adminAddLesson}
+        </Link>
+        <Link className={styles.quickActionButton} to="/admin/courses">
+          <span aria-hidden="true">+</span> {he.adminAddMission}
+        </Link>
       </div>
 
       {state.status === 'loading' && (
@@ -34,9 +50,19 @@ export function AdminDashboard() {
           <MetricCard label={he.adminMetricTotalCourses} value={state.metrics.totalCourses} />
           <MetricCard label={he.adminMetricTotalLessons} value={state.metrics.totalLessons} />
           <MetricCard label={he.adminMetricTotalMissions} value={state.metrics.totalMissions} />
-          <MetricCard label={he.adminMetricActiveCourses} value={state.metrics.activeCourses} />
-          <MetricCard label={he.adminMetricActiveLessons} value={state.metrics.activeLessons} />
-          <MetricCard label={he.adminMetricActiveMissions} value={state.metrics.activeMissions} />
+          <MetricCard
+            label={he.adminMetricActiveContent}
+            value={state.metrics.activeCourses + state.metrics.activeLessons + state.metrics.activeMissions}
+          />
+          <MetricCard
+            label={he.adminMetricDraftContent}
+            value={
+              state.metrics.totalCourses -
+              state.metrics.activeCourses +
+              (state.metrics.totalLessons - state.metrics.activeLessons) +
+              (state.metrics.totalMissions - state.metrics.activeMissions)
+            }
+          />
         </div>
       )}
     </div>

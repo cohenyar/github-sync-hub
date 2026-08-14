@@ -1,7 +1,9 @@
+import { Link } from 'react-router-dom'
 import type { ExplorerRank } from '../progression'
 import { getExplorerRankLabel } from '../progression'
-import { AuthButton } from '../auth'
+import { AuthButton, useOptionalAuth } from '../auth'
 import { he } from '../i18n'
+import { HomeLink } from '../platform/ui'
 import { SettingsMenu, type SettingsMenuProps } from './SettingsMenu'
 import styles from './GameControlBar.module.css'
 
@@ -25,16 +27,21 @@ export interface GameControlBarProps extends SettingsMenuProps {
  * keep resolving the same controls, just inside the settings menu now.
  */
 export function GameControlBar(props: GameControlBarProps) {
+  // Admin CMS UX pass — same "renders nothing without a provider" contract
+  // AuthButton already relies on for the many existing tests that mount
+  // <GameApp/> directly with no AuthProvider ancestor.
+  const isAdmin = Boolean(useOptionalAuth()?.isAdmin)
+
   return (
     <header className={styles.bar}>
-      <div className={styles.brandCorner}>
+      <HomeLink className={styles.brandCorner} ariaLabel="Meridian">
         <span aria-hidden className={styles.brandMark} />
         <span className={styles.brandName}>Meridian</span>
         <span className={styles.rankBadge} data-testid="explorer-rank-badge">
           {getExplorerRankLabel(props.explorerRank.tier)} · {props.explorerRank.completions}/
           {props.explorerRank.totalContent}
         </span>
-      </div>
+      </HomeLink>
 
       <div className={styles.actionsCorner}>
         {/* Lives here, not inside SettingsMenu — clicking Save closes that
@@ -44,6 +51,11 @@ export function GameControlBar(props: GameControlBarProps) {
           <span className={styles.savedConfirmation} role="status" data-testid="saved-confirmation">
             {he.saved}
           </span>
+        )}
+        {isAdmin && (
+          <Link to="/admin" className={styles.adminButton} data-testid="global-admin-button">
+            {he.navAdminLabel}
+          </Link>
         )}
         <button
           type="button"

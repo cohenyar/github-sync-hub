@@ -1,4 +1,3 @@
-import type { SqlErrorKind } from '../../missions/runQuery'
 import type { UnlockTargetType } from '../../unlocks'
 
 /**
@@ -12,7 +11,6 @@ export type OdinReactionTrigger =
   | { event: 'ContentUnlocked'; targetType?: UnlockTargetType; targetId?: string }
   | { event: 'CampaignCompleted'; campaignId?: string }
   | { event: 'WorldStateChanged' }
-  | { event: 'QueryFailed'; missionId?: string; reason?: 'mismatch' | 'sql-error'; sqlErrorKind?: SqlErrorKind }
   | { event: 'LessonCompleted'; lessonId?: string }
   | { event: 'LessonFailed'; lessonId?: string }
   | { event: 'WorldEntered' }

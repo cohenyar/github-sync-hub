@@ -5,7 +5,15 @@ import { getCampaignSummary, getCurrentMission, getNextMission, isCampaignComple
 import type { CampaignProgress, GameCampaign } from './types'
 
 function makeMission(id: string): MissionConfig {
-  return { id, title: `Mission ${id}`, goal: 'goal', prompt: 'prompt', setupSql: '', referenceSql: 'SELECT 1' }
+  return {
+    id,
+    title: `Mission ${id}`,
+    goal: 'goal',
+    prompt: 'prompt',
+    subjectHe: 'מתמטיקה',
+    taskHe: 'שאלה לדוגמה?',
+    answerConfig: { type: 'exact_text', acceptedAnswers: ['תשובה'] },
+  }
 }
 
 const missionA = makeMission('a')

@@ -8,12 +8,13 @@ import { ArchiveIntro } from './ArchiveIntro'
 const mission: MissionConfig = {
   id: 'first-contact',
   title: 'First Contact',
-  titleHe: 'מגע ראשון',
-  goal: 'Bring the Records Core online.',
+  titleHe: 'הקיסר הראשון',
+  goal: 'Identify the first Roman emperor.',
   prompt: 'The Records Core is blind.\nQuery the citizens registry.',
   promptHe: 'מוקד הרשומות עיוור.\nשאל את מרשם התושבים.',
-  setupSql: '',
-  referenceSql: 'SELECT * FROM citizens',
+  subjectHe: 'היסטוריה',
+  taskHe: 'מי היה הקיסר הראשון של רומא?',
+  answerConfig: { type: 'multiple_choice', options: ['אוגוסטוס', 'נירון'], correctIndex: 0 },
 }
 
 const npc: NpcConfig = {
@@ -28,7 +29,7 @@ const npc: NpcConfig = {
 describe('ArchiveIntro', () => {
   it('shows the mission\'s Hebrew display title, not the raw English field', () => {
     render(<ArchiveIntro mission={mission} />)
-    expect(screen.getByTestId('archive-intro-quest-title')).toHaveTextContent('מגע ראשון')
+    expect(screen.getByTestId('archive-intro-quest-title')).toHaveTextContent('הקיסר הראשון')
   })
 
   it('omits the NPC row entirely when no companion applies, rather than rendering an empty one', () => {

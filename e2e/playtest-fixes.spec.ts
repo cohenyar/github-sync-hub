@@ -1,4 +1,4 @@
-import { expect, test, waitForMissionReady } from './helpers.js'
+import { expect, questionFeedbackIsPass, submitMultipleChoiceAnswer, test, waitForQuestionPanel } from './helpers.js'
 
 /**
  * Manual playtest fix pass — real-browser coverage for issues 2 (Mera/
@@ -102,9 +102,10 @@ test.describe('Tomas Reyeth and the East district explain the real prerequisite 
     await expect(prompt).toHaveAttribute('data-interactable-id', 'core')
     await page.keyboard.press('KeyE')
     await expect(page.getByTestId('terminal-view')).toBeVisible()
-    await page.getByTestId('sql-input').fill('SELECT * FROM citizens;')
-    await page.getByTestId('run-button').click()
-    await expect(page.getByTestId('verdict-banner')).toHaveAttribute('data-verdict', 'pass')
+    await expect(page.getByTestId('question-panel')).toBeVisible()
+    // First Contact / "הקיסר הראשון" — אוגוסטוס (index 0) is correct.
+    await submitMultipleChoiceAnswer(page, 0)
+    await questionFeedbackIsPass(page)
     await page.getByTestId('return-to-world-button').click()
     await expect(page.getByTestId('world-scene-3d')).toBeVisible()
     await expect(prompt).toHaveAttribute('data-interactable-id', 'core')
@@ -129,7 +130,11 @@ test.describe('Tomas Reyeth and the East district explain the real prerequisite 
     await page.waitForTimeout(900)
     await page.keyboard.up('KeyD')
     await expect(prompt).toHaveAttribute('data-interactable-id', 'east')
-    await expect(prompt).toContainText('נדרש: השלמת יציבות הדרום')
+    // The East district's "locked, here's what unblocks it" line names the
+    // real blocking mission's own title live — South Stability is now
+    // "כפל: 8 × 7" (Math, short text; see missions/southStability.ts) rather
+    // than its old SQL-era title, so the composed prompt text changed too.
+    await expect(prompt).toContainText('נדרש: השלמת כפל: 8 × 7')
   })
 })
 
@@ -151,65 +156,82 @@ test.describe('The Records Hub entrance uses a specific action, not the generic 
 })
 
 test.describe('Mission screen copy (issue 5)', () => {
-  test('the query panel uses a narrative label and shows a generic, non-spoiler syntax example', async ({ page }) => {
-    await page.goto('/world')
-    await waitForMissionReady(page)
-
-    await expect(page.getByRole('heading', { name: 'הפקודה שלך' })).toBeVisible()
-    const hint = page.getByTestId('sql-example-hint')
-    await expect(hint).toBeVisible()
-    await expect(hint).toContainText('SELECT')
-    // Never the mission's own solution (SELECT * FROM citizens) — just a
-    // generic placeholder table name.
-    await expect(hint).not.toContainText('FROM citizens')
-  })
+  // SQL-removal pass — this test's whole premise was the SQL editor's own
+  // narrative heading ("הפקודה שלך") plus a generic, non-spoiler SELECT
+  // syntax example (sql-example-hint). Neither exists anymore: the question
+  // panel's heading is he.questionCardTitle ("שאלה"), a deliberately plain
+  // generic label rather than a narrative one, and there is no SQL syntax
+  // concept left to show an example of. The genuine Easy-only scaffolding
+  // affordance now is the question panel's own inline hint, already covered
+  // by difficulty-levels.spec.ts. Removed rather than forced into a false
+  // equivalence.
 
   test('the persistent objective chip shows the mission goal, not just its title', async ({ page }) => {
     await page.goto('/world')
     await expect(page.getByTestId('world-scene-3d')).toBeVisible()
 
+    // First Contact is now "הקיסר הראשון" (History, MC) — see missions/firstContact.ts.
     const chip = page.getByTestId('quest-chip')
-    await expect(chip).toContainText('מגע ראשון')
-    await expect(page.getByTestId('quest-chip-goal')).toContainText('מוקד הרשומות')
+    await expect(chip).toContainText('הקיסר הראשון')
+    // goalHe ("לזהות מי נחשב לקיסר הראשון של האימפריה הרומית.") — a distinct
+    // substring not present in the title, proving the chip shows the goal
+    // itself and not just a repeat of the title.
+    await expect(page.getByTestId('quest-chip-goal')).toContainText('האימפריה הרומית')
   })
 })
 
-test.describe('Ask Odin (issue 6C)', () => {
-  test('the panel is reachable from the classic dashboard and answers all five deterministic questions', async ({
+test.describe('Ask Odin — general educational assistant pass', () => {
+  test('the panel is reachable from the classic dashboard and answers all six deterministic questions', async ({
     page,
   }) => {
     await page.goto('/world')
-    await waitForMissionReady(page)
+    await waitForQuestionPanel(page)
 
     const panel = page.getByTestId('ask-odin-panel')
     await expect(panel).toBeVisible()
 
+    // "what now"/"explain question" answer with the active mission's own
+    // goalHe/promptHe verbatim (see resolveAskOdinAnswer.ts); First
+    // Contact's goal/prompt text is History-trivia content, not the old
+    // "מוקד הרשומות"/"עיוור" (Records Hub is offline/blind) narrative.
     await page.getByTestId('ask-odin-what-now').click()
-    await expect(page.getByTestId('ask-odin-answer')).toContainText('מוקד הרשומות')
+    await expect(page.getByTestId('ask-odin-answer')).toContainText('קיסר הראשון')
 
-    await page.getByTestId('ask-odin-explain-mission').click()
-    await expect(page.getByTestId('ask-odin-answer')).toContainText('עיוור')
+    await page.getByTestId('ask-odin-explain-question').click()
+    await expect(page.getByTestId('ask-odin-answer')).toContainText('אוגוסטוס')
 
+    await page.getByTestId('ask-odin-subject').click()
+    await expect(page.getByTestId('ask-odin-answer')).toContainText('היסטוריה')
+
+    // A fresh profile defaults to Easy (level 1), where the hint prefers the
+    // mission's own guidanceLevel1 over its plain hintHe (see
+    // resolveAskOdinAnswer.ts's resolveHint) — First Contact's guidanceLevel1
+    // is "שימו לב: התשובה מוזכרת במפורש בטקסט שלמעלה.", not the "רמז:" line.
     await page.getByTestId('ask-odin-hint').click()
-    await expect(page.getByTestId('ask-odin-answer')).toContainText('רמז')
+    await expect(page.getByTestId('ask-odin-answer')).toContainText('התשובה מוזכרת')
 
     await page.getByTestId('ask-odin-where-to-go').click()
     await expect(page.getByTestId('ask-odin-answer')).toContainText('מוקד הרשומות')
 
-    // No error has happened yet this session.
-    await page.getByTestId('ask-odin-why-failed').click()
-    await expect(page.getByTestId('ask-odin-answer')).toContainText('לא נרשמה שגיאה עדיין')
+    // No wrong answer has been submitted yet this session.
+    await page.getByTestId('ask-odin-why-wrong').click()
+    await expect(page.getByTestId('ask-odin-answer')).toContainText('עדיין לא נרשמה תשובה שגויה')
   })
 
-  test('"why didn\'t it work" reflects the actual most recent error once one happens', async ({ page }) => {
+  test('never shows any SQL-learning terms anywhere in an Ask Odin answer', async ({ page }) => {
     await page.goto('/world')
-    const runButton = await waitForMissionReady(page)
+    await waitForQuestionPanel(page)
 
-    await page.getByTestId('sql-input').fill('NOT VALID SQL')
-    await runButton.click()
-    await expect(page.getByTestId('sql-error-message')).toBeVisible()
-
-    await page.getByTestId('ask-odin-why-failed').click()
-    await expect(page.getByTestId('ask-odin-answer')).toContainText('שגיאת תחביר')
+    for (const testId of [
+      'ask-odin-what-now',
+      'ask-odin-explain-question',
+      'ask-odin-subject',
+      'ask-odin-hint',
+      'ask-odin-where-to-go',
+      'ask-odin-why-wrong',
+    ]) {
+      await page.getByTestId(testId).click()
+      await expect(page.getByTestId('ask-odin-answer')).not.toContainText(/SQL|SELECT|FROM|query|citizens/i)
+    }
   })
 })

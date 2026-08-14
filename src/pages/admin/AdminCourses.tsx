@@ -1,9 +1,10 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useCourses } from '../../cms'
 import type { Course, ContentStatus } from '../../cms'
 import { he } from '../../i18n'
 import { ConfirmDialog } from './components/ConfirmDialog'
+import { ModalOverlay } from './components/ModalOverlay'
 import { StatusBadge } from './components/StatusBadge'
 import styles from './components/adminCrud.module.css'
 
@@ -31,6 +32,7 @@ function formFromCourse(course: Course): FormState {
 
 export function AdminCourses() {
   const { state, create, update, remove } = useCourses()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [mode, setMode] = useState<FormMode>({ kind: 'closed' })
   const [form, setForm] = useState<FormState>(EMPTY_FORM)
   const [dirty, setDirty] = useState(false)
@@ -48,6 +50,20 @@ export function AdminCourses() {
     setDirty(false)
     setMode({ kind: 'create' })
   }
+
+  // Admin Dashboard's "+ קורס חדש" quick action links here with ?create=1
+  // so it can jump straight into the create form, not just the list.
+  useEffect(() => {
+    if (searchParams.get('create') === '1') {
+      openCreate()
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev)
+        next.delete('create')
+        return next
+      })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams])
 
   function openEdit(course: Course) {
     setForm(formFromCourse(course))
@@ -107,7 +123,7 @@ export function AdminCourses() {
         <h1 className={styles.headerTitle}>{he.adminNavCourses}</h1>
         {mode.kind === 'closed' && (
           <button type="button" className={styles.primaryButton} onClick={openCreate}>
-            {he.adminAddCourse}
+            <span aria-hidden="true">+</span> {he.adminAddCourse}
           </button>
         )}
       </div>
@@ -165,8 +181,11 @@ export function AdminCourses() {
       )}
 
       {mode.kind !== 'closed' && (
+        <ModalOverlay onDismiss={requestClose} labelledBy="course-form-title">
         <div className={styles.formPanel} data-testid="course-form">
-          <h2 className={styles.formPanelTitle}>{mode.kind === 'create' ? he.adminAddCourse : he.adminEditAction}</h2>
+          <h2 id="course-form-title" className={styles.formPanelTitle}>
+            {mode.kind === 'create' ? he.adminAddCourse : he.adminEditAction}
+          </h2>
 
           {saveState.kind === 'error' && (
             <div className={`${styles.saveBanner} ${styles.saveBannerError}`}>{saveState.message}</div>
@@ -234,6 +253,7 @@ export function AdminCourses() {
             </button>
           </div>
         </div>
+        </ModalOverlay>
       )}
 
       {deleteTarget && (

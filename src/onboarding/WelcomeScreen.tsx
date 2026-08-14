@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type MouseEvent } from 'react'
 import { EmailPasswordForm, useOptionalAuth } from '../auth'
 import { he } from '../i18n'
-import { Button } from '../platform/ui'
+import { Button, HomeLink } from '../platform/ui'
 import { getPlayerAvatarPreset } from '../worldScene/logic/playerAppearance'
 import styles from './WelcomeScreen.module.css'
 
@@ -120,10 +120,10 @@ export function WelcomeScreen({
       </div>
 
       <div className={styles.content}>
-        <div className={styles.brand}>
+        <HomeLink className={styles.brand} ariaLabel="Meridian">
           <span className={styles.brandMark} aria-hidden="true" />
           <h1 className={styles.brandName}>Meridian</h1>
-        </div>
+        </HomeLink>
         <p className={styles.tagline}>{he.welcomeTagline}</p>
 
         {hasProfile && (

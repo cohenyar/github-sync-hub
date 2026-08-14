@@ -90,21 +90,24 @@ export const test = base.extend<{ page: Page }>({
 export { expect }
 
 /**
- * Waits for the mission database to finish preparing and returns the Run
- * button. The World Scene (not the classic dashboard) is now the default
- * view at /world — every existing caller of this helper wants the classic
- * dashboard's SQL console specifically, so this switches to it first via
- * the existing toggle if we've landed in the 3D scene instead.
+ * SQL-removal pass — every real mission is now a question mission (see
+ * src/missions/firstContact.ts and siblings): multiple choice or short
+ * text, no async "mission database" step at all. Waits for the question
+ * panel to be visible. The World Scene (not the classic dashboard) is now
+ * the default view at /world — every existing caller of this helper wants
+ * the classic dashboard's mission console specifically, so this switches
+ * to it first via the existing toggle if we've landed in the 3D scene
+ * instead.
  */
-export async function waitForMissionReady(page: Page): Promise<Locator> {
+export async function waitForQuestionPanel(page: Page): Promise<Locator> {
   const worldScene = page.getByTestId('world-scene-3d')
   if (await worldScene.isVisible().catch(() => false)) {
     await openSettingsMenu(page)
     await page.getByTestId('toggle-world-scene-button').click()
   }
-  const runButton = page.getByTestId('run-button')
-  await expect(runButton).toBeEnabled()
-  return runButton
+  const panel = page.getByTestId('question-panel')
+  await expect(panel).toBeVisible()
+  return panel
 }
 
 /** Opens the corner HUD's settings popover (Save/Load/New Game/Mute/Classic View), Meridian 1.2. */
@@ -117,18 +120,24 @@ export async function openAccountMenu(page: Page): Promise<void> {
   await page.getByTestId('auth-account').click()
 }
 
-/** Types a query into the SQL editor and clicks Run. */
-export async function runSql(page: Page, sql: string): Promise<void> {
-  await page.getByTestId('sql-input').fill(sql)
-  await page.getByTestId('run-button').click()
+/** Selects the given (0-based) multiple-choice option and submits it. */
+export async function submitMultipleChoiceAnswer(page: Page, optionIndex: number): Promise<void> {
+  await page.getByTestId(`question-option-${optionIndex}`).click()
+  await page.getByTestId('question-submit-button').click()
 }
 
-/** True once the verdict banner shows a passing result. */
-export function verdictIsPass(page: Page) {
-  return expect(page.getByTestId('verdict-banner')).toHaveAttribute('data-verdict', 'pass')
+/** Types the given short-text answer and submits it. */
+export async function submitShortTextAnswer(page: Page, answer: string): Promise<void> {
+  await page.getByTestId('question-answer-input').fill(answer)
+  await page.getByTestId('question-submit-button').click()
 }
 
-/** True once the verdict banner shows a failing result. */
-export function verdictIsFail(page: Page) {
-  return expect(page.getByTestId('verdict-banner')).toHaveAttribute('data-verdict', 'fail')
+/** True once the question panel's feedback shows a passing result. */
+export function questionFeedbackIsPass(page: Page) {
+  return expect(page.getByTestId('question-feedback')).toHaveAttribute('data-verdict', 'pass')
+}
+
+/** True once the question panel's feedback shows a failing result. */
+export function questionFeedbackIsFail(page: Page) {
+  return expect(page.getByTestId('question-feedback')).toHaveAttribute('data-verdict', 'fail')
 }

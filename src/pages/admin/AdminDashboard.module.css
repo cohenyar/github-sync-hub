@@ -18,6 +18,27 @@
   max-width: 640px;
 }
 
+.quickActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.quickActionButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 8px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #0a0f1a;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
 .loading,
 .error {
   padding: 24px;

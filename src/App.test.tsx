@@ -1,17 +1,9 @@
 // @vitest-environment jsdom
 import { fireEvent, screen, within } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { he } from './i18n'
 import { markOnboardingComplete } from './onboarding'
 import { renderGameApp } from './test/renderGameApp'
-
-// The real createDatabase() loads sql.js's wasm binary via a Vite asset URL,
-// which has no server to fetch from under jsdom. Swap in the Node-friendly
-// test loader so App renders without touching the network.
-vi.mock('./db/database', async () => {
-  const { createTestDatabase } = await import('./verifier/testDb')
-  return { createDatabase: createTestDatabase }
-})
 
 // Onboarding: a fresh player now sees the boot sequence before anything
 // else, and the World Scene (not the classic dashboard) is the default view
@@ -38,9 +30,15 @@ describe('App', () => {
     expect(document.querySelector('[data-district-id="east"]')).toBeInTheDocument()
   })
 
-  it('starts the Run button disabled until the mission database is ready', () => {
+  // SQL-removal pass — every real mission is now a question mission with no
+  // async database step, so there's no "disabled until ready" state left to
+  // prove; what actually matters is that the question panel (not a SQL
+  // console) is what's shown.
+  it('shows the question panel immediately, not a SQL console', () => {
     renderReturningPlayer()
-    expect(screen.getByRole('button', { name: he.run })).toBeDisabled()
+    expect(screen.getByTestId('question-panel')).toBeInTheDocument()
+    expect(screen.queryByTestId('sql-input')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('run-button')).not.toBeInTheDocument()
   })
 
   it('renders the Mission panel content and the Odin placeholder', () => {
@@ -49,7 +47,8 @@ describe('App', () => {
     expect(missionRegion).toBeInTheDocument()
     // The active mission title now also appears in the Journey Summary, so
     // scope this to the Mission panel to assert its own content specifically.
-    expect(within(missionRegion).getByText('מגע ראשון')).toBeInTheDocument()
+    // First Contact is now "הקיסר הראשון" (The First Emperor) — SQL-removal pass.
+    expect(within(missionRegion).getByText('הקיסר הראשון')).toBeInTheDocument()
     expect(screen.getByRole('region', { name: 'Odin' })).toBeInTheDocument()
   })
 })

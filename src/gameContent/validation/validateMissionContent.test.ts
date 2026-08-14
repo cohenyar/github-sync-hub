@@ -7,7 +7,6 @@ const validMission: GameMissionContent = {
   title: 'First Contact',
   goal: 'Bring the Records Core online.',
   prompt: 'Query the citizens registry.',
-  referenceSql: 'SELECT * FROM citizens;',
 }
 
 describe('validateMissionContent', () => {
@@ -27,14 +26,8 @@ describe('validateMissionContent', () => {
     expect(result.errors).toContain('title must be a non-empty string')
   })
 
-  it('rejects a mission missing referenceSql', () => {
-    const result = validateMissionContent({ ...validMission, referenceSql: '' })
-    expect(result.valid).toBe(false)
-    expect(result.errors).toContain('referenceSql must be a non-empty string')
-  })
-
-  it('collects every missing field at once', () => {
-    const result = validateMissionContent({ id: '', title: '', goal: '', prompt: '', referenceSql: '' })
-    expect(result.errors).toHaveLength(5)
+  it('collects every missing required field at once', () => {
+    const result = validateMissionContent({ id: '', title: '', goal: '', prompt: '' })
+    expect(result.errors).toHaveLength(4)
   })
 })

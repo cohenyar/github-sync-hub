@@ -8,6 +8,9 @@ export interface MissionDisplayText {
   hint?: string
   /** First Mission UX pass — undefined when the mission has no authored instruction yet; callers simply omit the instruction line. */
   instruction?: string
+  /** The actual question shown to the player, and the subject label (History/English/Math) it belongs to — both used by Ask Odin. */
+  task: string
+  subject: string
 }
 
 /** Hebrew display text for a mission, falling back to the English field when absent. */
@@ -18,5 +21,7 @@ export function getMissionDisplayText(mission: MissionConfig): MissionDisplayTex
     prompt: mission.promptHe ?? mission.prompt,
     hint: mission.hintHe,
     instruction: mission.instructionHe,
+    task: mission.taskHe,
+    subject: mission.subjectHe,
   }
 }

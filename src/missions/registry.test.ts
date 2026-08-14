@@ -12,14 +12,17 @@ import type { MissionConfig } from './types'
 
 const TEST_MISSION_ID = 'test-crud-mission'
 
+// This suite only exercises the registry's generic CRUD mechanics
+// (add/update/remove by id), not mission content.
 function testMission(overrides: Partial<MissionConfig> = {}): MissionConfig {
   return {
     id: TEST_MISSION_ID,
     title: 'Test Mission',
     goal: 'Test goal',
     prompt: 'Test prompt',
-    setupSql: 'CREATE TABLE t (id INTEGER);',
-    referenceSql: 'SELECT * FROM t;',
+    subjectHe: 'מתמטיקה',
+    taskHe: 'כמה זה 1 + 1?',
+    answerConfig: { type: 'exact_text', acceptedAnswers: ['2'] },
     ...overrides,
   }
 }

@@ -1,34 +1,25 @@
 import type { MissionConfig } from './types'
 
 /**
- * South Stability — Meridian's third mission. Builds on District Ties'
- * single-column WHERE filter by introducing a compound condition (AND plus
- * a numeric comparison), a natural next step before Full Signal's
- * aggregate query. Gated behind completing District Ties (see
- * unlocks/services/defaultUnlockRules.ts).
+ * South Stability — Meridian's third mission. SQL-removal pass: this used
+ * to be a compound-WHERE SQL exercise; it's now a simple Math question
+ * (short-text answer, unlike the multiple-choice missions around it), but
+ * keeps its original id and successEffect so the unlock chain (gated
+ * behind District Ties) and existing saves keep working unchanged.
  */
 export const southStabilityMission: MissionConfig = {
   id: 'south-stability',
-  title: 'South Stability',
-  goal: 'Surface the serious incident reports destabilizing the South district.',
-  prompt:
-    "South is the city's most unstable district. Meridian keeps a log of civic reports, but not\n" +
-    'every report demands action. Find every South district report rated severity 3 or higher.',
-  setupSql: `
-    CREATE TABLE district_reports (id INTEGER, district TEXT, issue TEXT, severity INTEGER);
-    INSERT INTO district_reports (id, district, issue, severity) VALUES
-      (1, 'south', 'Water shortage', 4),
-      (2, 'south', 'Late transit', 2),
-      (3, 'north', 'Noise complaint', 3),
-      (4, 'south', 'Power outage', 5),
-      (5, 'east', 'Market delay', 1);
-  `,
-  referenceSql: "SELECT * FROM district_reports WHERE district = 'south' AND severity >= 3;",
+  title: 'Multiplication: 8 × 7',
+  goal: 'Calculate the result of 8 multiplied by 7.',
+  prompt: '8 × 7 can be split into (8 × 5) + (8 × 2) = 40 + 16.',
+  subjectHe: 'מתמטיקה',
+  taskHe: 'מה התוצאה של 8 × 7?',
+  answerConfig: { type: 'exact_text', acceptedAnswers: ['56'] },
   successEffect: { kind: 'ADJUST_STAT', districtId: 'south', stat: 'stability', delta: 30 },
-  titleHe: 'יציבות הדרום',
-  goalHe: 'העלה/י את דוחות התקרית החמורים שמערערים את יציבות מחוז הדרום.',
-  promptHe:
-    'הדרום הוא המחוז הכי לא יציב בעיר. במרידיאן מתועדים דוחות אזרחיים, אך לא כולם דורשים טיפול מיידי.\n' +
-    'אתר/י כל דוח במחוז הדרום שדורג בחומרה 3 ומעלה.',
-  hintHe: 'רמז: שלב/י שני תנאים ב-WHERE — גם district וגם severity.',
+  titleHe: 'כפל: 8 × 7',
+  goalHe: 'לחשב את תוצאת הכפל של 8 כפול 7.',
+  promptHe: 'ניתן לפרק את 8 × 7 ל- (8 × 5) + (8 × 2) = 40 + 16.',
+  hintHe: 'רמז: 8 × 7 = 8×5 + 8×2.',
+  guidanceLevel1: 'שימו לב: התשובה היא סכום שני המכפלות שבטקסט.',
+  guidanceLevel3: 'פרקו את 7 לסכום של שני מספרים קטנים יותר וכפלו כל אחד ב-8.',
 }

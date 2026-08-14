@@ -1,11 +1,11 @@
 // @vitest-environment jsdom
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import { removeMission } from '../../missions'
+import { removeNpc } from '../../npcs'
 import { getAdminSections } from '../selectors/adminSelectors'
 import { AdminPanel } from './AdminPanel'
 
-const TEST_ID = 'test-admin-panel-mission'
+const TEST_NPC_ID = 'test-admin-panel-npc'
 
 describe('AdminPanel', () => {
   it('renders the Admin Area title', () => {
@@ -27,23 +27,35 @@ describe('AdminPanel', () => {
     }
   })
 
-  it('updates the missions item count live after creating a mission through the CRUD form', () => {
+  // General educational assistant pass — the Missions section's own CRUD
+  // form (MissionsAdminSection) authored only SQL missions and has been
+  // removed along with SQL as a learning subject; the real Admin CMS
+  // (Course -> Lesson -> Mission/Question) is the sanctioned authoring path
+  // now. This section is read-only here — no id/title/goal form renders for
+  // it — while the still-CRUD-enabled NPCs section proves the underlying
+  // "item count updates live after a mutation" behavior still works.
+  it('shows the missions section as read-only, with no mission authoring form', () => {
     render(<AdminPanel />)
-    const before = getAdminSections().find((section) => section.id === 'missions')!.itemCount
-
-    fireEvent.change(screen.getByLabelText('Mission id'), { target: { value: TEST_ID } })
-    fireEvent.change(screen.getByLabelText('Mission title'), { target: { value: 'Panel Test Mission' } })
-    fireEvent.change(screen.getByLabelText('Mission goal'), { target: { value: 'Goal' } })
-    fireEvent.change(screen.getByLabelText('Mission prompt'), { target: { value: 'Prompt' } })
-    fireEvent.change(screen.getByLabelText('Mission setup SQL'), {
-      target: { value: 'CREATE TABLE t (id INTEGER);' },
-    })
-    fireEvent.change(screen.getByLabelText('Mission reference SQL'), { target: { value: 'SELECT * FROM t;' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Add Mission' }))
-
     const missionsCard = document.querySelector('[data-section-id="missions"]')
-    expect(missionsCard).toHaveTextContent(`Items: ${before + 1}`)
+    expect(missionsCard).toHaveTextContent('Status: Read-only foundation')
+    expect(screen.queryByLabelText('Mission id')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Add Mission' })).not.toBeInTheDocument()
+  })
 
-    removeMission(TEST_ID)
+  it('updates the npcs item count live after creating an NPC through the CRUD form', () => {
+    render(<AdminPanel />)
+    const before = getAdminSections().find((section) => section.id === 'npcs')!.itemCount
+
+    fireEvent.change(screen.getByLabelText('NPC id'), { target: { value: TEST_NPC_ID } })
+    fireEvent.change(screen.getByLabelText('NPC name'), { target: { value: 'Panel Test NPC' } })
+    fireEvent.change(screen.getByLabelText('NPC district'), { target: { value: 'core' } })
+    fireEvent.change(screen.getByLabelText('NPC role'), { target: { value: 'Test Role' } })
+    fireEvent.change(screen.getByLabelText('NPC description'), { target: { value: 'Description' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Add NPC' }))
+
+    const npcsCard = document.querySelector('[data-section-id="npcs"]')
+    expect(npcsCard).toHaveTextContent(`Items: ${before + 1}`)
+
+    removeNpc(TEST_NPC_ID)
   })
 })

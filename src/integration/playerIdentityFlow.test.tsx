@@ -1,14 +1,9 @@
 // @vitest-environment jsdom
 import { fireEvent, render, screen } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import GameApp from '../GameApp'
 import { he } from '../i18n'
 import { clearOnboardingFlag, markOnboardingComplete } from '../onboarding'
-
-vi.mock('../db/database', async () => {
-  const { createTestDatabase } = await import('../verifier/testDb')
-  return { createDatabase: createTestDatabase }
-})
 
 function ensureSettingsMenuOpen() {
   if (!screen.queryByRole('menu')) {

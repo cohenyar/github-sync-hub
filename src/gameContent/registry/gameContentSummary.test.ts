@@ -8,7 +8,6 @@ describe('getGameContentSummary', () => {
   it('reports the real mission and district counts', () => {
     const summary = getGameContentSummary()
     expect(summary.missions).toBe(missionRegistry.length)
-    expect(summary.sqlChallenges).toBe(missionRegistry.length)
     expect(summary.districts).toBe(initialDistricts.length)
   })
 

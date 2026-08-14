@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { fireEvent, render, screen } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 import { AuthContext } from '../auth/AuthProvider'
 import type { AuthContextValue } from '../auth/types'
@@ -57,6 +58,20 @@ describe('WelcomeScreen — branding and primary action', () => {
     renderScreen()
     expect(screen.getByText('Meridian')).toBeInTheDocument()
     expect(screen.getByText(he.welcomeTagline)).toBeInTheDocument()
+  })
+
+  it('the wordmark is a real link to "/" once a Router ancestor exists (global logo navigation)', () => {
+    render(
+      <MemoryRouter>
+        <WelcomeScreen {...baseProps()} />
+      </MemoryRouter>,
+    )
+    expect(screen.getByRole('link', { name: 'Meridian' })).toHaveAttribute('href', '/')
+  })
+
+  it('degrades to a plain, non-crashing wordmark with no Router ancestor (existing <GameApp/> test convention)', () => {
+    renderScreen()
+    expect(screen.getByText('Meridian')).toBeInTheDocument()
   })
 
   it('always shows Continue Journey, and calls onContinue when clicked', () => {

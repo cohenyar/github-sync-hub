@@ -8,14 +8,13 @@ describe('getMissionContent', () => {
     expect(getMissionContent()).toHaveLength(missionRegistry.length)
   })
 
-  it('maps id, title, goal, prompt, and referenceSql from the real mission', () => {
+  it('maps id, title, goal, and prompt from the real mission', () => {
     const [mission] = missionRegistry
     expect(getMissionContent()).toContainEqual({
       id: mission.id,
       title: mission.title,
       goal: mission.goal,
       prompt: mission.prompt,
-      referenceSql: mission.referenceSql,
     })
   })
 

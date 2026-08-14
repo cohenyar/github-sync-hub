@@ -36,10 +36,38 @@
   background: var(--text);
 }
 
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  text-decoration: none;
+  color: var(--text-h);
+}
+
+.brandMark {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: var(--accent);
+}
+
+.brandName {
+  font-family: var(--ds-font-display, inherit);
+  font-weight: 700;
+  font-size: 1rem;
+}
+
 .title {
   font-size: 1.05rem;
   font-weight: 600;
   color: var(--text-h);
+}
+
+@media (max-width: 480px) {
+  .brandName {
+    display: none;
+  }
 }
 
 .backLink {

@@ -1,4 +1,5 @@
 export * from './matchReaction'
 export * from './odinNarrator'
 export * from './resolveAskOdinAnswer'
+export * from './resolveFreeTextQuestion'
 export * from './useOdin'

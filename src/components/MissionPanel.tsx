@@ -1,8 +1,8 @@
 import type { CampaignSummary } from '../campaign/types'
 import { he } from '../i18n'
 import { getMissionDisplayText } from '../missions/missionDisplayText'
-import type { MissionPhase } from '../missions/missionManager'
 import type { MissionConfig } from '../missions/types'
+import type { QuestionMissionPhase as MissionPhase } from '../missions/useQuestionMission'
 import type { DifficultyLevel } from '../progression/types'
 import type { ContentStatus } from '../unlocks'
 import styles from './Panel.module.css'
@@ -30,12 +30,12 @@ export interface MissionPanelProps {
 
 // 'active' has no dedicated phase key of its own — he.phaseActive covers it.
 // 'completed' intentionally reuses he.completed (the same word already used
-// for content status) rather than a near-duplicate key.
+// for content status) rather than a near-duplicate key. SQL-removal pass —
+// a question mission has no async setup, so 'loading'/'error' phases no
+// longer exist at all; only active/completed remain.
 const PHASE_LABEL: Record<MissionPhase, string> = {
-  loading: he.phaseLoading,
   active: he.phaseActive,
   completed: he.completed,
-  error: he.phaseError,
 }
 
 const CONTENT_STATUS_LABEL: Record<ContentStatus, string> = {

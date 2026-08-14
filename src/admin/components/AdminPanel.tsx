@@ -1,16 +1,22 @@
 import { useState } from 'react'
 import { getAdminSections } from '../selectors/adminSelectors'
 import styles from './AdminPanel.module.css'
-import { MissionsAdminSection } from './MissionsAdminSection'
 import { NpcsAdminSection } from './NpcsAdminSection'
 
 /**
  * Read-only foundation for most sections, plus real CRUD (Step 27) for
- * Missions and NPCs. Mutations happen entirely inside admin/services,
- * which write straight to the real mission/NPC registries — there is no
- * separate admin data store. refreshKey exists only to force this
- * component to re-read the registries after a mutation, since mutating an
- * array in place doesn't itself trigger a React re-render.
+ * NPCs. Mutations happen entirely inside admin/services, which write
+ * straight to the real NPC registry — there is no separate admin data
+ * store. refreshKey exists only to force this component to re-read the
+ * registries after a mutation, since mutating an array in place doesn't
+ * itself trigger a React re-render.
+ *
+ * General educational assistant pass — the Missions section's own CRUD
+ * form (MissionsAdminSection) authored only SQL missions and has been
+ * removed along with SQL as a learning subject; the real Admin CMS
+ * (Course -> Lesson -> Mission/Question, src/pages/admin/**) is the
+ * sanctioned place to author real content now. The Missions section here
+ * stays as a read-only count of the hardcoded campaign registry.
  */
 export function AdminPanel() {
   // The value itself is never read — setting it is only ever used to force
@@ -32,7 +38,6 @@ export function AdminPanel() {
             <p>{section.description}</p>
             <p>Items: {section.itemCount}</p>
             <p>Status: {section.status}</p>
-            {section.id === 'missions' && <MissionsAdminSection onChange={refresh} />}
             {section.id === 'npcs' && <NpcsAdminSection onChange={refresh} />}
           </li>
         ))}

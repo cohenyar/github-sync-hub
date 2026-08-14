@@ -19,16 +19,6 @@ const reactions: OdinReaction[] = [
   { id: 'campaign-completed', trigger: { event: 'CampaignCompleted', campaignId: 'meridian-campaign' }, message: 'done' },
   { id: 'world-changed', trigger: { event: 'WorldStateChanged' }, message: 'world changed' },
   {
-    id: 'query-failed-sql-error',
-    trigger: { event: 'QueryFailed', reason: 'sql-error' },
-    message: 'sql error',
-  },
-  {
-    id: 'query-failed-mismatch-first-contact',
-    trigger: { event: 'QueryFailed', reason: 'mismatch', missionId: 'first-contact' },
-    message: 'mismatch on first contact specifically',
-  },
-  {
     id: 'lesson-completed-generic',
     trigger: { event: 'LessonCompleted' },
     message: 'a lesson was completed',
@@ -79,21 +69,6 @@ describe('matchReaction — prefers specific triggers over generic ones', () => 
   it('falls back to the generic ContentUnlocked reaction for a different target', () => {
     const event: GameEvent = { type: 'ContentUnlocked', target: { type: 'district', id: 'north' } }
     expect(matchReaction(reactions, event)?.id).toBe('content-unlocked-generic')
-  })
-
-  it('matches a QueryFailed reaction by reason alone', () => {
-    const event: GameEvent = { type: 'QueryFailed', missionId: 'district-ties', reason: 'sql-error' }
-    expect(matchReaction(reactions, event)?.id).toBe('query-failed-sql-error')
-  })
-
-  it('prefers the mission-specific QueryFailed reaction over the reason-only one', () => {
-    const event: GameEvent = { type: 'QueryFailed', missionId: 'first-contact', reason: 'mismatch' }
-    expect(matchReaction(reactions, event)?.id).toBe('query-failed-mismatch-first-contact')
-  })
-
-  it('has no QueryFailed match when neither reason nor mission id line up', () => {
-    const event: GameEvent = { type: 'QueryFailed', missionId: 'district-ties', reason: 'mismatch' }
-    expect(matchReaction(reactions, event)).toBeUndefined()
   })
 
   it('picks the lesson-specific LessonCompleted reaction over the generic one', () => {

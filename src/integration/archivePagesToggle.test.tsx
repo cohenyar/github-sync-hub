@@ -1,16 +1,11 @@
 // @vitest-environment jsdom
 import { fireEvent, screen } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { markOnboardingComplete } from '../onboarding'
 import { saveCurrentGame } from '../persistence'
 import { createInitialPlayerProgress, recordArchivePageFound } from '../progression'
 import { renderGameApp } from '../test/renderGameApp'
 import { createWorldState, initialDistricts } from '../worldState'
-
-vi.mock('../db/database', async () => {
-  const { createTestDatabase } = await import('../verifier/testDb')
-  return { createDatabase: createTestDatabase }
-})
 
 function seedSaveWithArchivePages(pageIds: readonly string[]) {
   let progress = createInitialPlayerProgress()

@@ -2,24 +2,16 @@ import { describe, expect, it } from 'vitest'
 import { addMission, removeMission } from '../../missions'
 import { getAdminRegistry } from './registry'
 
-const EXPECTED_SECTION_IDS = [
-  'missions',
-  'sql-reference-answers',
-  'districts',
-  'npcs',
-  'rewards',
-  'progression',
-  'player-state',
-]
+const EXPECTED_SECTION_IDS = ['missions', 'districts', 'npcs', 'rewards', 'progression', 'player-state']
 
-const CRUD_ENABLED_SECTION_IDS = ['missions', 'npcs']
+const CRUD_ENABLED_SECTION_IDS = ['npcs']
 
 describe('getAdminRegistry', () => {
   it('exists and is non-empty', () => {
     expect(getAdminRegistry().length).toBeGreaterThan(0)
   })
 
-  it('registers exactly the seven required sections', () => {
+  it('registers exactly the six required sections', () => {
     expect(
       getAdminRegistry()
         .map((section) => section.id)
@@ -75,8 +67,9 @@ describe('getAdminRegistry', () => {
       title: 'Temp',
       goal: 'Temp',
       prompt: 'Temp',
-      setupSql: 'CREATE TABLE t (id INTEGER);',
-      referenceSql: 'SELECT * FROM t;',
+      subjectHe: 'מתמטיקה',
+      taskHe: 'כמה זה 1 + 1?',
+      answerConfig: { type: 'exact_text', acceptedAnswers: ['2'] },
     })
 
     expect(getAdminRegistry().find((s) => s.id === 'missions')!.itemCount).toBe(before + 1)

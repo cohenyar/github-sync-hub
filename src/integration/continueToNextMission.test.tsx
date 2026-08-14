@@ -1,47 +1,36 @@
 // @vitest-environment jsdom
-import { fireEvent, screen, waitFor } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { fireEvent, screen } from '@testing-library/react'
+import { describe, expect, it } from 'vitest'
 import { he } from '../i18n'
-import { renderGameApp } from '../test/renderGameApp'
+import { renderGameApp, submitMultipleChoiceAnswer } from '../test/renderGameApp'
 
-vi.mock('../db/database', async () => {
-  const { createTestDatabase } = await import('../verifier/testDb')
-  return { createDatabase: createTestDatabase }
-})
-
-async function readyRunButton() {
-  // The World Scene (not the classic dashboard) is now the default view —
-  // switch to the classic dashboard first if we're not there already.
+// SQL-removal pass — every real mission is now a question mission with no
+// async database step, so there's nothing left to wait "ready" for; only
+// the World Scene -> classic dashboard switch (unchanged) is still needed.
+function switchToClassicDashboard() {
   if (screen.queryByTestId('world-scene-3d')) {
     fireEvent.click(screen.getByTestId('settings-menu-button'))
     fireEvent.click(screen.getByTestId('toggle-world-scene-button'))
   }
-  const runButton = await screen.findByRole('button', { name: he.run })
-  await waitFor(() => expect(runButton).toBeEnabled())
-  return runButton
 }
 
 describe('The Continue to Next Mission CTA', () => {
   it('is absent before a mission completes, then loads the next mission when clicked', async () => {
     renderGameApp()
-    const runButton = await readyRunButton()
+    switchToClassicDashboard()
 
     expect(
       screen.queryByRole('button', { name: new RegExp(`^${he.continueToPrefix}`) }),
     ).not.toBeInTheDocument()
 
-    fireEvent.change(screen.getByPlaceholderText(he.sqlPlaceholder), {
-      target: { value: 'SELECT * FROM citizens;' },
-    })
-    fireEvent.click(runButton)
-    await screen.findByText(he.pass)
+    submitMultipleChoiceAnswer(0) // First Contact: אוגוסטוס
+    await screen.findByText(he.exerciseCorrectFeedback)
 
-    const continueButton = await screen.findByRole('button', { name: `${he.continueToPrefix}קשרי מחוז` })
+    const continueButton = await screen.findByRole('button', { name: `${he.continueToPrefix}תרגום: ספרייה` })
     fireEvent.click(continueButton)
 
-    // The SQL console reloads with District Ties' own setup, and the
+    // The question panel reloads with District Ties' own setup, and the
     // Mission panel now reflects it as the active mission.
-    await readyRunButton()
-    expect(screen.getByRole('heading', { name: 'קשרי מחוז' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'תרגום: ספרייה' })).toBeInTheDocument()
   })
 })

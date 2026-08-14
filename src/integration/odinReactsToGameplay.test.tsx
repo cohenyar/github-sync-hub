@@ -1,50 +1,58 @@
 // @vitest-environment jsdom
 import { fireEvent, screen, waitFor } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { he } from '../i18n'
-import { renderGameApp } from '../test/renderGameApp'
+import { renderGameApp, submitMultipleChoiceAnswer } from '../test/renderGameApp'
 
-vi.mock('../db/database', async () => {
-  const { createTestDatabase } = await import('../verifier/testDb')
-  return { createDatabase: createTestDatabase }
-})
-
-async function readyRunButton() {
-  // The World Scene (not the classic dashboard) is now the default view —
-  // switch to the classic dashboard first if we're not there already.
+// SQL-removal pass — every real mission is now a question mission with no
+// async database step, so there's nothing left to wait "ready" for; only
+// the World Scene -> classic dashboard switch (unchanged) is still needed.
+function switchToClassicDashboard() {
   if (screen.queryByTestId('world-scene-3d')) {
     fireEvent.click(screen.getByTestId('settings-menu-button'))
     fireEvent.click(screen.getByTestId('toggle-world-scene-button'))
   }
-  const runButton = await screen.findByRole('button', { name: he.run })
-  await waitFor(() => expect(runButton).toBeEnabled())
-  return runButton
 }
 
 describe('Odin reacts to real gameplay end to end', () => {
-  it('greets the player once the mission database is ready', async () => {
+  /**
+   * SQL-removal pass — a question mission has no async setup step, so it
+   * can already be 'active' on the very first render. GameApp.tsx
+   * deliberately excludes the very first render from MissionStarted
+   * detection (see isFirstMissionStartRenderRef) specifically so this
+   * doesn't fire in the same instant as, and overwrite, WorldEntered's own
+   * boot greeting — Odin's status/greeting at boot is WorldEntered's job,
+   * not MissionStarted's. MissionStarted still fires correctly on every
+   * later mission switch (verified below).
+   */
+  it('shows Odin ready and greeted at boot, with no mission-started narration competing for it', () => {
     renderGameApp()
-    await readyRunButton()
+    switchToClassicDashboard()
 
-    // Playtest fix pass (issue 6B) — mission-started now interpolates the
-    // actual mission's own title (First Contact, on a fresh game) instead
-    // of a repeated static line.
-    await waitFor(() => {
-      expect(screen.getByText('משימה חדשה מתחילה: מגע ראשון. אני מקשיב.')).toBeInTheDocument()
-    })
     expect(screen.getByText(he.odinStatusLabel)).toBeInTheDocument()
+    expect(screen.queryByText(/^משימה חדשה מתחילה/)).not.toBeInTheDocument()
+  })
+
+  it('narrates a new mission starting once switching to it, interpolating that mission\'s own title', async () => {
+    renderGameApp()
+    switchToClassicDashboard()
+
+    submitMultipleChoiceAnswer(0) // אוגוסטוס — passes First Contact, unlocking District Ties
+    await screen.findByText(he.exerciseCorrectFeedback)
+
+    fireEvent.click(await screen.findByRole('button', { name: `תרגום: ספרייה (${he.available})` }))
+
+    await waitFor(() => {
+      expect(screen.getByText('משימה חדשה מתחילה: תרגום: ספרייה. אני מקשיב.')).toBeInTheDocument()
+    })
   })
 
   it('comments on the restored signal when First Contact passes, then hints at District Ties unlocking', async () => {
     renderGameApp()
-    const runButton = await readyRunButton()
+    switchToClassicDashboard()
 
-    fireEvent.change(screen.getByPlaceholderText(he.sqlPlaceholder), {
-      target: { value: 'SELECT * FROM citizens;' },
-    })
-    fireEvent.click(runButton)
-
-    await screen.findByText(he.pass)
+    submitMultipleChoiceAnswer(0) // אוגוסטוס — the correct answer
+    await screen.findByText(he.exerciseCorrectFeedback)
 
     await waitFor(() => {
       expect(screen.getByText('האות יציב כעת. מרידיאן שוב רואה את תושביה.')).toBeInTheDocument()
@@ -59,73 +67,31 @@ describe('Odin reacts to real gameplay end to end', () => {
     })
   })
 
-  it('does not narrate a mission completion for a failing query, but does narrate the failure', async () => {
+  /**
+   * SQL-removal pass — a question mission has no equivalent to QueryFailed
+   * (see GameApp.tsx's useQuestionMission onFailure, and the final SQL-
+   * removal report): a wrong answer plays the failure sound and shows
+   * in-panel feedback, but does not narrate a mission-specific Odin
+   * reaction the way a mismatched/invalid SQL query used to. This replaces
+   * three former SQL-specific tests (row mismatch, syntax error, and a
+   * mission-specific mismatch hint) that exercised a path no real mission
+   * can reach anymore — defaultOdinReactions.test.ts still covers the
+   * underlying QueryFailed reaction-matching logic directly, since it
+   * remains real, working, legacy code (reachable again if an admin adds a
+   * SQL mission back through the legacy admin tool).
+   */
+  it('does not narrate a mission completion or a QueryFailed-style reaction for a wrong answer', async () => {
     renderGameApp()
-    const runButton = await readyRunButton()
+    switchToClassicDashboard()
 
-    fireEvent.change(screen.getByPlaceholderText(he.sqlPlaceholder), {
-      target: { value: 'SELECT * FROM citizens WHERE id = 1;' },
-    })
-    fireEvent.click(runButton)
-
-    await screen.findByText(he.fail)
+    submitMultipleChoiceAnswer(1) // נירון — a distractor, not the correct answer
+    // Asserted via the panel's own data-verdict attribute rather than a
+    // literal feedback string, since the exact wording is difficulty-level-
+    // dependent (see QuestionAnswerPanel.tsx) and not this test's concern.
+    await screen.findByTestId('question-feedback')
+    expect(screen.getByTestId('question-feedback')).toHaveAttribute('data-verdict', 'fail')
 
     expect(screen.queryByText(/האות יציב/)).not.toBeInTheDocument()
-    await waitFor(() => {
-      expect(
-        screen.getByText('קרוב, אך הרשומות עדיין לא תואמות. הבט/הביטי שוב במה שהשאילתה מחזירה.'),
-      ).toBeInTheDocument()
-    })
-  })
-
-  it('narrates a SQL error distinctly from a row mismatch', async () => {
-    renderGameApp()
-    const runButton = await readyRunButton()
-
-    fireEvent.change(screen.getByPlaceholderText(he.sqlPlaceholder), {
-      target: { value: 'NOT VALID SQL' },
-    })
-    fireEvent.click(runButton)
-
-    await screen.findByText(new RegExp(`^${he.sqlErrorPrefix}`))
-
-    // Playtest fix pass (issue 6A) — sql.js's real message for this input
-    // is `near "NOT": syntax error`, classified 'syntax', so Odin now picks
-    // the specific syntax-error reaction rather than the old generic one.
-    await waitFor(() => {
-      expect(
-        screen.getByText('יש שגיאת תחביר בשאילתה — בדוק/י אם חסר פסיק, מרכאות או סוגריים.'),
-      ).toBeInTheDocument()
-    })
-  })
-
-  it('narrates a mission-specific hint for a mismatched query on District Ties, not the generic one', async () => {
-    renderGameApp()
-    const runButton = await readyRunButton()
-
-    // Pass First Contact to unlock District Ties.
-    fireEvent.change(screen.getByPlaceholderText(he.sqlPlaceholder), {
-      target: { value: 'SELECT * FROM citizens;' },
-    })
-    fireEvent.click(runButton)
-    await screen.findByText(he.pass)
-
-    fireEvent.click(await screen.findByRole('button', { name: `קשרי מחוז (${he.available})` }))
-    await readyRunButton()
-
-    // Wrong district value — a valid query, wrong result.
-    fireEvent.change(screen.getByPlaceholderText(he.sqlPlaceholder), {
-      target: { value: "SELECT * FROM citizens WHERE district = 'south';" },
-    })
-    fireEvent.click(screen.getByRole('button', { name: he.run }))
-
-    await screen.findByText(he.fail)
-
-    await waitFor(() => {
-      expect(
-        screen.getByText('בדוק/י את ערך המחוז בתנאי ה-WHERE שלך — הוא צריך להתאים בדיוק לצפון.'),
-      ).toBeInTheDocument()
-    })
     expect(
       screen.queryByText('קרוב, אך הרשומות עדיין לא תואמות. הבט/הביטי שוב במה שהשאילתה מחזירה.'),
     ).not.toBeInTheDocument()

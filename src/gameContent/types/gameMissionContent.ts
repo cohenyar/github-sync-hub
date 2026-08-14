@@ -3,5 +3,4 @@ export interface GameMissionContent {
   title: string
   goal: string
   prompt: string
-  referenceSql: string
 }

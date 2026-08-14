@@ -1,4 +1,11 @@
-import { expect, passProfileCreationIfShown, runSql, test, verdictIsPass, waitForMissionReady } from './helpers.js'
+import {
+  expect,
+  passProfileCreationIfShown,
+  questionFeedbackIsPass,
+  submitMultipleChoiceAnswer,
+  test,
+  waitForQuestionPanel,
+} from './helpers.js'
 
 // The raw world-state JSON is a collapsed debug view (Sprint 1 polish) —
 // expand it before asserting on its contents. Resets closed on every full
@@ -17,11 +24,12 @@ test.describe('Save/Load and load-on-boot persist world and progress across a re
     page.on('pageerror', (err) => errors.push(String(err)))
 
     await page.goto('/world')
-    await waitForMissionReady(page)
+    await waitForQuestionPanel(page)
     await openDebugView(page)
 
-    await runSql(page, 'SELECT * FROM citizens;')
-    await verdictIsPass(page)
+    // First Contact: "הקיסר הראשון" — option 0 (אוגוסטוס) is correct.
+    await submitMultipleChoiceAnswer(page, 0)
+    await questionFeedbackIsPass(page)
     await expect(page.getByTestId('progress-badge')).toHaveAttribute('data-percentage', '17')
     await expect(page.getByText(/"signal": 100/)).toBeVisible()
 
@@ -30,7 +38,7 @@ test.describe('Save/Load and load-on-boot persist world and progress across a re
     await expect(page.getByTestId('saved-confirmation')).toBeVisible()
 
     await page.reload()
-    await waitForMissionReady(page)
+    await waitForQuestionPanel(page)
     await openDebugView(page)
 
     // Step 23: a reload now boots straight into the saved game, no Load
@@ -62,7 +70,7 @@ test.describe('Save/Load and load-on-boot persist world and progress across a re
 
     // New Game also cleared the save, so the reset isn't undone by a reload.
     await page.reload()
-    await waitForMissionReady(page)
+    await waitForQuestionPanel(page)
     await expect(page.getByTestId('progress-badge')).toHaveAttribute('data-percentage', '0')
     await expect(page.getByTestId('next-mission-label')).toHaveAttribute('data-status', 'locked')
 
@@ -71,10 +79,11 @@ test.describe('Save/Load and load-on-boot persist world and progress across a re
 
   test('Cancel dismisses the New Game confirmation without resetting progress', async ({ page }) => {
     await page.goto('/world')
-    await waitForMissionReady(page)
+    await waitForQuestionPanel(page)
 
-    await runSql(page, 'SELECT * FROM citizens;')
-    await verdictIsPass(page)
+    // First Contact: "הקיסר הראשון" — option 0 (אוגוסטוס) is correct.
+    await submitMultipleChoiceAnswer(page, 0)
+    await questionFeedbackIsPass(page)
     await expect(page.getByTestId('progress-badge')).toHaveAttribute('data-percentage', '17')
 
     await page.getByTestId('settings-menu-button').click()

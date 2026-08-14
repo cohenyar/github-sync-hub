@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { fireEvent, render, screen } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 import { AuthContext } from '../auth'
 import type { AuthContextValue } from '../auth'
@@ -238,5 +239,85 @@ describe('GameControlBar — persistent auth control (main-flow auth access)', (
     // The rest of the control bar is completely unaffected.
     openSettingsMenu()
     expect(screen.getByRole('button', { name: he.save })).toBeInTheDocument()
+  })
+})
+
+function barProps() {
+  return {
+    explorerRank: DEFAULT_EXPLORER_RANK,
+    archivePageCount: 0,
+    onToggleArchivePages: vi.fn(),
+    justSaved: false,
+    confirmingNewGame: false,
+    showWorldScene: false,
+    isMuted: false,
+    onSave: vi.fn(),
+    onLoad: vi.fn(),
+    onRequestNewGame: vi.fn(),
+    onConfirmNewGame: vi.fn(),
+    onCancelNewGame: vi.fn(),
+    onToggleWorldScene: vi.fn(),
+    onToggleMuted: vi.fn(),
+    onEditProfile: vi.fn(),
+    onSelectDifficulty: vi.fn(),
+  }
+}
+
+describe('GameControlBar — global logo navigation + global admin button', () => {
+  it('the brand mark is a real link to "/" once a Router ancestor exists', () => {
+    render(
+      <MemoryRouter>
+        <GameControlBar {...barProps()} />
+      </MemoryRouter>,
+    )
+    expect(screen.getByRole('link', { name: 'Meridian' })).toHaveAttribute('href', '/')
+  })
+
+  it('degrades to a plain, non-crashing brand element with no Router ancestor (existing <GameApp/> test convention)', () => {
+    renderBar()
+    expect(screen.getByText('Meridian')).toBeInTheDocument()
+  })
+
+  it('shows a global admin button, linking to /admin, for an admin user', () => {
+    render(
+      <MemoryRouter>
+        <AuthContext.Provider
+          value={{
+            ...BASE_AUTH,
+            status: 'signed-in',
+            isAdmin: true,
+            role: 'admin',
+            user: { id: 'admin-1', email: 'admin@example.com', avatarUrl: null, displayName: null },
+          }}
+        >
+          <GameControlBar {...barProps()} />
+        </AuthContext.Provider>
+      </MemoryRouter>,
+    )
+    expect(screen.getByTestId('global-admin-button')).toHaveAttribute('href', '/admin')
+  })
+
+  it('hides the admin button for a normal signed-in (non-admin) user', () => {
+    render(
+      <MemoryRouter>
+        <AuthContext.Provider
+          value={{
+            ...BASE_AUTH,
+            status: 'signed-in',
+            isAdmin: false,
+            role: 'student',
+            user: { id: 'u1', email: 'student@example.com', avatarUrl: null, displayName: null },
+          }}
+        >
+          <GameControlBar {...barProps()} />
+        </AuthContext.Provider>
+      </MemoryRouter>,
+    )
+    expect(screen.queryByTestId('global-admin-button')).not.toBeInTheDocument()
+  })
+
+  it('hides the admin button for a guest (no provider at all)', () => {
+    renderBar()
+    expect(screen.queryByTestId('global-admin-button')).not.toBeInTheDocument()
   })
 })

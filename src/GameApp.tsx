@@ -2,17 +2,17 @@ import { useEffect, useRef, useState } from 'react'
 import './App.css'
 import { getArchivePageByLessonId, getArchivePageById } from './archive'
 import { defaultCampaign, getCampaignSummary, isCampaignComplete, type CampaignProgress } from './campaign'
-import { ArchivePagesPanel, CampaignCompleteBanner, MissionPanel, MissionSelect, SqlEditorPanel } from './components'
+import { ArchivePagesPanel, CampaignCompleteBanner, MissionPanel, MissionSelect, QuestionAnswerPanel } from './components'
 import { createProgressionMissionCompletedHandler, createUnlockReactionHandler, gameEventBus } from './events'
 import { he } from './i18n'
 import { getLearningPath, getLessonById, LEARNING_PATHS, LessonStage } from './learning'
 import {
-  classifySqlError,
   getDefaultMission,
   getMissionById,
   getMissionDisplayText,
   missionRegistry,
-  useMissionManager,
+  useQuestionMission,
+  type QuestionMissionPhase,
 } from './missions'
 import { getNpcById } from './npcs'
 import { AskOdinPanel, OdinPanel, useOdin } from './odin'
@@ -37,7 +37,14 @@ import {
   type PlayerProgress,
 } from './progression'
 import { getMissionContentStatus, getUnlockedNpcIds } from './unlocks'
-import { applyEffect, createWorldState, getDistrictStatus, initialDistricts, type WorldState } from './worldState'
+import {
+  applyEffect,
+  createWorldState,
+  getDistrictStatus,
+  initialDistricts,
+  type WorldEffect,
+  type WorldState,
+} from './worldState'
 import {
   closeDialogue,
   CoreTransitionOverlay,
@@ -459,66 +466,81 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
 
   const contentStatus = getMissionContentStatus(playerProgress, activeMission.id)
 
-  const { status, run, retry } = useMissionManager(activeMission, {
+  function handleMissionComplete(mission: { id: string; successEffect?: WorldEffect }) {
+    const effect = mission.successEffect
+    // Living World Sprint, Batch 5: whether any district's status label
+    // actually flips as a result of this effect — drives a presentation-
+    // only sting, the same moment the district markers/HUD would show it.
+    let anyDistrictStatusChanged = false
+    if (effect) {
+      // Compute the next world synchronously from this render's closure
+      // (not inside setWorld's updater, which React defers until the
+      // commit phase) so WorldStateChanged publishes before the rest of
+      // this handler, in the order these events actually happen.
+      const next = applyEffect(world, effect)
+      anyDistrictStatusChanged = Object.values(world.districts).some((district) => {
+        const updated = next.districts[district.id]
+        return updated !== undefined && getDistrictStatus(updated) !== getDistrictStatus(district)
+      })
+      gameEventBus.publish({ type: 'WorldStateChanged', world: next })
+      setWorld(next)
+    }
+
+    const wasComplete = isCampaignComplete(defaultCampaign, {
+      completedMissionIds: playerProgress.completedMissionIds,
+    })
+    const willBeComplete = isCampaignComplete(defaultCampaign, {
+      completedMissionIds: [...playerProgress.completedMissionIds, mission.id],
+    })
+
+    gameEventBus.publish({ type: 'MissionCompleted', missionId: mission.id })
+
+    if (!wasComplete && willBeComplete) {
+      gameEventBus.publish({ type: 'CampaignCompleted', campaignId: defaultCampaign.id })
+    }
+
+    playPass()
+    if (anyDistrictStatusChanged) playStatusChange()
+  }
+
+  const { status, submit: submitAnswer } = useQuestionMission(activeMission, {
     initiallyCompleted: contentStatus === 'completed',
-    onComplete: (mission) => {
-      const effect = mission.successEffect
-      // Living World Sprint, Batch 5: whether any district's status label
-      // actually flips as a result of this effect — drives a presentation-
-      // only sting, the same moment the district markers/HUD would show it.
-      let anyDistrictStatusChanged = false
-      if (effect) {
-        // Compute the next world synchronously from this render's closure
-        // (not inside setWorld's updater, which React defers until the
-        // commit phase) so WorldStateChanged publishes before the rest of
-        // this handler, in the order these events actually happen.
-        const next = applyEffect(world, effect)
-        anyDistrictStatusChanged = Object.values(world.districts).some((district) => {
-          const updated = next.districts[district.id]
-          return updated !== undefined && getDistrictStatus(updated) !== getDistrictStatus(district)
-        })
-        gameEventBus.publish({ type: 'WorldStateChanged', world: next })
-        setWorld(next)
-      }
-
-      const wasComplete = isCampaignComplete(defaultCampaign, {
-        completedMissionIds: playerProgress.completedMissionIds,
-      })
-      const willBeComplete = isCampaignComplete(defaultCampaign, {
-        completedMissionIds: [...playerProgress.completedMissionIds, mission.id],
-      })
-
-      gameEventBus.publish({ type: 'MissionCompleted', missionId: mission.id })
-
-      if (!wasComplete && willBeComplete) {
-        gameEventBus.publish({ type: 'CampaignCompleted', campaignId: defaultCampaign.id })
-      }
-
-      playPass()
-      if (anyDistrictStatusChanged) playStatusChange()
-    },
-    onFailure: (mission, result) => {
-      gameEventBus.publish({
-        type: 'QueryFailed',
-        missionId: mission.id,
-        reason: result.kind === 'error' ? 'sql-error' : 'mismatch',
-        // Playtest fix pass (issue 6A) — a deterministic classification,
-        // never the raw driver message, so Odin can react with something
-        // more specific than one generic "check your syntax" line.
-        sqlErrorKind: result.kind === 'error' ? classifySqlError(result.message) : undefined,
-      })
+    onComplete: handleMissionComplete,
+    onFailure: () => {
       playFail()
     },
   })
+  const effectiveHasAttempted = status.lastResult !== null
 
-  // Fires once, the moment the mission's database finishes preparing.
-  const previousPhaseRef = useRef(status.phase)
+  // Fires once a mission actually STARTS after the app is already up and
+  // running — a mission switch (mid-session, or the campaign auto-advancing)
+  // — never for whichever mission happens to be loaded at boot. That boot
+  // exclusion is deliberate, not just incidental: WorldEntered/SessionResumed
+  // already narrate the boot moment itself (see the effects above), and a
+  // mission has no async setup step at all, so without excluding the very
+  // first render, its MissionStarted would fire in the very same effect
+  // flush and immediately overwrite that boot narration before a player
+  // could ever see it. isFirstMissionStartRenderRef guards only the very
+  // first invocation of this effect for the component's whole lifetime;
+  // every later mission switch is tracked normally via mission id + phase.
+  const isFirstMissionStartRenderRef = useRef(true)
+  const missionStartTrackingRef = useRef<{ missionId: string; phase: QuestionMissionPhase | null }>({
+    missionId: activeMission.id,
+    phase: status.phase,
+  })
   useEffect(() => {
-    if (previousPhaseRef.current !== 'active' && status.phase === 'active') {
+    if (isFirstMissionStartRenderRef.current) {
+      isFirstMissionStartRenderRef.current = false
+      missionStartTrackingRef.current = { missionId: activeMission.id, phase: status.phase }
+      return
+    }
+    const tracking = missionStartTrackingRef.current
+    const previousPhase = tracking.missionId === activeMission.id ? tracking.phase : null
+    if (previousPhase !== 'active' && status.phase === 'active') {
       gameEventBus.publish({ type: 'MissionStarted', missionId: activeMission.id })
     }
-    previousPhaseRef.current = status.phase
-  }, [status.phase])
+    missionStartTrackingRef.current = { missionId: activeMission.id, phase: status.phase }
+  }, [status.phase, activeMission.id])
 
 
   const campaignProgress: CampaignProgress = { completedMissionIds: playerProgress.completedMissionIds }
@@ -554,7 +576,7 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
       missionRegistry.map((mission) => [mission.id, getMissionContentStatus(playerProgress, mission.id)]),
     ),
     activeMissionId: activeMission.id,
-    hasAttemptedActiveMission: status.lastResult !== null,
+    hasAttemptedActiveMission: effectiveHasAttempted,
     districtStatusByDistrictId: Object.fromEntries(
       Object.values(world.districts).map((district) => [district.id, getDistrictStatus(district)]),
     ),
@@ -726,8 +748,7 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
             <TerminalView
               mission={activeMission}
               status={status}
-              onRun={run}
-              onRetry={retry}
+              onSubmitAnswer={submitAnswer}
               campaignSummary={campaignSummary}
               activeMissionOrder={activeCampaignEntry?.order}
               nextMission={nextMission}
@@ -856,7 +877,14 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
                   difficultyLevel={difficultyLevel}
                 />
               }
-              terminal={<SqlEditorPanel status={status} onRun={run} onRetry={retry} difficultyLevel={difficultyLevel} />}
+              terminal={
+                <QuestionAnswerPanel
+                  mission={activeMission}
+                  status={status}
+                  onSubmit={submitAnswer}
+                  difficultyLevel={difficultyLevel}
+                />
+              }
             />
           }
           questTrack={
@@ -871,11 +899,17 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
             <>
               <OdinPanel latestMessage={odinMessage} history={odinHistory} />
               <AskOdinPanel
+                subjectHe={activeMission.subjectHe}
                 missionGoal={getMissionDisplayText(activeMission).goal}
                 missionPrompt={getMissionDisplayText(activeMission).prompt}
+                missionTask={getMissionDisplayText(activeMission).task}
                 missionHint={getMissionDisplayText(activeMission).hint}
+                guidanceLevel1={activeMission.guidanceLevel1}
+                guidanceLevel2={activeMission.guidanceLevel2}
+                guidanceLevel3={activeMission.guidanceLevel3}
                 destinationName={activeDestinationName}
-                history={odinHistory}
+                lastResult={status.lastResult}
+                difficultyLevel={difficultyLevel}
               />
             </>
           }

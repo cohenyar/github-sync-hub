@@ -1,9 +1,16 @@
-import { expect, runSql, test, verdictIsFail, verdictIsPass, waitForMissionReady } from './helpers.js'
+import {
+  expect,
+  questionFeedbackIsFail,
+  questionFeedbackIsPass,
+  submitMultipleChoiceAnswer,
+  test,
+  waitForQuestionPanel,
+} from './helpers.js'
 
 test.describe('Mission progression and unlock gating', () => {
   test('starts at Mission 1 of 6, 0% progress, with District Ties locked', async ({ page }) => {
     await page.goto('/world')
-    await waitForMissionReady(page)
+    await waitForQuestionPanel(page)
 
     await expect(page.getByTestId('mission-index-badge')).toHaveAttribute('data-current', '1')
     await expect(page.getByTestId('mission-index-badge')).toHaveAttribute('data-total', '6')
@@ -17,10 +24,11 @@ test.describe('Mission progression and unlock gating', () => {
     page,
   }) => {
     await page.goto('/world')
-    await waitForMissionReady(page)
+    await waitForQuestionPanel(page)
 
-    await runSql(page, 'SELECT * FROM citizens;')
-    await verdictIsPass(page)
+    // First Contact / "הקיסר הראשון" (History, MC) — option 0 (אוגוסטוס) is correct.
+    await submitMultipleChoiceAnswer(page, 0)
+    await questionFeedbackIsPass(page)
 
     // Passing First Contact doesn't switch the active mission away from it —
     // the ordinal badge tracks the mission actually on screen (still index
@@ -34,16 +42,17 @@ test.describe('Mission progression and unlock gating', () => {
 
     // Switching to District Ties is what actually advances the badge to 2.
     await page.getByTestId('mission-option-district-ties').click()
-    await waitForMissionReady(page)
+    await waitForQuestionPanel(page)
     await expect(page.getByTestId('mission-index-badge')).toHaveAttribute('data-current', '2')
   })
 
   test('a failing query leaves progression and unlocks unchanged', async ({ page }) => {
     await page.goto('/world')
-    await waitForMissionReady(page)
+    await waitForQuestionPanel(page)
 
-    await runSql(page, 'SELECT * FROM citizens WHERE id = 1;')
-    await verdictIsFail(page)
+    // Option 1 (נירון) is a distractor, not the correct answer.
+    await submitMultipleChoiceAnswer(page, 1)
+    await questionFeedbackIsFail(page)
 
     await expect(page.getByTestId('mission-index-badge')).toHaveAttribute('data-current', '1')
     await expect(page.getByTestId('progress-badge')).toHaveAttribute('data-percentage', '0')
@@ -52,13 +61,13 @@ test.describe('Mission progression and unlock gating', () => {
 
   test('revisiting an already-completed mission shows a completed phase, never an active one', async ({ page }) => {
     await page.goto('/world')
-    await waitForMissionReady(page)
+    await waitForQuestionPanel(page)
 
-    await runSql(page, 'SELECT * FROM citizens;')
-    await verdictIsPass(page)
+    await submitMultipleChoiceAnswer(page, 0)
+    await questionFeedbackIsPass(page)
 
     await page.getByTestId('mission-option-district-ties').click()
-    await waitForMissionReady(page)
+    await waitForQuestionPanel(page)
 
     await page.getByTestId('mission-option-first-contact').click()
 

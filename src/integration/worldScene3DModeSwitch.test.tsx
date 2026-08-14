@@ -1,13 +1,7 @@
 // @vitest-environment jsdom
 import { fireEvent, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
-import { he } from '../i18n'
 import { renderGameApp } from '../test/renderGameApp'
-
-vi.mock('../db/database', async () => {
-  const { createTestDatabase } = await import('../verifier/testDb')
-  return { createDatabase: createTestDatabase }
-})
 
 // jsdom has no WebGL context and no native ResizeObserver, both of which
 // @react-three/fiber's <Canvas> requires to mount. This is the exact,
@@ -42,7 +36,10 @@ describe('World Scene (Phase 2): mode-switch wiring', () => {
 
     expect(await screen.findByTestId('world-scene-3d')).toBeInTheDocument()
     expect(screen.getByTestId('district-status-hud')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: he.run })).not.toBeInTheDocument()
+    // SQL-removal pass — every real mission is now a question mission, so
+    // the classic dashboard's mission UI is the question panel, not a Run
+    // button; it must still stay off-screen while the World Scene is up.
+    expect(screen.queryByTestId('question-panel')).not.toBeInTheDocument()
   })
 
   it('switches to the classic dashboard when toggled, and back to the World Scene when toggled again', async () => {
@@ -53,12 +50,12 @@ describe('World Scene (Phase 2): mode-switch wiring', () => {
     fireEvent.click(screen.getByTestId('toggle-world-scene-button'))
 
     expect(screen.queryByTestId('world-scene-3d')).not.toBeInTheDocument()
-    expect(await screen.findByRole('button', { name: he.run })).toBeInTheDocument()
+    expect(await screen.findByTestId('question-panel')).toBeInTheDocument()
 
     ensureSettingsMenuOpen()
     fireEvent.click(screen.getByTestId('toggle-world-scene-button'))
 
     expect(await screen.findByTestId('world-scene-3d')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: he.run })).not.toBeInTheDocument()
+    expect(screen.queryByTestId('question-panel')).not.toBeInTheDocument()
   })
 })

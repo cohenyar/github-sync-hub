@@ -11,7 +11,6 @@ describe('Admin sections stay in sync with the game content schema layer', () =>
     const summary = getGameContentSummary()
 
     expect(itemCount('missions')).toBe(summary.missions)
-    expect(itemCount('sql-reference-answers')).toBe(summary.sqlChallenges)
     expect(itemCount('districts')).toBe(summary.districts)
     expect(itemCount('npcs')).toBe(summary.npcs)
     expect(itemCount('rewards')).toBe(summary.rewards)

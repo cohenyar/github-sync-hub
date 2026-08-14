@@ -1,13 +1,7 @@
 // @vitest-environment jsdom
-import { act, fireEvent, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { he } from '../i18n'
 import { renderGameApp } from '../test/renderGameApp'
-
-vi.mock('../db/database', async () => {
-  const { createTestDatabase } = await import('../verifier/testDb')
-  return { createDatabase: createTestDatabase }
-})
 
 // Under Vitest's fireEvent.click (unlike a real browser click), MouseEvent's
 // detail is 0 — the same signal GameControlBar/SettingsMenu already treats
@@ -21,16 +15,15 @@ function ensureSettingsMenuOpen() {
   }
 }
 
-async function readyRunButton() {
-  // The World Scene (not the classic dashboard) is now the default view —
-  // switch to the classic dashboard first if we're not there already.
+// SQL-removal pass — every real mission is now a question mission with no
+// async database step, so there's no "wait for Run to become enabled" step
+// left; only the World Scene -> classic dashboard switch (unchanged, since
+// the World Scene is still the default view) is still needed.
+function switchToClassicDashboard() {
   if (screen.queryByTestId('world-scene-3d')) {
     ensureSettingsMenuOpen()
     fireEvent.click(screen.getByTestId('toggle-world-scene-button'))
   }
-  const runButton = await screen.findByRole('button', { name: he.run })
-  await waitFor(() => expect(runButton).toBeEnabled())
-  return runButton
 }
 
 beforeEach(() => {
@@ -42,9 +35,9 @@ afterEach(() => {
 })
 
 describe('Save confirmation', () => {
-  it('shows "Saved." after clicking Save, then hides it again after a few seconds', async () => {
+  it('shows "Saved." after clicking Save, then hides it again after a few seconds', () => {
     renderGameApp()
-    await readyRunButton()
+    switchToClassicDashboard()
 
     expect(screen.queryByTestId('saved-confirmation')).not.toBeInTheDocument()
 

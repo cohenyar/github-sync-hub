@@ -1,30 +1,23 @@
 // @vitest-environment jsdom
-import { fireEvent, screen, waitFor } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { fireEvent, screen } from '@testing-library/react'
+import { describe, expect, it } from 'vitest'
 import { he } from '../i18n'
-import { renderGameApp } from '../test/renderGameApp'
+import { renderGameApp, submitMultipleChoiceAnswer } from '../test/renderGameApp'
 
-vi.mock('../db/database', async () => {
-  const { createTestDatabase } = await import('../verifier/testDb')
-  return { createDatabase: createTestDatabase }
-})
-
-async function readyRunButton() {
-  // The World Scene (not the classic dashboard) is now the default view —
-  // switch to the classic dashboard first if we're not there already.
+// SQL-removal pass — every real mission is now a question mission with no
+// async database step, so there's nothing left to wait "ready" for; only
+// the World Scene -> classic dashboard switch (unchanged) is still needed.
+function switchToClassicDashboard() {
   if (screen.queryByTestId('world-scene-3d')) {
     fireEvent.click(screen.getByTestId('settings-menu-button'))
     fireEvent.click(screen.getByTestId('toggle-world-scene-button'))
   }
-  const runButton = await screen.findByRole('button', { name: he.run })
-  await waitFor(() => expect(runButton).toBeEnabled())
-  return runButton
 }
 
 describe('Clicking an NPC marker on the World Map', () => {
   it('opens a read-only bio panel with that NPC’s own registry fields, and Close dismisses it', async () => {
     renderGameApp()
-    await readyRunButton()
+    switchToClassicDashboard()
 
     // Devrin Kass (north-warden) has no unlock conditions, so it's visible
     // from a fresh boot with no mission progress needed.
@@ -42,18 +35,15 @@ describe('Clicking an NPC marker on the World Map', () => {
 
   it('does not affect mission gameplay or Odin', async () => {
     renderGameApp()
-    await readyRunButton()
+    switchToClassicDashboard()
 
     fireEvent.click(screen.getByText('Devrin Kass'))
     await screen.findByRole('heading', { name: 'Devrin Kass' })
     fireEvent.click(screen.getByRole('button', { name: he.close }))
 
-    const runButton = await readyRunButton()
-    fireEvent.change(screen.getByPlaceholderText(he.sqlPlaceholder), {
-      target: { value: 'SELECT * FROM citizens;' },
-    })
-    fireEvent.click(runButton)
+    switchToClassicDashboard()
+    submitMultipleChoiceAnswer(0) // First Contact: אוגוסטוס
 
-    await screen.findByText(he.pass)
+    await screen.findByText(he.exerciseCorrectFeedback)
   })
 })

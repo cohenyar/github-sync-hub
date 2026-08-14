@@ -16,11 +16,6 @@ const reactions: OdinReaction[] = [
     trigger: { event: 'ContentUnlocked', targetType: 'mission', targetId: 'district-ties' },
     message: 'The city is beginning to respond.',
   },
-  {
-    id: 'query-failed-mismatch',
-    trigger: { event: 'QueryFailed', reason: 'mismatch' },
-    message: "The records don't match yet.",
-  },
 ]
 
 describe('useOdin', () => {
@@ -49,15 +44,6 @@ describe('useOdin', () => {
     act(() => bus.publish({ type: 'ContentUnlocked', target: { type: 'mission', id: 'district-ties' } }))
 
     expect(result.current.latestMessage).toBe('The city is beginning to respond.')
-  })
-
-  it('reacts to a QueryFailed event published on the bus', () => {
-    const bus = createEventBus()
-    const { result } = renderHook(() => useOdin(bus, reactions))
-
-    act(() => bus.publish({ type: 'QueryFailed', missionId: 'first-contact', reason: 'mismatch' }))
-
-    expect(result.current.latestMessage).toBe("The records don't match yet.")
   })
 
   it('ignores events with no matching reaction', () => {

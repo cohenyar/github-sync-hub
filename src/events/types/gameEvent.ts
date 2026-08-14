@@ -1,4 +1,3 @@
-import type { SqlErrorKind } from '../../missions/runQuery'
 import type { UnlockTarget } from '../../unlocks'
 import type { WorldState } from '../../worldState'
 
@@ -28,30 +27,11 @@ export interface CampaignCompletedEvent {
 }
 
 /**
- * Fired whenever a run produces a non-passing result — either a mismatched
- * verdict or a SQL error. Deliberately minimal: no SQL text, no error
- * details, nothing beyond what's needed to react to the fact a query
- * failed.
- */
-export interface QueryFailedEvent {
-  type: 'QueryFailed'
-  missionId: string
-  reason: 'mismatch' | 'sql-error'
-  /**
-   * Playtest fix pass (issue 6A) — only set when reason === 'sql-error': a
-   * deterministic classification of sql.js's own error message (see
-   * missions/runQuery.classifySqlError), never the raw driver text itself.
-   * Lets Odin react with something more specific than "check your syntax."
-   */
-  sqlErrorKind?: SqlErrorKind
-}
-
-/**
- * Batch 3A.4B — the lesson-side counterparts to MissionCompleted/QueryFailed.
- * lessonId is always a namespaced id (e.g. "lesson:math-001"), never a real
- * missionRegistry id, so these can never be confused with the SQL events
- * above. Deliberately separate types rather than reusing MissionCompleted:
- * that event is what Progression's bus handler uses to write into
+ * Batch 3A.4B — the lesson-side counterparts to MissionCompleted. lessonId
+ * is always a namespaced id (e.g. "lesson:math-001"), never a real
+ * missionRegistry id, so these can never be confused with a mission event.
+ * Deliberately separate types rather than reusing MissionCompleted: that
+ * event is what Progression's bus handler uses to write into
  * completedMissionIds, and a lesson id must never reach that array.
  */
 export interface LessonCompletedEvent {
@@ -99,7 +79,6 @@ export type GameEvent =
   | WorldStateChangedEvent
   | ContentUnlockedEvent
   | CampaignCompletedEvent
-  | QueryFailedEvent
   | LessonCompletedEvent
   | LessonFailedEvent
   | WorldEnteredEvent
@@ -114,7 +93,6 @@ export const ALL_EVENT_TYPES: readonly GameEventType[] = [
   'WorldStateChanged',
   'ContentUnlocked',
   'CampaignCompleted',
-  'QueryFailed',
   'LessonCompleted',
   'LessonFailed',
   'WorldEntered',

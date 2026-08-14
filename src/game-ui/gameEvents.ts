@@ -51,8 +51,6 @@ export function bannerFromOdinEntry(entry: OdinNarrationEntry | null): GameEvent
       const { text, dir } = missionDetail(event.target.id)
       return { key, tone: 'info', icon: '◆', title: he.eventMissionUnlocked, detail: text, detailDir: dir }
     }
-    case 'QueryFailed':
-      return { key, tone: 'warning', icon: '!', title: he.eventQueryFailed }
     // MissionStarted / WorldStateChanged carry no distinct "just happened"
     // beat worth a banner — deliberately not surfaced.
     default:

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { NavLink, Outlet } from 'react-router-dom'
+import { Link, NavLink, Outlet } from 'react-router-dom'
 import { he } from '../../i18n'
 import styles from './AdminLayout.module.css'
 
@@ -35,6 +35,10 @@ export function AdminLayout() {
           <span className={styles.menuBar} aria-hidden="true" />
           <span className={styles.menuBar} aria-hidden="true" />
         </button>
+        <Link to="/" className={styles.brand} aria-label="Meridian">
+          <span aria-hidden className={styles.brandMark} />
+          <span className={styles.brandName}>Meridian</span>
+        </Link>
         <span className={styles.title}>{he.adminAreaTitle}</span>
         <NavLink to="/dashboard" className={styles.backLink}>
           {he.adminBackToGame}

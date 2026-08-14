@@ -1,37 +1,24 @@
 // @vitest-environment jsdom
-import { fireEvent, screen, waitFor } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { fireEvent, screen } from '@testing-library/react'
+import { afterEach, describe, expect, it } from 'vitest'
 import { gameEventBus } from '../events'
 import type { GameEvent } from '../events'
 import { he } from '../i18n'
-import { renderGameApp } from '../test/renderGameApp'
+import { renderGameApp, submitMultipleChoiceAnswer, submitShortTextAnswer } from '../test/renderGameApp'
 
-vi.mock('../db/database', async () => {
-  const { createTestDatabase } = await import('../verifier/testDb')
-  return { createDatabase: createTestDatabase }
-})
-
-async function readyRunButton() {
-  // The World Scene (not the classic dashboard) is now the default view —
-  // switch to the classic dashboard first if we're not there already.
+// SQL-removal pass — every real mission is now a question mission with no
+// async database step, so there's nothing left to wait "ready" for; only
+// the World Scene -> classic dashboard switch (unchanged) is still needed.
+function switchToClassicDashboard() {
   if (screen.queryByTestId('world-scene-3d')) {
     fireEvent.click(screen.getByTestId('settings-menu-button'))
     fireEvent.click(screen.getByTestId('toggle-world-scene-button'))
   }
-  const runButton = await screen.findByRole('button', { name: he.run })
-  await waitFor(() => expect(runButton).toBeEnabled())
-  return runButton
-}
-
-function runQuery(sql: string) {
-  fireEvent.change(screen.getByPlaceholderText(he.sqlPlaceholder), { target: { value: sql } })
-  fireEvent.click(screen.getByRole('button', { name: he.run }))
 }
 
 async function switchToMission(title: string, status: 'available' | 'completed') {
   const label = status === 'available' ? he.available : he.completed
   fireEvent.click(screen.getByRole('button', { name: `${title} (${label})` }))
-  await readyRunButton()
 }
 
 const activeHandlers: Array<(event: GameEvent) => void> = []
@@ -55,63 +42,60 @@ describe('Full campaign playthrough: all six missions in order, switching betwee
   it('unlocks every mission and NPC in the chain and completes the campaign exactly once', async () => {
     const events = watch()
     renderGameApp()
-    await readyRunButton()
+    switchToClassicDashboard()
 
-    // 1. First Contact (1/6 ≈ 17%)
-    runQuery('SELECT * FROM citizens;')
-    await screen.findByText(he.pass)
+    // 1. First Contact / "הקיסר הראשון" (History, MC — 1/6 ≈ 17%)
+    submitMultipleChoiceAnswer(0) // אוגוסטוס
+    await screen.findByText(he.exerciseCorrectFeedback)
     expect(screen.getByText(`${he.progressLabelPrefix}17%`)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: `קשרי מחוז (${he.available})` })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: `תרגום: ספרייה (${he.available})` })).toBeInTheDocument()
 
-    // 2. District Ties (2/6 ≈ 33%)
+    // 2. District Ties / "תרגום: ספרייה" (English, MC — 2/6 ≈ 33%)
     // The 40%-progression-gated NPC is not visible yet — 33% is still below it.
     expect(document.querySelector('[data-npc-id="north-analyst"]')).toBeNull()
 
-    await switchToMission('קשרי מחוז', 'available')
-    runQuery("SELECT * FROM citizens WHERE district = 'north';")
-    await screen.findByText(he.pass)
+    await switchToMission('תרגום: ספרייה', 'available')
+    submitMultipleChoiceAnswer(0) // Library
+    await screen.findByText(he.exerciseCorrectFeedback)
     expect(screen.getByText(`${he.progressLabelPrefix}33%`)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: `יציבות הדרום (${he.available})` })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: `כפל: 8 × 7 (${he.available})` })).toBeInTheDocument()
     expect(document.querySelector('[data-npc-id="north-analyst"]')).toBeNull()
 
-    // 3. South Stability (3/6 = 50%)
-    await switchToMission('יציבות הדרום', 'available')
-    runQuery("SELECT * FROM district_reports WHERE district = 'south' AND severity >= 3;")
-    await screen.findByText(he.pass)
+    // 3. South Stability / "כפל: 8 × 7" (Math, short text — 3/6 = 50%)
+    await switchToMission('כפל: 8 × 7', 'available')
+    submitShortTextAnswer('56')
+    await screen.findByText(he.exerciseCorrectFeedback)
     expect(screen.getByText(`${he.progressLabelPrefix}50%`)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: `אות מלא (${he.available})` })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: `הנשיא הראשון (${he.available})` })).toBeInTheDocument()
     // The NPC gated behind South Stability is now visible on the map.
     expect(document.querySelector('[data-npc-id="south-engineer"]')).not.toBeNull()
     // 50% crosses the 40% progression threshold — north-analyst unlocks here, not at District Ties.
     expect(document.querySelector('[data-npc-id="north-analyst"]')).not.toBeNull()
 
-    // 4. Full Signal (4/6 ≈ 67%)
-    await switchToMission('אות מלא', 'available')
-    runQuery('SELECT district, COUNT(*) AS total FROM citizens GROUP BY district;')
-    await screen.findByText(he.pass)
+    // 4. Full Signal / "הנשיא הראשון" (History, MC — 4/6 ≈ 67%)
+    await switchToMission('הנשיא הראשון', 'available')
+    submitMultipleChoiceAnswer(0) // ג'ורג' וושינגטון
+    await screen.findByText(he.exerciseCorrectFeedback)
     expect(screen.getByText(`${he.progressLabelPrefix}67%`)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: `רשומות מקושרות (${he.available})` })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: `תרגום: ספר (${he.available})` })).toBeInTheDocument()
     expect(screen.queryByText(he.campaignCompleteTitle)).not.toBeInTheDocument()
 
-    // 5. Linked Records (5/6 ≈ 83%) — no longer the finale.
-    await switchToMission('רשומות מקושרות', 'available')
-    runQuery(
-      'SELECT citizens.name, district_officials.official ' +
-        'FROM citizens JOIN district_officials ON citizens.district = district_officials.district;',
-    )
-    await screen.findByText(he.pass)
+    // 5. Linked Records / "תרגום: ספר" (English, short text — 5/6 ≈ 83%) — no longer the finale.
+    await switchToMission('תרגום: ספר', 'available')
+    submitShortTextAnswer('book')
+    await screen.findByText(he.exerciseCorrectFeedback)
     expect(screen.getByText(`${he.progressLabelPrefix}83%`)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: `אות בעדיפות (${he.available})` })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: `כפל: 12 × 5 (${he.available})` })).toBeInTheDocument()
     expect(screen.queryByText(he.campaignCompleteTitle)).not.toBeInTheDocument()
 
-    // 6. Priority Signal (6/6 = 100%) — the true finale, introducing ORDER BY.
-    await switchToMission('אות בעדיפות', 'available')
-    runQuery('SELECT * FROM signal_reports ORDER BY severity DESC;')
-    await screen.findByText(he.pass)
+    // 6. Priority Signal / "כפל: 12 × 5" (Math, MC — 6/6 = 100%) — the true finale.
+    await switchToMission('כפל: 12 × 5', 'available')
+    submitMultipleChoiceAnswer(0) // 60
+    await screen.findByText(he.exerciseCorrectFeedback)
     expect(screen.getByText(`${he.progressLabelPrefix}100%`)).toBeInTheDocument()
 
     // The campaign-completion-gated NPC is now visible.
-    await waitFor(() => expect(document.querySelector('[data-npc-id="city-voice"]')).not.toBeNull())
+    expect(document.querySelector('[data-npc-id="city-voice"]')).not.toBeNull()
 
     // Every mission fired exactly once, and CampaignCompleted fired exactly
     // once, only after the true last mission completed.
@@ -127,7 +111,9 @@ describe('Full campaign playthrough: all six missions in order, switching betwee
     expect(events.filter((e) => e.type === 'CampaignCompleted')).toHaveLength(1)
 
     // Odin's dedicated finale/campaign lines both appear somewhere in the
-    // narration (order doesn't matter here — just that both fired).
+    // narration (order doesn't matter here — just that both fired). These
+    // are world/campaign-state flavor text, unrelated to mission content, so
+    // they're unaffected by the SQL-removal content change.
     expect(
       screen.getByText('הקול הדחוף ביותר עולה לראש. מרידיאן יודעת סוף־סוף במה לטפל קודם.'),
     ).toBeInTheDocument()

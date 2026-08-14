@@ -5,7 +5,6 @@ import { getNpcItems } from './npcs'
 import { getPlayerStateItems } from './playerState'
 import { getProgressionItems } from './progression'
 import { getRewardItems } from './rewards'
-import { getSqlReferenceAnswerItems } from './sqlReferenceAnswers'
 
 /**
  * The Admin registry: one entry per section. Every section here is a
@@ -22,13 +21,6 @@ export function getAdminRegistry(): AdminSection[] {
       title: 'Missions',
       description: 'All missions currently registered in the game.',
       itemCount: getMissionItems().length,
-      status: 'CRUD enabled',
-    },
-    {
-      id: 'sql-reference-answers',
-      title: 'SQL Reference Answers',
-      description: 'The reference SQL query the Verifier checks each mission against.',
-      itemCount: getSqlReferenceAnswerItems().length,
       status: 'Read-only foundation',
     },
     {

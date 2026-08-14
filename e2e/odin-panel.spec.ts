@@ -1,4 +1,11 @@
-import { expect, runSql, test, verdictIsFail, verdictIsPass, waitForMissionReady } from './helpers.js'
+import {
+  expect,
+  questionFeedbackIsFail,
+  questionFeedbackIsPass,
+  submitMultipleChoiceAnswer,
+  test,
+  waitForQuestionPanel,
+} from './helpers.js'
 
 test.describe('Odin narrates real gameplay events', () => {
   test('greets the player once ready and shows the deterministic/offline status', async ({ page }) => {
@@ -9,13 +16,19 @@ test.describe('Odin narrates real gameplay events', () => {
     page.on('pageerror', (err) => errors.push(String(err)))
 
     await page.goto('/world')
-    await waitForMissionReady(page)
+    await waitForQuestionPanel(page)
 
     await expect(page.getByTestId('odin-panel')).toBeVisible()
     await expect(page.getByText('סטטוס: דטרמיניסטי / לא מקוון' /* he.odinStatusLabel */)).toBeVisible()
-    // Playtest fix pass (issue 6B) — mission-started now names the actual
-    // mission (First Contact, on a fresh game) instead of a static line.
-    await expect(page.getByTestId('odin-latest-message')).toHaveText('משימה חדשה מתחילה: מגע ראשון. אני מקשיב.')
+    // SQL-removal pass — a question mission has no async "mission database"
+    // step, so GameApp deliberately excludes the very first render from
+    // MissionStarted detection (see isFirstMissionStartRenderRef in
+    // GameApp.tsx): without that exclusion, MissionStarted would fire in the
+    // same tick as, and overwrite, WorldEntered/SessionResumed's own boot
+    // greeting before a player could ever see it. So unlike the old SQL-era
+    // behavior, no mission-started narration is expected here at boot — see
+    // the mid-session mission-switch test below for where it does fire.
+    await expect(page.getByTestId('odin-latest-message')).not.toContainText('משימה חדשה מתחילה')
 
     expect(errors).toEqual([])
   })
@@ -30,10 +43,11 @@ test.describe('Odin narrates real gameplay events', () => {
     page.on('pageerror', (err) => errors.push(String(err)))
 
     await page.goto('/world')
-    await waitForMissionReady(page)
+    await waitForQuestionPanel(page)
 
-    await runSql(page, 'SELECT * FROM citizens;')
-    await verdictIsPass(page)
+    // First Contact / "הקיסר הראשון" — אוגוסטוס (index 0) is correct.
+    await submitMultipleChoiceAnswer(page, 0)
+    await questionFeedbackIsPass(page)
 
     await expect(page.getByText('האות יציב כעת. מרידיאן שוב רואה את תושביה.')).toBeVisible()
 
@@ -54,7 +68,9 @@ test.describe('Odin narrates real gameplay events', () => {
     expect(errors).toEqual([])
   })
 
-  test('reacts to a failing query, distinguishing a mismatch from a SQL error', async ({ page }) => {
+  test('does not narrate a mission completion or a QueryFailed-style reaction for a wrong answer', async ({
+    page,
+  }) => {
     const errors: string[] = []
     page.on('console', (msg) => {
       if (msg.type() === 'error') errors.push(msg.text())
@@ -62,27 +78,24 @@ test.describe('Odin narrates real gameplay events', () => {
     page.on('pageerror', (err) => errors.push(String(err)))
 
     await page.goto('/world')
-    await waitForMissionReady(page)
+    await waitForQuestionPanel(page)
 
-    await runSql(page, 'SELECT * FROM citizens WHERE id = 1;')
-    await verdictIsFail(page)
+    // SQL-removal pass — a question mission has no equivalent to the old
+    // QueryFailed row-mismatch/SQL-error distinction: a wrong answer plays
+    // the failure feedback in-panel, but Odin narrates nothing extra for it.
+    // נירון (index 1) is a distractor, not the correct answer.
+    await submitMultipleChoiceAnswer(page, 1)
+    await questionFeedbackIsFail(page)
+
+    await expect(page.getByText('האות יציב כעת. מרידיאן שוב רואה את תושביה.')).not.toBeVisible()
     await expect(
       page.getByText('קרוב, אך הרשומות עדיין לא תואמות. הבט/הביטי שוב במה שהשאילתה מחזירה.'),
-    ).toBeVisible()
-
-    await runSql(page, 'NOT VALID SQL')
-    await expect(page.getByTestId('sql-error-message')).toBeVisible()
-    // Playtest fix pass (issue 6A) — sql.js's real message for this input is
-    // `near "NOT": syntax error`, classified 'syntax', so Odin now picks the
-    // specific syntax-error reaction instead of the old generic one.
-    await expect(
-      page.getByText('יש שגיאת תחביר בשאילתה — בדוק/י אם חסר פסיק, מרכאות או סוגריים.'),
-    ).toBeVisible()
+    ).not.toBeVisible()
 
     expect(errors).toEqual([])
   })
 
-  test('narrates a mission-specific hint for a mismatched query on District Ties', async ({ page }) => {
+  test('narrates a new mission starting once switching to District Ties mid-session', async ({ page }) => {
     const errors: string[] = []
     page.on('console', (msg) => {
       if (msg.type() === 'error') errors.push(msg.text())
@@ -90,19 +103,18 @@ test.describe('Odin narrates real gameplay events', () => {
     page.on('pageerror', (err) => errors.push(String(err)))
 
     await page.goto('/world')
-    await waitForMissionReady(page)
+    await waitForQuestionPanel(page)
 
-    await runSql(page, 'SELECT * FROM citizens;')
-    await verdictIsPass(page)
+    await submitMultipleChoiceAnswer(page, 0)
+    await questionFeedbackIsPass(page)
 
     await page.getByTestId('mission-option-district-ties').click()
-    await waitForMissionReady(page)
+    await waitForQuestionPanel(page)
 
-    await runSql(page, "SELECT * FROM citizens WHERE district = 'south';")
-    await verdictIsFail(page)
-    await expect(
-      page.getByText('בדוק/י את ערך המחוז בתנאי ה-WHERE שלך — הוא צריך להתאים בדיוק לצפון.'),
-    ).toBeVisible()
+    // Unlike the boot case above, MissionStarted fires correctly for a
+    // genuine mid-session mission switch, interpolating District Ties' own
+    // new title (see GameApp.tsx's isFirstMissionStartRenderRef comment).
+    await expect(page.getByTestId('odin-latest-message')).toHaveText('משימה חדשה מתחילה: תרגום: ספרייה. אני מקשיב.')
 
     expect(errors).toEqual([])
   })

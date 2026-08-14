@@ -31,3 +31,21 @@ export function renderGameApp(props?: GameAppProps): ReturnType<typeof render> {
   passEntryGates()
   return result
 }
+
+/**
+ * SQL-removal pass — the question-mission counterpart to the old
+ * "type SQL into the textarea and click Run" pattern used throughout the
+ * integration suite. Selects the given option (0-based, matching each
+ * mission's answerConfig.options order) on a multiple-choice question and
+ * submits it. See submitShortTextAnswer for a short-text question.
+ */
+export function submitMultipleChoiceAnswer(optionIndex: number): void {
+  fireEvent.click(screen.getByTestId(`question-option-${optionIndex}`))
+  fireEvent.click(screen.getByTestId('question-submit-button'))
+}
+
+/** The short-text counterpart to submitMultipleChoiceAnswer — types the given answer and submits it. */
+export function submitShortTextAnswer(answer: string): void {
+  fireEvent.change(screen.getByTestId('question-answer-input'), { target: { value: answer } })
+  fireEvent.click(screen.getByTestId('question-submit-button'))
+}

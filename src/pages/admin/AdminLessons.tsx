@@ -4,6 +4,7 @@ import { useCourses, useLessons } from '../../cms'
 import type { Lesson, ContentStatus } from '../../cms'
 import { he } from '../../i18n'
 import { ConfirmDialog } from './components/ConfirmDialog'
+import { ModalOverlay } from './components/ModalOverlay'
 import { StatusBadge } from './components/StatusBadge'
 import styles from './components/adminCrud.module.css'
 
@@ -119,7 +120,7 @@ export function AdminLessons() {
         <h1 className={styles.headerTitle}>{he.adminNavLessons}</h1>
         {mode.kind === 'closed' && (
           <button type="button" className={styles.primaryButton} onClick={openCreate}>
-            {he.adminAddLesson}
+            <span aria-hidden="true">+</span> {he.adminAddLesson}
           </button>
         )}
       </div>
@@ -175,8 +176,11 @@ export function AdminLessons() {
       )}
 
       {mode.kind !== 'closed' && (
+        <ModalOverlay onDismiss={requestClose} labelledBy="lesson-form-title">
         <div className={styles.formPanel} data-testid="lesson-form">
-          <h2 className={styles.formPanelTitle}>{mode.kind === 'create' ? he.adminAddLesson : he.adminEditAction}</h2>
+          <h2 id="lesson-form-title" className={styles.formPanelTitle}>
+            {mode.kind === 'create' ? he.adminAddLesson : he.adminEditAction}
+          </h2>
 
           {saveState.kind === 'error' && (
             <div className={`${styles.saveBanner} ${styles.saveBannerError}`}>{saveState.message}</div>
@@ -234,6 +238,7 @@ export function AdminLessons() {
             </button>
           </div>
         </div>
+        </ModalOverlay>
       )}
 
       {deleteTarget && (

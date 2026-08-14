@@ -1,2 +1,0 @@
--- Meridian database seed
--- Placeholder: schema and seed data will be added in a later step.

@@ -12,7 +12,7 @@ import { NotFound } from './pages/NotFound'
 /**
  * Startup performance: only the landing page (the first thing anyone sees)
  * and the tiny NotFound page are in the initial bundle. Everything heavy —
- * the 3D world + SQL engine (GameApp), the admin surface, and the secondary
+ * the 3D world + mission/learning engine (GameApp), the admin surface, and the secondary
  * platform pages — is code-split, so first paint no longer waits on a
  * ~1.5 MB single bundle. Routing and behavior are otherwise unchanged.
  */

@@ -225,6 +225,10 @@ export function AuthPage() {
   return (
     <main className={styles.page} dir="rtl">
       <section className={styles.card} aria-labelledby="auth-title" data-testid="auth-page">
+        <Link to="/" className={styles.brand} aria-label="Meridian" data-testid="auth-brand-link">
+          <span aria-hidden className={styles.brandMark} />
+          <span className={styles.brandName}>Meridian</span>
+        </Link>
         <h1 className={styles.title} id="auth-title">
           {mode === 'forgot' ? he.authForgotTitle : mode === 'sign-up' ? he.authSignUpTitle : he.authSignInTitle}
         </h1>

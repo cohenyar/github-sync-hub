@@ -1,4 +1,4 @@
-import { expect, test } from './helpers.js'
+import { expect, questionFeedbackIsPass, submitMultipleChoiceAnswer, test } from './helpers.js'
 
 /**
  * The 3D scene's internals (meshes, the frame loop, WASD movement,
@@ -11,7 +11,9 @@ import { expect, test } from './helpers.js'
  * position values.
  */
 test.describe('Phase 2 primary 3D scene: the canonical world-scene loop', () => {
-  test('city -> NPC -> Hebrew dialogue -> Records Core -> terminal -> SQL -> world reaction', async ({ page }) => {
+  test('city -> NPC -> Hebrew dialogue -> Records Core -> terminal -> question -> world reaction', async ({
+    page,
+  }) => {
     const errors: string[] = []
     page.on('console', (msg) => {
       if (msg.type() === 'error') errors.push(msg.text())
@@ -94,13 +96,14 @@ test.describe('Phase 2 primary 3D scene: the canonical world-scene loop', () => 
     await expect(prompt).toHaveAttribute('data-interactable-id', 'core')
 
     await page.keyboard.press('KeyE')
-    const runButton = page.getByTestId('run-button')
     await expect(page.getByTestId('terminal-view')).toBeVisible()
-    await expect(runButton).toBeEnabled()
+    await expect(page.getByTestId('question-panel')).toBeVisible()
 
-    await page.getByTestId('sql-input').fill('SELECT * FROM citizens;')
-    await runButton.click()
-    await expect(page.getByTestId('verdict-banner')).toHaveAttribute('data-verdict', 'pass')
+    // SQL-removal pass — First Contact / "הקיסר הראשון" is now a multiple-
+    // choice question mission, not a SQL exercise. אוגוסטוס (index 0) is
+    // correct.
+    await submitMultipleChoiceAnswer(page, 0)
+    await questionFeedbackIsPass(page)
 
     // Living World Sprint, Batch 1: Odin's existing narration is now visible
     // as a subtitle over the Terminal itself, not just logged to the
@@ -161,7 +164,10 @@ test.describe('Phase 2 primary 3D scene: the canonical world-scene loop', () => 
     await page.getByTestId('settings-menu-button').click()
     await page.getByTestId('toggle-world-scene-button').click()
     await expect(page.getByTestId('world-scene-3d')).not.toBeVisible()
-    await expect(page.getByRole('button', { name: 'הרץ' /* he.run */ })).toBeVisible()
+    // SQL-removal pass — First Contact (the active mission on a fresh game)
+    // is now a question mission, so there's no SQL console/"הרץ" button to
+    // check for; the question panel is its counterpart.
+    await expect(page.getByTestId('question-panel')).toBeVisible()
   })
 
   test('Hub World, A1: a locked destination shows the locked prompt and never opens a Terminal on interaction', async ({
@@ -187,8 +193,9 @@ test.describe('Phase 2 primary 3D scene: the canonical world-scene loop', () => 
     await expect(prompt).toContainText('מסלול הצפון')
     // Playtest fix pass (issue 4) — a locked destination now names the real
     // blocking mission (District Ties requires First Contact) instead of
-    // showing only the bare "Locked" label.
-    await expect(prompt).toContainText('נדרש: השלמת מגע ראשון')
+    // showing only the bare "Locked" label. SQL-removal pass: First
+    // Contact's title is now "הקיסר הראשון" (The First Emperor).
+    await expect(prompt).toContainText('נדרש: השלמת הקיסר הראשון')
 
     // A deliberate, explained no-op — not a silent failure: interacting
     // with a locked destination must not open a Terminal.
@@ -215,9 +222,10 @@ test.describe('Phase 2 primary 3D scene: the canonical world-scene loop', () => 
     await expect(page.getByTestId('interaction-prompt')).toHaveAttribute('data-interactable-id', 'core')
     await page.keyboard.press('KeyE')
     await expect(page.getByTestId('terminal-view')).toBeVisible()
-    await page.getByTestId('sql-input').fill('SELECT * FROM citizens;')
-    await page.getByTestId('run-button').click()
-    await expect(page.getByTestId('verdict-banner')).toHaveAttribute('data-verdict', 'pass')
+    await expect(page.getByTestId('question-panel')).toBeVisible()
+    // First Contact / "הקיסר הראשון" — אוגוסטוס (index 0) is correct.
+    await submitMultipleChoiceAnswer(page, 0)
+    await questionFeedbackIsPass(page)
     await page.getByTestId('return-to-world-button').click()
     await expect(page.getByTestId('world-scene-3d')).toBeVisible()
 
@@ -247,9 +255,9 @@ test.describe('Phase 2 primary 3D scene: the canonical world-scene loop', () => 
     // Solving District Ties should advance this destination's own derived
     // progress to 1/1 — no independent progression engine, just the same
     // existing playerProgress read fresh.
-    await page.getByTestId('sql-input').fill("SELECT * FROM citizens WHERE district = 'north';")
-    await page.getByTestId('run-button').click()
-    await expect(page.getByTestId('verdict-banner')).toHaveAttribute('data-verdict', 'pass')
+    // District Ties / "תרגום: ספרייה" — Library (index 0) is correct.
+    await submitMultipleChoiceAnswer(page, 0)
+    await questionFeedbackIsPass(page)
     await expect(destinationLabel).toContainText('1/1')
   })
 
@@ -538,7 +546,7 @@ test.describe('Batch 3A.3: teacher NPC interaction reliability', () => {
     await expect(dialogue).toBeVisible()
   })
 
-  test('Start Lesson resolves the namespaced math lesson id, opens the real exercise panel, and never touches the SQL console', async ({
+  test('Start Lesson resolves the namespaced math lesson id, opens the real exercise panel, and never touches the mission question panel', async ({
     page,
   }) => {
     const errors: string[] = []
@@ -558,12 +566,14 @@ test.describe('Batch 3A.3: teacher NPC interaction reliability', () => {
     await expect(page.getByTestId('lesson-stage')).toHaveAttribute('data-lesson-id', 'lesson:math-001')
     await expect(page.getByTestId('math-exercise-panel')).toBeVisible()
 
-    // The classic dashboard's SQL console is untouched — Start Lesson never
-    // reached activeMissionId/useMissionManager/runQuery.
+    // The classic dashboard's mission side is untouched — Start Lesson never
+    // reached activeMissionId/useMissionManager/useQuestionMission. Still
+    // shows the question panel for First Contact (the active mission on a
+    // fresh game), not any lesson UI.
     await page.getByTestId('lesson-return-to-world-button').click()
     await page.getByTestId('settings-menu-button').click()
     await page.getByTestId('toggle-world-scene-button').click()
-    await expect(page.getByRole('button', { name: 'הרץ' /* he.run */ })).toBeVisible()
+    await expect(page.getByTestId('question-panel')).toBeVisible()
     await expect(page.getByTestId('active-mission-title')).toHaveAttribute('data-mission-id', 'first-contact')
 
     expect(errors).toEqual([])
@@ -860,7 +870,7 @@ test.describe('Batch 3A.5: visual polish + lesson completion UX', () => {
     await expect(page.getByTestId('lesson-success-message')).toBeVisible()
     await page.getByTestId('lesson-return-to-world-button').click()
 
-    // The classic dashboard's SQL side is still completely unaffected —
+    // The classic dashboard's mission side is still completely unaffected —
     // same proof as Batch 3A.4B, re-checked after the replay.
     await page.getByTestId('settings-menu-button').click()
     await page.getByTestId('toggle-world-scene-button').click()

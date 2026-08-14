@@ -57,7 +57,14 @@ describe('PageShell', () => {
     const links = nav.querySelectorAll('a')
     const hrefs = Array.from(links).map((link) => link.getAttribute('href'))
 
-    expect(hrefs).toEqual(['/', '/dashboard', '/world'])
+    // First "/" is the Meridian brand mark (global logo navigation pass);
+    // the second is the "ראשי" text nav item — both intentionally present.
+    expect(hrefs).toEqual(['/', '/', '/dashboard', '/world'])
+  })
+
+  it('the brand mark is a real link to "/"', () => {
+    renderShell()
+    expect(screen.getByRole('link', { name: 'Meridian' })).toHaveAttribute('href', '/')
   })
 
   it('does not link to the hidden placeholder pages', () => {

@@ -1,4 +1,11 @@
-import { expect, runSql, test, verdictIsPass, waitForMissionReady } from './helpers.js'
+import {
+  expect,
+  questionFeedbackIsPass,
+  submitMultipleChoiceAnswer,
+  submitShortTextAnswer,
+  test,
+  waitForQuestionPanel,
+} from './helpers.js'
 
 test.describe('Vertical slice: the full six-mission campaign is playable end to end', () => {
   test('switches missions, unlocks the full chain, and completes the campaign', async ({ page }) => {
@@ -9,53 +16,49 @@ test.describe('Vertical slice: the full six-mission campaign is playable end to 
     page.on('pageerror', (err) => errors.push(String(err)))
 
     await page.goto('/world')
-    await waitForMissionReady(page)
+    await waitForQuestionPanel(page)
 
-    // 1. First Contact
-    await runSql(page, 'SELECT * FROM citizens;')
-    await verdictIsPass(page)
+    // 1. First Contact / "הקיסר הראשון" (History, MC) — option 0 (אוגוסטוס)
+    await submitMultipleChoiceAnswer(page, 0)
+    await questionFeedbackIsPass(page)
     await expect(page.getByTestId('progress-badge')).toHaveAttribute('data-percentage', '17')
 
-    // 2. Switch to District Ties and complete it
+    // 2. Switch to District Ties / "תרגום: ספרייה" (English, MC) and complete it — option 0 (Library)
     await page.getByTestId('mission-option-district-ties').click()
-    await waitForMissionReady(page)
-    await runSql(page, "SELECT * FROM citizens WHERE district = 'north';")
-    await verdictIsPass(page)
+    await waitForQuestionPanel(page)
+    await submitMultipleChoiceAnswer(page, 0)
+    await questionFeedbackIsPass(page)
     await expect(page.getByTestId('progress-badge')).toHaveAttribute('data-percentage', '33')
 
-    // 3. Switch to South Stability and complete it
+    // 3. Switch to South Stability / "כפל: 8 × 7" (Math, short text) and complete it — "56"
     await page.getByTestId('mission-option-south-stability').click()
-    await waitForMissionReady(page)
-    await runSql(page, "SELECT * FROM district_reports WHERE district = 'south' AND severity >= 3;")
-    await verdictIsPass(page)
+    await waitForQuestionPanel(page)
+    await submitShortTextAnswer(page, '56')
+    await questionFeedbackIsPass(page)
     await expect(page.getByTestId('progress-badge')).toHaveAttribute('data-percentage', '50')
     await expect(page.locator('[data-npc-id="south-engineer"]')).toBeVisible()
 
-    // 4. Switch to Full Signal and complete it (not the finale)
+    // 4. Switch to Full Signal / "הנשיא הראשון" (History, MC) and complete it (not the finale) — option 0 (ג'ורג' וושינגטון)
     await page.getByTestId('mission-option-full-signal').click()
-    await waitForMissionReady(page)
-    await runSql(page, 'SELECT district, COUNT(*) AS total FROM citizens GROUP BY district;')
-    await verdictIsPass(page)
+    await waitForQuestionPanel(page)
+    await submitMultipleChoiceAnswer(page, 0)
+    await questionFeedbackIsPass(page)
     await expect(page.getByTestId('progress-badge')).toHaveAttribute('data-percentage', '67')
     await expect(page.getByTestId('campaign-complete-banner')).not.toBeVisible()
 
-    // 5. Switch to Linked Records and complete it (not the finale either)
+    // 5. Switch to Linked Records / "תרגום: ספר" (English, short text) and complete it (not the finale either) — "book"
     await page.getByTestId('mission-option-linked-records').click()
-    await waitForMissionReady(page)
-    await runSql(
-      page,
-      'SELECT citizens.name, district_officials.official ' +
-        'FROM citizens JOIN district_officials ON citizens.district = district_officials.district;',
-    )
-    await verdictIsPass(page)
+    await waitForQuestionPanel(page)
+    await submitShortTextAnswer(page, 'book')
+    await questionFeedbackIsPass(page)
     await expect(page.getByTestId('progress-badge')).toHaveAttribute('data-percentage', '83')
     await expect(page.getByTestId('campaign-complete-banner')).not.toBeVisible()
 
-    // 6. Switch to Priority Signal — the true finale, introducing ORDER BY
+    // 6. Switch to Priority Signal / "כפל: 12 × 5" — the true finale (Math, MC) — option 0 ("60")
     await page.getByTestId('mission-option-priority-signal').click()
-    await waitForMissionReady(page)
-    await runSql(page, 'SELECT * FROM signal_reports ORDER BY severity DESC;')
-    await verdictIsPass(page)
+    await waitForQuestionPanel(page)
+    await submitMultipleChoiceAnswer(page, 0)
+    await questionFeedbackIsPass(page)
     await expect(page.getByTestId('progress-badge')).toHaveAttribute('data-percentage', '100')
 
     // The campaign-completion-gated NPC appears, and Odin narrates the close.

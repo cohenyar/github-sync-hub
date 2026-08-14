@@ -1,9 +1,16 @@
-import { expect, runSql, test, verdictIsFail, verdictIsPass, waitForMissionReady } from './helpers.js'
+import {
+  expect,
+  questionFeedbackIsFail,
+  questionFeedbackIsPass,
+  submitMultipleChoiceAnswer,
+  test,
+  waitForQuestionPanel,
+} from './helpers.js'
 
 test.describe('World reacts to verified queries', () => {
   test('districts show their starting statuses', async ({ page }) => {
     await page.goto('/world')
-    await waitForMissionReady(page)
+    await waitForQuestionPanel(page)
 
     // District status labels are Hebrew (he.districtStable/Unstable/Thriving):
     // 'יציב' / 'לא יציב' / 'משגשג'. Selected by the stable data-district-id.
@@ -15,13 +22,14 @@ test.describe('World reacts to verified queries', () => {
 
   test('the Core district goes from Unstable to Thriving once First Contact passes', async ({ page }) => {
     await page.goto('/world')
-    await waitForMissionReady(page)
+    await waitForQuestionPanel(page)
 
     const core = page.locator('[data-district-id="core"]')
     await expect(core).toContainText('לא יציב')
 
-    await runSql(page, 'SELECT * FROM citizens;')
-    await verdictIsPass(page)
+    // First Contact / "הקיסר הראשון" (History, MC) — option 0 (אוגוסטוס) is correct.
+    await submitMultipleChoiceAnswer(page, 0)
+    await questionFeedbackIsPass(page)
 
     await expect(core).toContainText('משגשג')
     await expect(core).toHaveCSS('opacity', '1')
@@ -29,25 +37,26 @@ test.describe('World reacts to verified queries', () => {
 
   test('the world state dump reflects the signal change', async ({ page }) => {
     await page.goto('/world')
-    await waitForMissionReady(page)
+    await waitForQuestionPanel(page)
 
     // The raw world-state JSON is a collapsed debug view (Sprint 1 polish).
     await page.getByRole('button', { name: 'הצג מצב עולם גולמי' /* he.showRawWorldState */ }).click()
     await expect(page.getByText(/"signal": 0/)).toBeVisible()
 
-    await runSql(page, 'SELECT * FROM citizens;')
-    await verdictIsPass(page)
+    await submitMultipleChoiceAnswer(page, 0)
+    await questionFeedbackIsPass(page)
 
     await expect(page.getByText(/"signal": 100/)).toBeVisible()
   })
 
   test('a failing query leaves the world state unchanged', async ({ page }) => {
     await page.goto('/world')
-    await waitForMissionReady(page)
+    await waitForQuestionPanel(page)
     await page.getByRole('button', { name: 'הצג מצב עולם גולמי' /* he.showRawWorldState */ }).click()
 
-    await runSql(page, 'SELECT * FROM citizens WHERE id = 1;')
-    await verdictIsFail(page)
+    // Option 1 (נירון) is a distractor, not the correct answer.
+    await submitMultipleChoiceAnswer(page, 1)
+    await questionFeedbackIsFail(page)
 
     await expect(page.getByText(/"signal": 0/)).toBeVisible()
     await expect(page.locator('[data-district-id="core"]')).toContainText('לא יציב')

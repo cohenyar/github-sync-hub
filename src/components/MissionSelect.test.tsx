@@ -6,7 +6,15 @@ import type { MissionConfig } from '../missions/types'
 import { MissionSelect, type MissionSelectOption } from './MissionSelect'
 
 function mission(id: string, title: string): MissionConfig {
-  return { id, title, goal: 'goal', prompt: 'prompt', setupSql: '', referenceSql: 'SELECT 1' }
+  return {
+    id,
+    title,
+    goal: 'goal',
+    prompt: 'prompt',
+    subjectHe: 'מתמטיקה',
+    taskHe: 'שאלה לדוגמה?',
+    answerConfig: { type: 'exact_text', acceptedAnswers: ['תשובה'] },
+  }
 }
 
 const options: MissionSelectOption[] = [

@@ -23,12 +23,6 @@ function triggerMatches(trigger: OdinReactionTrigger, event: GameEvent): boolean
       )
     case 'WorldStateChanged':
       return event.type === 'WorldStateChanged'
-    case 'QueryFailed':
-      if (event.type !== 'QueryFailed') return false
-      if (trigger.missionId !== undefined && trigger.missionId !== event.missionId) return false
-      if (trigger.reason !== undefined && trigger.reason !== event.reason) return false
-      if (trigger.sqlErrorKind !== undefined && trigger.sqlErrorKind !== event.sqlErrorKind) return false
-      return true
     case 'LessonCompleted':
       return (
         event.type === 'LessonCompleted' && (trigger.lessonId === undefined || trigger.lessonId === event.lessonId)

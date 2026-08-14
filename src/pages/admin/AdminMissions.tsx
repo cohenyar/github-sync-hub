@@ -4,6 +4,7 @@ import { useLessons, useMissions } from '../../cms'
 import type { Mission, MissionAnswerConfig, ContentStatus } from '../../cms'
 import { he } from '../../i18n'
 import { ConfirmDialog } from './components/ConfirmDialog'
+import { ModalOverlay } from './components/ModalOverlay'
 import { StatusBadge } from './components/StatusBadge'
 import styles from './components/adminCrud.module.css'
 
@@ -192,7 +193,7 @@ export function AdminMissions() {
         <h1 className={styles.headerTitle}>{he.adminNavMissions}</h1>
         {mode.kind === 'closed' && (
           <button type="button" className={styles.primaryButton} onClick={openCreate}>
-            {he.adminAddMission}
+            <span aria-hidden="true">+</span> {he.adminAddMission}
           </button>
         )}
       </div>
@@ -245,8 +246,11 @@ export function AdminMissions() {
       )}
 
       {mode.kind !== 'closed' && (
+        <ModalOverlay onDismiss={requestClose} labelledBy="mission-form-title">
         <div className={styles.formPanel} data-testid="mission-form">
-          <h2 className={styles.formPanelTitle}>{mode.kind === 'create' ? he.adminAddMission : he.adminEditAction}</h2>
+          <h2 id="mission-form-title" className={styles.formPanelTitle}>
+            {mode.kind === 'create' ? he.adminAddMission : he.adminEditAction}
+          </h2>
 
           {saveState.kind === 'error' && (
             <div className={`${styles.saveBanner} ${styles.saveBannerError}`}>{saveState.message}</div>
@@ -410,6 +414,7 @@ export function AdminMissions() {
             </button>
           </div>
         </div>
+        </ModalOverlay>
       )}
 
       {deleteTarget && (

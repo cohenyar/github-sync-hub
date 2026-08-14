@@ -34,39 +34,16 @@ export const he = {
   available: 'זמינה',
   completed: 'הושלמה',
 
-  // SQL terminal
-  // Playtest fix pass (issue 5) — "שאילתה" (Query) duplicated as both the
-  // aria-label and the visible header read as a generic technical form
-  // label with no narrative framing. Renamed to name what the player is
-  // actually doing (issuing a command to the Records Hub's core), and
-  // "run" was normalized from the malformed "הרץ/הריצי" full-word slash
-  // form to the short-suffix style used consistently across this screen.
-  sqlEditorLabel: 'הפקודה שלך',
-  sqlEditorTitle: 'הפקודה שלך',
-  run: 'הרץ/י',
-  sqlPlaceholder: '-- כתוב כאן את השאילתה שלך',
-  // A single, generic, non-spoiler syntax reminder — never the mission's
-  // own referenceSql, which would just hand over the answer.
-  sqlExampleHint: 'לדוגמה: SELECT * FROM שם_טבלה;',
-  databasePrepareErrorPrefix: 'שגיאה בהכנת מסד הנתונים: ',
-  // Player-facing replacement for the raw technical exception: never shown
-  // with the underlying error text appended — that's preserved internally
-  // (MissionStatus.error, and logged via console.error) for debugging only.
-  databasePrepareErrorMessage: 'אירעה שגיאה בהכנת מסד הנתונים למשימה. ניתן לנסות שוב.',
-  retryDatabaseSetup: 'נסה/י שוב',
-  sqlErrorPrefix: 'שגיאת SQL: ',
-
   // First Mission UX pass — the objective/instruction pair every mission
   // screen leads with, ahead of any secondary metadata (see MissionPanel.tsx).
   missionGoalLabel: 'מטרה: ',
   missionInstructionLabel: 'מה עושים: ',
   missionMoreDetailsLabel: 'פרטים נוספים',
 
-  // Mission panel
+  // Mission panel — a mission is either 'active' or 'completed' now (no
+  // async setup step exists to ever produce a 'loading'/'error' phase).
   missionPanelTitle: 'משימה',
-  phaseLoading: 'מתכונן…',
   phaseActive: 'בתהליך',
-  phaseError: 'שגיאה',
   contentLabelPrefix: 'תוכן: ',
   progressLabelPrefix: 'התקדמות: ',
   statusLabelPrefix: 'סטטוס: ',
@@ -74,10 +51,6 @@ export const he = {
   continueToPrefix: 'המשך/י אל ',
   missionLabel: 'משימה',
   ofLabel: 'מתוך',
-
-  // Verdict
-  pass: 'עבר',
-  fail: 'נכשל',
 
   // NPC bio
   npcPanelTitle: 'דמות',
@@ -153,7 +126,6 @@ export const he = {
   eventNpcUnlocked: 'דמות חדשה נפתחה',
   eventDistrictUnlocked: 'אזור נפתח',
   eventCampaignCompleted: 'הקמפיין הושלם!',
-  eventQueryFailed: 'השאילתה לא עברה',
   eventSaveSuccess: 'המשחק נשמר בהצלחה',
   eventLoadSuccess: 'המשחק נטען בהצלחה',
   eventNextStepAvailable: 'השלב הבא זמין',
@@ -177,18 +149,36 @@ export const he = {
   // Playtest fix pass (issue 6C) — a small, deterministic help panel (no
   // AI/LLM): no such entry point existed anywhere before this. Mounted
   // right alongside the existing Odin panel (see AskOdinPanel.tsx).
+  // SQL-removal pass, final cleanup — generalized for the History/English/
+  // Math model: "explain the question" and "why did I get it wrong"
+  // replace the old SQL-specific "explain the mission"/"why didn't the
+  // query work" wording, and "מה הנושא?" (what's the subject) is new.
   askOdinPanelTitle: 'שאל/י את אודין',
   askOdinWhatNowLabel: 'מה לעשות עכשיו?',
   askOdinHintLabel: 'תן לי רמז.',
-  askOdinExplainLabel: 'הסבר את המשימה.',
-  askOdinWhyFailedLabel: 'למה הפקודה לא עבדה?',
+  askOdinExplainLabel: 'תסביר את השאלה.',
+  askOdinSubjectLabel: 'מה הנושא?',
+  askOdinWhyWrongLabel: 'למה טעיתי?',
   askOdinWhereToGoLabel: 'לאן ללכת?',
-  askOdinNoHintFallback: 'אין רמז נוסף למשימה הזו כרגע — אפשר לנסות "הסבר את המשימה".',
-  askOdinNoErrorYetFallback: 'לא נרשמה שגיאה עדיין. הרץ/י שאילתה כדי לבדוק.',
+  askOdinNoHintFallback: 'אין רמז נוסף למשימה הזו כרגע — אפשר לנסות "תסביר את השאלה".',
+  // Hard difficulty's hint response when the mission has no authored
+  // guidanceLevel3 of its own — deliberately vague, never narrows toward
+  // the answer (see resolveAskOdinAnswer.ts's resolveHint).
+  askOdinHintMinimalAtHard: 'ברמת הקושי הזו הרמזים מוגבלים בכוונה. נסה/י לחשוב על השאלה שלב אחד בכל פעם.',
+  askOdinNoWrongAnswerYetFallback: 'עדיין לא נרשמה תשובה שגויה במשימה הזו.',
+  askOdinLastAnswerWasCorrectFallback: 'התשובה האחרונה שלך הייתה נכונה — אין כרגע טעות להסביר.',
+  askOdinSubjectPrefix: 'הנושא הנוכחי הוא ',
   askOdinWhereToGoPrefix: 'המטרה הנוכחית שלך היא להגיע אל ',
   askOdinNoDestinationFallback: 'אין יעד ספציפי כרגע — אפשר להמשיך לחקור את העיר.',
+  // Simple free-text Odin — a deterministic intent/context resolver, not
+  // AI (see resolveFreeTextQuestion.ts). askOdinUnknownQuestionFallback's
+  // exact wording is a deliberate, fixed disclaimer: Odin never pretends
+  // to reason beyond the current lesson/mission's own authored content.
+  askOdinFreeTextLabel: 'שאל/י את אודין',
+  askOdinFreeTextPlaceholder: 'שאל/י את אודין...',
+  askOdinFreeTextSubmitCta: 'שלח',
+  askOdinUnknownQuestionFallback: 'כרגע אני יכול לעזור רק לגבי השיעור והמשימה הנוכחיים.',
   npcBioAriaSuffix: 'פרופיל',
-  noRowsReturned: 'לא הוחזרו שורות.',
   // Distinct from eventCampaignCompleted (the notification-toast title for
   // the same event) — both can be visible on screen at once, so they need
   // different text to stay distinguishable.
@@ -476,7 +466,7 @@ export const he = {
   adminNavLessons: 'שיעורים',
   adminNavMissions: 'משימות',
   adminNavUsers: 'משתמשים',
-  adminNavLegacyTools: 'כלים ישנים (SQL)',
+  adminNavLegacyTools: 'כלים ישנים',
   adminBackToGame: 'חזרה למשחק',
   adminOpenMenuLabel: 'תפריט ניהול',
 
@@ -486,9 +476,8 @@ export const he = {
   adminMetricTotalCourses: 'קורסים',
   adminMetricTotalLessons: 'שיעורים',
   adminMetricTotalMissions: 'משימות',
-  adminMetricActiveCourses: 'קורסים פעילים',
-  adminMetricActiveLessons: 'שיעורים פעילים',
-  adminMetricActiveMissions: 'משימות פעילות',
+  adminMetricActiveContent: 'תוכן פעיל',
+  adminMetricDraftContent: 'תוכן טיוטה',
 
   adminLoadingMessage: 'טוען…',
   adminRetryAction: 'ניסיון נוסף',
@@ -559,6 +548,28 @@ export const he = {
   // CMS API layer (src/cms/api/**) — never the raw Postgres/PostgREST message.
   cmsGenericError: 'הפעולה נכשלה. אפשר לנסות שוב.',
   cmsUnavailableMessage: 'לא ניתן להתחבר לשירות התוכן כרגע.',
+
+  // Admin AI content-generation — the UI (src/pages/admin/AdminAiGenerator.tsx)
+  // was removed since no real AI backend exists yet; this one string stays
+  // because the service interface (cms/api/aiContentGenerator.ts) that a
+  // future UI will call still returns it as its "not configured" result.
+  aiGeneratorUnavailableMessage:
+    'יצירת תוכן באמצעות AI אינה מוגדרת עדיין במערכת — נדרש שירות AI בצד השרת שטרם הוגדר. אפשר עדיין ליצור תוכן ידנית.',
+
+  // SQL-removal pass — the general question/answer card that replaces the
+  // SQL editor as the main campaign's player-facing learning UI (see
+  // components/QuestionAnswerPanel.tsx). exerciseCorrectFeedback/
+  // exerciseIncorrectFeedback/hintCta above (Phase 3A.4A) are reused as-is
+  // for the normal/Medium case, matching the existing learning module's
+  // exact wording.
+  questionCardTitle: 'שאלה',
+  questionAnswerInputLabel: 'התשובה שלך',
+  questionAnswerInputPlaceholder: 'הקלד/י את התשובה שלך…',
+  checkAnswerCta: 'בדוק תשובה',
+  // Easy — more supportive than the shared exerciseIncorrectFeedback.
+  questionIncorrectFeedbackSupportive: 'לא מדויק, אבל את/ה מתקרב/ת. אפשר לנסות שוב.',
+  // Hard — deliberately terse; never names the correct answer.
+  questionIncorrectFeedbackMinimal: 'לא נכון.',
 } as const
 
 export type HebrewStringKey = keyof typeof he

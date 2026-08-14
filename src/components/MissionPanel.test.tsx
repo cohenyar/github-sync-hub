@@ -11,8 +11,9 @@ const mission: MissionConfig = {
   title: 'First Contact',
   goal: 'Bring the Records Core online.',
   prompt: 'Query the citizens registry.',
-  setupSql: '',
-  referenceSql: 'SELECT 1',
+  subjectHe: 'היסטוריה',
+  taskHe: 'שאלה לדוגמה?',
+  answerConfig: { type: 'exact_text', acceptedAnswers: ['תשובה'] },
 }
 
 const nextMission: MissionConfig = {
@@ -20,8 +21,9 @@ const nextMission: MissionConfig = {
   title: 'Second Mission',
   goal: 'goal',
   prompt: 'prompt',
-  setupSql: '',
-  referenceSql: 'SELECT 2',
+  subjectHe: 'היסטוריה',
+  taskHe: 'שאלה לדוגמה 2?',
+  answerConfig: { type: 'exact_text', acceptedAnswers: ['תשובה'] },
 }
 
 function summary(overrides: Partial<CampaignSummary> = {}): CampaignSummary {
@@ -50,15 +52,15 @@ describe('MissionPanel', () => {
   })
 
   it('renders the instruction line when the mission has one authored, ahead of the secondary details', () => {
-    const withInstruction: MissionConfig = { ...mission, instructionHe: 'כתבו פקודת SQL שמציגה את רשימת התושבים.' }
+    const withInstruction: MissionConfig = { ...mission, instructionHe: 'ענו על השאלה שלמעלה.' }
     render(<MissionPanel mission={withInstruction} />)
     const instruction = screen.getByTestId('mission-instruction')
-    expect(instruction).toHaveTextContent('כתבו פקודת SQL שמציגה את רשימת התושבים.')
+    expect(instruction).toHaveTextContent('ענו על השאלה שלמעלה.')
     expect(screen.queryByTestId('mission-secondary-details')).not.toContainElement(instruction)
   })
 
   describe('First Mission UX pass — inline hint (Easy only)', () => {
-    const withHint: MissionConfig = { ...mission, hintHe: 'רמז: נסה/י SELECT *.' }
+    const withHint: MissionConfig = { ...mission, hintHe: 'רמז: חשבו על התשובה הנפוצה ביותר.' }
 
     it('shows no inline hint when difficultyLevel is omitted (every existing caller/test)', () => {
       render(<MissionPanel mission={withHint} />)
@@ -75,7 +77,7 @@ describe('MissionPanel', () => {
 
     it('shows the mission\'s own hint inline at Easy', () => {
       render(<MissionPanel mission={withHint} difficultyLevel={1} />)
-      expect(screen.getByTestId('mission-inline-hint')).toHaveTextContent('רמז: נסה/י SELECT *.')
+      expect(screen.getByTestId('mission-inline-hint')).toHaveTextContent('רמז: חשבו על התשובה הנפוצה ביותר.')
     })
 
     it('shows no inline hint at Easy when the mission has no hint authored', () => {
@@ -90,10 +92,8 @@ describe('MissionPanel', () => {
   })
 
   it.each([
-    ['loading', `${he.statusLabelPrefix}${he.phaseLoading}`],
     ['active', `${he.statusLabelPrefix}${he.phaseActive}`],
     ['completed', `${he.statusLabelPrefix}${he.completed}`],
-    ['error', `${he.statusLabelPrefix}${he.phaseError}`],
   ] as const)('renders "%s" phase as "%s"', (phase, expected) => {
     render(<MissionPanel mission={mission} phase={phase} />)
     expect(screen.getByText(expected)).toBeInTheDocument()

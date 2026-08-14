@@ -4,11 +4,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { clearOnboardingFlag, hasCompletedOnboarding, markOnboardingComplete } from '../onboarding'
 import { passEntryGates, renderGameApp } from '../test/renderGameApp'
 
-vi.mock('../db/database', async () => {
-  const { createTestDatabase } = await import('../verifier/testDb')
-  return { createDatabase: createTestDatabase }
-})
-
 const LOG_LINE_MS = 1600
 const ODIN_LINE_MS = 3200
 

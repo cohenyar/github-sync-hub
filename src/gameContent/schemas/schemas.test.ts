@@ -7,8 +7,10 @@ import { REWARD_CONTENT_REQUIRED_STRING_FIELDS } from './rewardContentSchema'
 import { VALID_WORLD_EFFECT_KINDS } from './worldEffectContentSchema'
 
 describe('content schemas', () => {
-  it('mission schema requires id, title, goal, prompt, and referenceSql', () => {
-    expect(MISSION_CONTENT_REQUIRED_FIELDS).toEqual(['id', 'title', 'goal', 'prompt', 'referenceSql'])
+  // SQL-removal pass — referenceSql dropped: it only exists on a SQL
+  // mission now that question missions exist too (see GameMissionContent).
+  it('mission schema requires id, title, goal, and prompt', () => {
+    expect(MISSION_CONTENT_REQUIRED_FIELDS).toEqual(['id', 'title', 'goal', 'prompt'])
   })
 
   it('district schema requires an id', () => {

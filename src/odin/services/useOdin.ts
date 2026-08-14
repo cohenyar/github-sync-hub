@@ -10,7 +10,6 @@ const ODIN_SUBSCRIBED_EVENTS: readonly GameEventType[] = [
   'ContentUnlocked',
   'CampaignCompleted',
   'WorldStateChanged',
-  'QueryFailed',
   'LessonCompleted',
   'LessonFailed',
   'WorldEntered',

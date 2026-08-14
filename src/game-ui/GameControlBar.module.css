@@ -32,6 +32,15 @@
   backdrop-filter: var(--ds-glass-blur);
   -webkit-backdrop-filter: var(--ds-glass-blur);
   border: 1px solid var(--ds-border);
+  /* Now an <a> (Global logo navigation pass) — reset link defaults, keep it
+     looking exactly like the previous inert div. */
+  text-decoration: none;
+  color: inherit;
+}
+
+.brandCorner:hover .brandName,
+.brandCorner:focus-visible .brandName {
+  text-decoration: underline;
 }
 
 .brandMark {
@@ -119,6 +128,30 @@
   font-weight: 700;
   line-height: 16px;
   text-align: center;
+}
+
+/* Admin CMS UX pass — global admin entry point for /world, mirroring
+   PageShell's isAdmin-gated "ניהול" link so every real app surface has one. */
+.adminButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: var(--ds-radius-pill);
+  border: 1px solid var(--ds-border-strong);
+  background: var(--ds-surface-muted);
+  color: var(--ds-text-strong);
+  font-size: var(--ds-text-sm);
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.adminButton:hover,
+.adminButton:focus-visible {
+  border-color: var(--ds-border-strong);
+  background: var(--ds-surface);
 }
 
 .savedConfirmation {

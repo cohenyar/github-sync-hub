@@ -32,6 +32,10 @@ export function PageShell({ children }: { children: ReactNode }) {
   return (
     <div className={styles.shell}>
       <nav className={styles.nav} aria-label={he.navLandingLabel}>
+        <NavLink to="/" className={styles.brand} aria-label="Meridian" end>
+          <span aria-hidden className={styles.brandMark} />
+          <span className={styles.brandName}>Meridian</span>
+        </NavLink>
         {NAV_LINKS.map((link) => (
           <NavLink key={link.to} to={link.to} className={({ isActive }) => (isActive ? styles.active : undefined)}>
             {link.label}

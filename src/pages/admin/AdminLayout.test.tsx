@@ -36,6 +36,11 @@ describe('AdminLayout', () => {
     expect(screen.getByRole('link', { name: he.adminBackToGame })).toHaveAttribute('href', '/dashboard')
   })
 
+  it('the Meridian brand mark links back to "/" from inside the admin area (global logo navigation)', () => {
+    renderLayout()
+    expect(screen.getByRole('link', { name: 'Meridian' })).toHaveAttribute('href', '/')
+  })
+
   it('toggles the mobile nav menu open and closed', () => {
     renderLayout()
     const toggle = screen.getByTestId('admin-menu-toggle')

@@ -1,4 +1,13 @@
-import { expect, openSettingsMenu, passProfileCreationIfShown, test, waitForMissionReady } from './helpers.js'
+import {
+  expect,
+  openSettingsMenu,
+  passProfileCreationIfShown,
+  questionFeedbackIsFail,
+  questionFeedbackIsPass,
+  submitMultipleChoiceAnswer,
+  test,
+  waitForQuestionPanel,
+} from './helpers.js'
 import { expect as rawExpect, test as rawTest, type Page } from '@playwright/test'
 
 /**
@@ -69,17 +78,17 @@ test.describe('First Mission UX pass — difficulty persistence and Settings', (
 
   test('changing difficulty from Settings never resets mission progress', async ({ page }) => {
     await page.goto('/world')
-    await waitForMissionReady(page)
-    await page.getByTestId('sql-input').fill('SELECT * FROM citizens;')
-    await page.getByTestId('run-button').click()
-    await expect(page.getByTestId('verdict-banner')).toHaveAttribute('data-verdict', 'pass')
+    await waitForQuestionPanel(page)
+    // First Contact / "הקיסר הראשון" — אוגוסטוס (index 0) is correct.
+    await submitMultipleChoiceAnswer(page, 0)
+    await questionFeedbackIsPass(page)
     await expect(page.getByTestId('progress-badge')).toHaveAttribute('data-percentage', '17')
 
     await openSettingsMenu(page)
     await page.getByTestId('difficulty-level-3-button').click()
 
     await expect(page.getByTestId('progress-badge')).toHaveAttribute('data-percentage', '17')
-    await expect(page.getByTestId('verdict-banner')).toHaveAttribute('data-verdict', 'pass')
+    await questionFeedbackIsPass(page)
   })
 
   test('Save/Load round-trips the chosen difficulty level', async ({ page }) => {
@@ -116,14 +125,14 @@ test.describe('First Mission UX pass — difficulty persistence and Settings', (
     await page.keyboard.press('Escape')
 
     // 2. Make gameplay progress.
-    await waitForMissionReady(page)
-    await page.getByTestId('sql-input').fill('SELECT * FROM citizens;')
-    await page.getByTestId('run-button').click()
-    await expect(page.getByTestId('verdict-banner')).toHaveAttribute('data-verdict', 'pass')
+    await waitForQuestionPanel(page)
+    // First Contact / "הקיסר הראשון" — אוגוסטוס (index 0) is correct.
+    await submitMultipleChoiceAnswer(page, 0)
+    await questionFeedbackIsPass(page)
     await expect(page.getByTestId('progress-badge')).toHaveAttribute('data-percentage', '17')
 
     // 3. Start New Game. (difficulty is already 3 from step 1 — no need to
-    // re-select it; the settings menu was closed by waitForMissionReady's
+    // re-select it; the settings menu was closed by waitForQuestionPanel's
     // own toggle-world-scene-button click, so it needs reopening here.)
     await openSettingsMenu(page)
     await page.getByTestId('new-game-button').click()
@@ -141,7 +150,7 @@ test.describe('First Mission UX pass — difficulty persistence and Settings', (
     await passProfileCreationIfShown(page)
 
     // 4. Gameplay progress reset.
-    await waitForMissionReady(page)
+    await waitForQuestionPanel(page)
     await expect(page.getByTestId('progress-badge')).toHaveAttribute('data-percentage', '0')
 
     // 5. difficultyLevel remains 3.
@@ -164,38 +173,50 @@ test.describe('First Mission UX pass — difficulty persistence and Settings', (
   })
 })
 
-test.describe('First Mission UX pass — scaffolding differences are visible in the SQL editor', () => {
-  test('Easy shows the syntax example; Medium and Hard hide it', async ({ page }) => {
+test.describe('First Mission UX pass — scaffolding differences are visible in the question panel', () => {
+  // SQL-removal pass — there is no SQL editor (and no sql-example-hint) left
+  // for any real mission, so "shows the syntax example" no longer applies.
+  // The genuine Easy-only affordance now is the question panel's own inline
+  // hint (question-inline-hint); Medium falls back to an on-request hint
+  // button (question-hint-button) instead of showing it unprompted; Hard
+  // shows no hint UI at all — see QuestionAnswerPanel.tsx.
+  test('Easy shows the inline hint unprompted; Medium offers it only via a hint button; Hard shows no hint at all', async ({
+    page,
+  }) => {
     await page.goto('/world')
-    await waitForMissionReady(page)
+    await waitForQuestionPanel(page)
 
     await openSettingsMenu(page)
     await page.getByTestId('difficulty-level-1-button').click()
     await page.keyboard.press('Escape')
-    await expect(page.getByTestId('sql-example-hint')).toBeVisible()
+    await expect(page.getByTestId('question-inline-hint')).toBeVisible()
+    await expect(page.getByTestId('question-hint-button')).not.toBeVisible()
 
     await openSettingsMenu(page)
     await page.getByTestId('difficulty-level-2-button').click()
     await page.keyboard.press('Escape')
-    await expect(page.getByTestId('sql-example-hint')).not.toBeVisible()
+    await expect(page.getByTestId('question-inline-hint')).not.toBeVisible()
+    await expect(page.getByTestId('question-hint-button')).toBeVisible()
 
     await openSettingsMenu(page)
     await page.getByTestId('difficulty-level-3-button').click()
     await page.keyboard.press('Escape')
-    await expect(page.getByTestId('sql-example-hint')).not.toBeVisible()
+    await expect(page.getByTestId('question-inline-hint')).not.toBeVisible()
+    await expect(page.getByTestId('question-hint-button')).not.toBeVisible()
   })
 
-  test('Hard feedback on a wrong query identifies the mistake type without exact row counts', async ({ page }) => {
+  test('Hard feedback on a wrong answer is minimal and never reveals the correct answer', async ({ page }) => {
     await page.goto('/world')
-    await waitForMissionReady(page)
+    await waitForQuestionPanel(page)
     await openSettingsMenu(page)
     await page.getByTestId('difficulty-level-3-button').click()
     await page.keyboard.press('Escape')
 
-    await page.getByTestId('sql-input').fill('SELECT * FROM citizens WHERE id = 1;')
-    await page.getByTestId('run-button').click()
+    // נירון (index 1) is a distractor, not the correct answer (אוגוסטוס, index 0).
+    await submitMultipleChoiceAnswer(page, 1)
 
-    await expect(page.getByTestId('verdict-banner')).toHaveAttribute('data-verdict', 'fail')
-    await expect(page.locator('body')).not.toContainText('ציפינו')
+    await questionFeedbackIsFail(page)
+    await expect(page.getByTestId('question-feedback')).toHaveText('לא נכון.')
+    await expect(page.getByTestId('question-feedback')).not.toContainText('אוגוסטוס')
   })
 })

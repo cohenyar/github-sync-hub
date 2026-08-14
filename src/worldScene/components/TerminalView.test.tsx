@@ -3,8 +3,8 @@ import { act, fireEvent, render, screen } from '@testing-library/react'
 import type { ReactElement } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { CampaignSummary } from '../../campaign/types'
-import type { MissionStatus } from '../../missions/missionManager'
 import type { MissionConfig } from '../../missions/types'
+import type { QuestionMissionPhase, QuestionMissionStatus } from '../../missions/useQuestionMission'
 import type { NpcConfig } from '../../npcs/types'
 import { TerminalView, type TerminalViewProps } from './TerminalView'
 
@@ -13,8 +13,9 @@ const mission: MissionConfig = {
   title: 'First Contact',
   goal: 'Bring the Records Core online.',
   prompt: 'The Records Core is blind.\nQuery the citizens registry.',
-  setupSql: '',
-  referenceSql: 'SELECT * FROM citizens',
+  subjectHe: 'היסטוריה',
+  taskHe: 'מי היה הקיסר הראשון של רומא?',
+  answerConfig: { type: 'multiple_choice', options: ['אוגוסטוס', 'נירון'], correctIndex: 0 },
 }
 
 const npc: NpcConfig = {
@@ -25,7 +26,7 @@ const npc: NpcConfig = {
   description: 'Tends the Records Core.',
 }
 
-const status: MissionStatus = { phase: 'active', mission, lastResult: null, error: null }
+const status: QuestionMissionStatus = { phase: 'active', lastResult: null }
 
 const campaignSummary: CampaignSummary = {
   totalMissions: 6,
@@ -38,7 +39,7 @@ function baseProps(overrides: Partial<TerminalViewProps> = {}): TerminalViewProp
   return {
     mission,
     status,
-    onRun: vi.fn(),
+    onSubmitAnswer: vi.fn(),
     campaignSummary,
     completionPercentage: 0,
     contentStatus: 'available',
@@ -52,12 +53,13 @@ function baseProps(overrides: Partial<TerminalViewProps> = {}): TerminalViewProp
 }
 
 describe('TerminalView', () => {
-  it('reuses the existing MissionPanel and SqlEditorPanel unchanged', () => {
+  it('reuses the existing MissionPanel and QuestionAnswerPanel unchanged, with no SQL console anywhere', () => {
     render(<TerminalView {...baseProps()} />)
 
     expect(screen.getByTestId('mission-panel')).toBeInTheDocument()
-    expect(screen.getByTestId('sql-input')).toBeInTheDocument()
-    expect(screen.getByTestId('run-button')).toBeInTheDocument()
+    expect(screen.getByTestId('question-panel')).toBeInTheDocument()
+    expect(screen.queryByTestId('sql-input')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('run-button')).not.toBeInTheDocument()
   })
 
   it('calls onReturnToWorld when the return button is clicked', () => {
@@ -68,14 +70,14 @@ describe('TerminalView', () => {
     expect(onReturnToWorld).toHaveBeenCalledTimes(1)
   })
 
-  it('calls onRun with the typed SQL when Run is clicked', () => {
-    const onRun = vi.fn()
-    render(<TerminalView {...baseProps({ onRun })} />)
+  it('calls onSubmitAnswer with the selected option when submitted', () => {
+    const onSubmitAnswer = vi.fn()
+    render(<TerminalView {...baseProps({ onSubmitAnswer })} />)
 
-    fireEvent.change(screen.getByTestId('sql-input'), { target: { value: 'SELECT * FROM citizens' } })
-    fireEvent.click(screen.getByTestId('run-button'))
+    fireEvent.click(screen.getByTestId('question-option-0'))
+    fireEvent.click(screen.getByTestId('question-submit-button'))
 
-    expect(onRun).toHaveBeenCalledWith('SELECT * FROM citizens')
+    expect(onSubmitAnswer).toHaveBeenCalledWith('0')
   })
 
   it('shows the Core\'s current status as a labeled pill in the header', () => {
@@ -150,13 +152,13 @@ describe('TerminalView — completion beat', () => {
     vi.useRealTimers()
   })
 
-  function renderWithPhase(phase: MissionStatus['phase']) {
-    const activeStatus: MissionStatus = { phase, mission, lastResult: null, error: null }
+  function renderWithPhase(phase: QuestionMissionPhase) {
+    const activeStatus: QuestionMissionStatus = { phase, lastResult: null }
     return render(<TerminalView {...baseProps({ status: activeStatus })} />)
   }
 
-  function rerenderWithPhase(rerender: (ui: ReactElement) => void, phase: MissionStatus['phase']) {
-    const nextStatus: MissionStatus = { phase, mission, lastResult: null, error: null }
+  function rerenderWithPhase(rerender: (ui: ReactElement) => void, phase: QuestionMissionPhase) {
+    const nextStatus: QuestionMissionStatus = { phase, lastResult: null }
     rerender(<TerminalView {...baseProps({ status: nextStatus, coreStatus: 'thriving' })} />)
   }
 

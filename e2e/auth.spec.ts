@@ -1,4 +1,4 @@
-import { expect, test } from './helpers.js'
+import { expect, test, waitForQuestionPanel } from './helpers.js'
 
 // This environment runs against a local placeholder Supabase URL/key (see
 // .env.example), not a real signed-in session, and Google's real OAuth
@@ -52,7 +52,9 @@ test.describe('Auth access in the main flow', () => {
 
     await page.getByTestId('settings-menu-button').click()
     await page.getByTestId('toggle-world-scene-button').click()
-    await expect(page.getByRole('button', { name: 'הרץ' })).toBeVisible()
+    // SQL-removal pass — the classic dashboard's mission console is now the
+    // question panel, not a SQL Run button.
+    await waitForQuestionPanel(page)
   })
 
   test('the same sign-in entry point appears on the shared page nav', async ({ page }) => {

@@ -1,35 +1,29 @@
 import type { MissionConfig } from './types'
 
 /**
- * District Ties — Meridian's second mission. Builds on First Contact's
- * citizens registry by adding a district column and teaching WHERE
- * filtering. Gated behind completing First Contact (see
- * unlocks/services/defaultUnlockRules.ts) — the first real, live use of
- * the Unlock Engine's missionCompleted condition.
+ * District Ties — Meridian's second mission. SQL-removal pass: this used to
+ * be a "filter citizens by district" SQL exercise; it's now a simple
+ * English vocabulary question, but keeps its original id and successEffect
+ * so the unlock chain (gated behind First Contact) and existing saves keep
+ * working unchanged.
  */
 export const districtTiesMission: MissionConfig = {
   id: 'district-ties',
-  title: 'District Ties',
-  goal: "Reveal which citizens call Meridian's North district home.",
-  prompt:
-    'The Records Core can see citizens now, but not where they live.\n' +
-    "Filter the registry to bring North district's ties into focus.",
-  setupSql: `
-    CREATE TABLE citizens (id INTEGER, name TEXT, district TEXT);
-    INSERT INTO citizens (id, name, district) VALUES
-      (1, 'Iris Vell', 'north'),
-      (2, 'Bram Osei', 'south'),
-      (3, 'Talia Nkemdirim', 'north'),
-      (4, 'Coen Adeyemi', 'east');
-  `,
-  referenceSql: "SELECT * FROM citizens WHERE district = 'north';",
+  title: 'Library',
+  goal: 'Choose the correct English translation for the Hebrew word "ספרייה".',
+  prompt: '"ספרייה" is the place where books are borrowed and read.',
+  subjectHe: 'אנגלית',
+  taskHe: "בחר/י את התרגום הנכון למילה 'ספרייה'",
+  answerConfig: {
+    type: 'multiple_choice',
+    options: ['Library', 'School', 'Market', 'Hospital'],
+    correctIndex: 0,
+  },
   successEffect: { kind: 'ADJUST_STAT', districtId: 'north', stat: 'loyalty', delta: 15 },
-  titleHe: 'קשרי מחוז',
-  // Playtest fix pass (issue 5) — normalized from "חשוף/חשפי" to the
-  // short-suffix style used consistently across this mission screen.
-  goalHe: 'חשוף/י אילו תושבים גרים במחוז הצפון של מרידיאן.',
-  promptHe:
-    'מוקד הרשומות כבר רואה את התושבים, אך לא את מקום מגוריהם.\n' +
-    'סנן/י את המרשם כדי להעלות את קשרי מחוז הצפון.',
-  hintHe: 'רמז: סנן/י את טבלת citizens לפי עמודת district.',
+  titleHe: 'תרגום: ספרייה',
+  goalHe: 'לבחור את התרגום הנכון באנגלית למילה "ספרייה".',
+  promptHe: '"ספרייה" הוא המקום שבו שואלים וקוראים ספרים.',
+  hintHe: 'רמז: זהו המקום שבו שואלים ספרים.',
+  guidanceLevel1: 'שימו לב: המילה מתחילה באות L באנגלית.',
+  guidanceLevel3: 'חשבו על המקום שבו נמצאים המון ספרים להשאלה.',
 }

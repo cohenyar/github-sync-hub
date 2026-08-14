@@ -1,56 +1,79 @@
-import { useState } from 'react'
+import { useState, type FormEvent } from 'react'
 import { he } from '../../i18n'
-import { resolveAskOdinAnswer, type AskOdinQuestionId } from '../services/resolveAskOdinAnswer'
-import type { OdinNarrationEntry } from '../types'
+import type { DifficultyLevel } from '../../progression/types'
+import { resolveAskOdinAnswer, type AskOdinLastResult, type AskOdinQuestionId } from '../services/resolveAskOdinAnswer'
+import { resolveFreeTextQuestion } from '../services/resolveFreeTextQuestion'
 import styles from './AskOdinPanel.module.css'
 
 export interface AskOdinPanelProps {
+  subjectHe: string
   missionGoal: string
   missionPrompt: string
+  missionTask: string
   missionHint?: string
+  guidanceLevel1?: string
+  guidanceLevel2?: string
+  guidanceLevel3?: string
   destinationName?: string
-  /** Same history useOdin already tracks — scanned backward for the most recent QueryFailed-driven line, never mutated. */
-  history: readonly OdinNarrationEntry[]
+  /** The player's most recent submission on the active mission, if any yet this session. */
+  lastResult: AskOdinLastResult | null
+  difficultyLevel?: DifficultyLevel
 }
 
 const QUESTIONS: ReadonlyArray<{ id: AskOdinQuestionId; label: string }> = [
   { id: 'what-now', label: he.askOdinWhatNowLabel },
   { id: 'hint', label: he.askOdinHintLabel },
-  { id: 'explain-mission', label: he.askOdinExplainLabel },
-  { id: 'why-failed', label: he.askOdinWhyFailedLabel },
+  { id: 'explain-question', label: he.askOdinExplainLabel },
+  { id: 'why-wrong', label: he.askOdinWhyWrongLabel },
+  { id: 'subject', label: he.askOdinSubjectLabel },
   { id: 'where-to-go', label: he.askOdinWhereToGoLabel },
 ]
 
-function findLastQueryFailedMessage(history: readonly OdinNarrationEntry[]): string | null {
-  for (let index = history.length - 1; index >= 0; index -= 1) {
-    if (history[index].event.type === 'QueryFailed') return history[index].message
-  }
-  return null
-}
-
 /**
- * Playtest fix pass (issue 6C) — a small, deterministic help panel. No
- * "Ask Odin" entry point existed anywhere in the codebase before this (a
- * full grep turned up nothing), and per the playtest's own instructions
- * this stays deterministic — five fixed questions, each resolved from data
- * already available to the caller, no AI/LLM, no new persisted state.
- * Structurally independent of useOdin's reactive narration state (only
- * reads `history`, never writes to it), so it carries zero risk to Odin's
- * existing reaction/priority behavior or its tests.
+ * Odin's deterministic help panel — General educational assistant pass:
+ * generalized from the earlier SQL-era "Ask Odin" (which only knew about
+ * missions/queries) to History/English/Math, plus a simple free-text input
+ * (see resolveFreeTextQuestion.ts). Still no AI/LLM, no external network
+ * call, no new persisted state: every answer is resolved synchronously from
+ * props GameApp already computes from the active mission and progress.
  */
-export function AskOdinPanel({ missionGoal, missionPrompt, missionHint, destinationName, history }: AskOdinPanelProps) {
+export function AskOdinPanel({
+  subjectHe,
+  missionGoal,
+  missionPrompt,
+  missionTask,
+  missionHint,
+  guidanceLevel1,
+  guidanceLevel2,
+  guidanceLevel3,
+  destinationName,
+  lastResult,
+  difficultyLevel,
+}: AskOdinPanelProps) {
   const [answer, setAnswer] = useState<string | null>(null)
+  const [freeText, setFreeText] = useState('')
+
+  const context = {
+    subjectHe,
+    missionGoal,
+    missionPrompt,
+    missionHint,
+    guidanceLevel1,
+    guidanceLevel2,
+    guidanceLevel3,
+    destinationName,
+    lastResult,
+    difficultyLevel,
+  }
 
   function ask(questionId: AskOdinQuestionId) {
-    setAnswer(
-      resolveAskOdinAnswer(questionId, {
-        missionGoal,
-        missionPrompt,
-        missionHint,
-        destinationName,
-        lastQueryFailedMessage: findLastQueryFailedMessage(history),
-      }),
-    )
+    setAnswer(resolveAskOdinAnswer(questionId, context))
+  }
+
+  function handleFreeTextSubmit(event: FormEvent) {
+    event.preventDefault()
+    if (freeText.trim().length === 0) return
+    setAnswer(resolveFreeTextQuestion(freeText, { ...context, missionTask }))
   }
 
   return (
@@ -69,6 +92,25 @@ export function AskOdinPanel({ missionGoal, missionPrompt, missionHint, destinat
           </button>
         ))}
       </div>
+      <form className={styles.freeTextForm} onSubmit={handleFreeTextSubmit}>
+        <input
+          className={styles.freeTextInput}
+          type="text"
+          value={freeText}
+          onChange={(event) => setFreeText(event.target.value)}
+          placeholder={he.askOdinFreeTextPlaceholder}
+          aria-label={he.askOdinFreeTextLabel}
+          data-testid="ask-odin-free-text-input"
+        />
+        <button
+          type="submit"
+          className={styles.freeTextSubmitButton}
+          data-testid="ask-odin-free-text-submit"
+          disabled={freeText.trim().length === 0}
+        >
+          {he.askOdinFreeTextSubmitCta}
+        </button>
+      </form>
       {answer && (
         <p className={styles.answer} data-testid="ask-odin-answer">
           {answer}

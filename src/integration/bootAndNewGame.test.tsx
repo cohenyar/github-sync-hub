@@ -7,13 +7,8 @@ import { firstContactMission, missionRegistry } from '../missions'
 import { hasCompletedOnboarding, markOnboardingComplete } from '../onboarding'
 import { saveCurrentGame } from '../persistence'
 import { createInitialPlayerProgress, recordMissionCompletion } from '../progression'
-import { passEntryGates, renderGameApp } from '../test/renderGameApp'
+import { passEntryGates, renderGameApp, submitMultipleChoiceAnswer } from '../test/renderGameApp'
 import { applyEffect, createWorldState, initialDistricts } from '../worldState'
-
-vi.mock('../db/database', async () => {
-  const { createTestDatabase } = await import('../verifier/testDb')
-  return { createDatabase: createTestDatabase }
-})
 
 // Matches the private key used inside persistence/services/gameSaveService.ts.
 const SAVE_KEY = 'meridian:save'
@@ -31,16 +26,17 @@ function ensureSettingsMenuOpen() {
   }
 }
 
-async function readyRunButton() {
+// SQL-removal pass — every real mission is now a question mission with no
+// async database step, so there's no "wait for Run to become enabled" step
+// left; only the World Scene -> classic dashboard switch (unchanged) is
+// still needed before the question panel is on screen.
+function switchToClassicDashboard() {
   // The World Scene (not the classic dashboard) is now the default view —
   // switch to the classic dashboard first if we're not there already.
   if (screen.queryByTestId('world-scene-3d')) {
     ensureSettingsMenuOpen()
     fireEvent.click(screen.getByTestId('toggle-world-scene-button'))
   }
-  const runButton = await screen.findByRole('button', { name: he.run })
-  await waitFor(() => expect(runButton).toBeEnabled())
-  return runButton
 }
 
 // The raw world-state JSON is a collapsed debug view (Sprint 1 polish) —
@@ -83,13 +79,19 @@ beforeEach(() => {
 describe('Load-on-boot', () => {
   it('boots into a fresh game when no save exists', async () => {
     renderGameApp()
-    await readyRunButton()
+    switchToClassicDashboard()
 
     expect(screen.getByText(`${he.progressLabelPrefix}0%`)).toBeInTheDocument()
-    expect(screen.getByText(new RegExp(`${he.nextLabelPrefix}קשרי מחוז \\(${he.locked}\\)`))).toBeInTheDocument()
-    // Playtest fix pass (issue 6B) — mission-started now interpolates the
-    // actual mission's own title (First Contact, on a fresh game).
-    await waitFor(() => expect(screen.getByText('משימה חדשה מתחילה: מגע ראשון. אני מקשיב.')).toBeInTheDocument())
+    expect(screen.getByText(new RegExp(`${he.nextLabelPrefix}תרגום: ספרייה \\(${he.locked}\\)`))).toBeInTheDocument()
+    // SQL-removal pass — a question mission has no async "mission database"
+    // step, so First Contact (the very first mission of a fresh game) is
+    // already active the instant GameApp mounts. That leaves no observable
+    // "loading -> active" transition for GameApp's previousPhaseRef effect
+    // to publish an initial MissionStarted from (see GameApp.tsx; the same
+    // gap is documented in eventBusPublishesOnMissionCompletion.test.tsx),
+    // so there is no "mission started" narration to assert on for a fresh
+    // boot's own starting mission anymore — the progress/lock checks above
+    // are this test's real coverage of "boots into a fresh game."
   })
 
   it('boots straight into a previously saved game, resuming on the actual current mission', async () => {
@@ -97,7 +99,7 @@ describe('Load-on-boot', () => {
     saveCurrentGame(world, playerProgress)
 
     renderGameApp()
-    await readyRunButton()
+    switchToClassicDashboard()
     openDebugView()
 
     expect(screen.getByText(`${he.progressLabelPrefix}${ONE_MISSION_PERCENTAGE}%`)).toBeInTheDocument()
@@ -106,9 +108,9 @@ describe('Load-on-boot', () => {
     // (District Ties, the mission after the one just completed) directly —
     // not re-open the already-finished First Contact and make the player
     // click "Continue" to get anywhere.
-    expect(screen.getByRole('heading', { name: 'קשרי מחוז' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'תרגום: ספרייה' })).toBeInTheDocument()
     expect(
-      screen.getByText(new RegExp(`${he.nextLabelPrefix}יציבות הדרום \\(${he.locked}\\)`)),
+      screen.getByText(new RegExp(`${he.nextLabelPrefix}כפל: 8 × 7 \\(${he.locked}\\)`)),
     ).toBeInTheDocument()
   })
 
@@ -127,11 +129,11 @@ describe('Load-on-boot', () => {
     saveCurrentGame(createWorldState(initialDistricts), progress)
 
     renderGameApp()
-    await readyRunButton()
+    switchToClassicDashboard()
 
-    expect(screen.getByRole('heading', { name: 'יציבות הדרום' })).toBeInTheDocument()
-    expect(screen.queryByRole('heading', { name: 'מגע ראשון' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('heading', { name: 'קשרי מחוז' })).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'כפל: 8 × 7' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'הקיסר הראשון' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'תרגום: ספרייה' })).not.toBeInTheDocument()
   })
 
   it('does not spuriously re-narrate content that was already unlocked in the save', async () => {
@@ -139,32 +141,76 @@ describe('Load-on-boot', () => {
     saveCurrentGame(world, playerProgress)
 
     renderGameApp()
-    await readyRunButton()
+    switchToClassicDashboard()
 
     // First Contact is already completed per the save, so booting into it is
     // a revisit, not a fresh start (Step 1, v0.2) — Odin has nothing new to
     // narrate about *unlock* progress: no re-announcement of District Ties
     // becoming available, since that already happened in a prior session.
-    // District Ties itself, however, is the player's real current mission
-    // (the progression fix now correctly loads it, not the already-finished
-    // First Contact) and genuinely is starting for the first time this
-    // session, so its own "mission started" line is expected and becomes
-    // the latest message — with the Meridian 1.3 welcome-back line (Core
-    // Loop §01) preserved just behind it in history, not lost.
-    // MissionStarted publishes once District Ties's own database finishes
-    // preparing — a separate async chain from readyRunButton's own wait, so
-    // this needs its own waitFor rather than assuming it has already landed.
-    // Playtest fix pass (issue 6B) — mission-started now interpolates the
-    // actual mission's own title (District Ties, the real current mission
-    // here, per this test's own comment above).
+    // District Ties itself is the player's real current mission (the
+    // progression fix now correctly loads it, not the already-finished
+    // First Contact) — but SQL-removal pass: a question mission has no
+    // async "mission database" step, so District Ties is already active
+    // the instant GameApp mounts here, same as First Contact would be on a
+    // fresh game. That leaves no observable "loading -> active" transition
+    // for GameApp's previousPhaseRef effect to publish an initial
+    // MissionStarted from (see GameApp.tsx; the same gap is documented in
+    // eventBusPublishesOnMissionCompletion.test.tsx), so District Ties gets
+    // no "mission started" line of its own on this boot. The Meridian 1.3
+    // welcome-back line (Core Loop §01) is therefore still the only, and
+    // therefore latest, message — which is exactly what this test needs:
+    // confirmation that nothing else (in particular, no spurious
+    // re-narration of District Ties unlocking) took its place. OdinPanel
+    // only renders its history list once a second entry exists (see
+    // OdinPanel.tsx's previousEntries), so with no mission-started line
+    // landing beside it, that list stays absent rather than showing the
+    // welcome-back line as a "previous" entry.
     await waitFor(() =>
-      expect(screen.getByTestId('odin-latest-message')).toHaveTextContent('משימה חדשה מתחילה: קשרי מחוז. אני מקשיב.'),
+      expect(screen.getByTestId('odin-latest-message')).toHaveTextContent('ברוך שובך למרידיאן. העיר המשיכה לחכות.'),
     )
-    expect(screen.getByRole('list', { name: he.odinHistoryAriaLabel })).toHaveTextContent('ברוך שובך למרידיאן')
+    expect(screen.queryByRole('list', { name: he.odinHistoryAriaLabel })).not.toBeInTheDocument()
     // The one thing this test actually guards: no spurious re-narration of
     // content unlocked in a prior session (the ContentUnlocked reaction for
     // District Ties becoming available must not fire again on this boot).
     expect(screen.queryByText(/להתחקות אחר קשרי המחוז/)).not.toBeInTheDocument()
+  })
+
+  /**
+   * SQL-removal pass, Section 10 backward-compatibility requirement — a
+   * save written before this change stores exactly these same mission ids
+   * ('first-contact', 'district-ties', ...): the SQL-removal pass
+   * deliberately kept every mission's id and successEffect unchanged,
+   * swapping only its content and kind (see missions/firstContact.ts and
+   * siblings). So a pre-existing save's completedMissionIds/currentMissionId
+   * still resolve directly via getMissionById — no id remapping/migration
+   * was needed, and none exists. This test hand-authors a save blob (rather
+   * than using this file's own helpers, which already run on the new code)
+   * to prove that resolution still works from genuinely old-shaped data.
+   */
+  it('loads an old (pre-SQL-removal) save whose ids reference the same missions, now showing question content', async () => {
+    const oldShapedWorld = applyEffect(createWorldState(initialDistricts), firstContactMission.successEffect!)
+    const oldShapedProgress = recordMissionCompletion(
+      createInitialPlayerProgress(defaultCampaign),
+      'first-contact',
+      defaultCampaign,
+    )
+    // Simulates a save written by the old SQL-era app: same shape, same
+    // ids — completedMissionIds/currentMissionId always were opaque
+    // strings to persistence (see deserializeSaveGame.ts, which validates
+    // shape only, never content).
+    window.localStorage.setItem(
+      SAVE_KEY,
+      JSON.stringify({ version: 1, world: oldShapedWorld, playerProgress: oldShapedProgress }),
+    )
+
+    renderGameApp()
+    switchToClassicDashboard()
+
+    // Resolves straight to the real current mission (District Ties) under
+    // its NEW question-mission title — no reset to mission 1, no crash.
+    expect(screen.getByRole('heading', { name: 'תרגום: ספרייה' })).toBeInTheDocument()
+    expect(screen.getByTestId('question-panel')).toBeInTheDocument()
+    expect(screen.getByText(`${he.progressLabelPrefix}${ONE_MISSION_PERCENTAGE}%`)).toBeInTheDocument()
   })
 
   it('falls back to a fresh game when the saved data is corrupted, without crashing', async () => {
@@ -172,10 +218,10 @@ describe('Load-on-boot', () => {
     window.localStorage.setItem(SAVE_KEY, 'not valid json{')
 
     renderGameApp()
-    await readyRunButton()
+    switchToClassicDashboard()
 
     expect(screen.getByText(`${he.progressLabelPrefix}0%`)).toBeInTheDocument()
-    expect(screen.getByText(new RegExp(`${he.nextLabelPrefix}קשרי מחוז \\(${he.locked}\\)`))).toBeInTheDocument()
+    expect(screen.getByText(new RegExp(`${he.nextLabelPrefix}תרגום: ספרייה \\(${he.locked}\\)`))).toBeInTheDocument()
     expect(errorSpy).not.toHaveBeenCalled()
 
     errorSpy.mockRestore()
@@ -185,14 +231,13 @@ describe('Load-on-boot', () => {
 describe('New Game reset', () => {
   it('clears the save and resets world and progress', async () => {
     renderGameApp()
-    const runButton = await readyRunButton()
+    switchToClassicDashboard()
     openDebugView()
 
-    fireEvent.change(screen.getByPlaceholderText(he.sqlPlaceholder), {
-      target: { value: 'SELECT * FROM citizens;' },
-    })
-    fireEvent.click(runButton)
-    await screen.findByText(he.pass)
+    // First Contact is now "The First Emperor" (History, multiple choice) —
+    // option 0 (אוגוסטוס) is the correct answer (see missions/firstContact.ts).
+    submitMultipleChoiceAnswer(0) // אוגוסטוס — the correct answer
+    await screen.findByText(he.exerciseCorrectFeedback)
     await waitFor(() => expect(screen.getByText(`${he.progressLabelPrefix}${ONE_MISSION_PERCENTAGE}%`)).toBeInTheDocument())
 
     ensureSettingsMenuOpen()
@@ -200,7 +245,7 @@ describe('New Game reset', () => {
     newGame()
 
     await waitFor(() => expect(screen.getByText(`${he.progressLabelPrefix}0%`)).toBeInTheDocument())
-    expect(screen.getByText(new RegExp(`${he.nextLabelPrefix}קשרי מחוז \\(${he.locked}\\)`))).toBeInTheDocument()
+    expect(screen.getByText(new RegExp(`${he.nextLabelPrefix}תרגום: ספרייה \\(${he.locked}\\)`))).toBeInTheDocument()
     expect(screen.queryByText(/"signal": 100/)).not.toBeInTheDocument()
 
     // The save was cleared too, so a later boot won't resurrect the old game.
@@ -215,13 +260,10 @@ describe('New Game reset', () => {
 
   it('does not spuriously re-narrate once the reset progress is re-evaluated against the reset baseline', async () => {
     renderGameApp()
-    const runButton = await readyRunButton()
+    switchToClassicDashboard()
 
-    fireEvent.change(screen.getByPlaceholderText(he.sqlPlaceholder), {
-      target: { value: 'SELECT * FROM citizens;' },
-    })
-    fireEvent.click(runButton)
-    await screen.findByText(he.pass)
+    submitMultipleChoiceAnswer(0) // אוגוסטוס — the correct answer
+    await screen.findByText(he.exerciseCorrectFeedback)
     await waitFor(() =>
       expect(
         screen.getByText('העיר מתחילה להשיב. אפשר כעת להתחקות אחר קשרי המחוז.'),
@@ -243,13 +285,10 @@ describe('New Game reset', () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
     renderGameApp()
-    const runButton = await readyRunButton()
+    switchToClassicDashboard()
 
-    fireEvent.change(screen.getByPlaceholderText(he.sqlPlaceholder), {
-      target: { value: 'SELECT * FROM citizens;' },
-    })
-    fireEvent.click(runButton)
-    await screen.findByText(he.pass)
+    submitMultipleChoiceAnswer(0) // אוגוסטוס — the correct answer
+    await screen.findByText(he.exerciseCorrectFeedback)
 
     ensureSettingsMenuOpen()
     fireEvent.click(screen.getByTestId('save-button'))
@@ -262,19 +301,15 @@ describe('New Game reset', () => {
 
   it('clears session-scoped UI state left over from before the reset (active mission, selected NPC)', async () => {
     renderGameApp()
-    const runButton = await readyRunButton()
+    switchToClassicDashboard()
 
-    fireEvent.change(screen.getByPlaceholderText(he.sqlPlaceholder), {
-      target: { value: 'SELECT * FROM citizens;' },
-    })
-    fireEvent.click(runButton)
-    await screen.findByText(he.pass)
+    submitMultipleChoiceAnswer(0) // אוגוסטוס — the correct answer
+    await screen.findByText(he.exerciseCorrectFeedback)
 
     // Move off the first mission and open an NPC's bio — both are
     // session-scoped state (activeMissionId, selectedNpcId), never part of
     // SaveGame, so a plain world/progress replace does not touch them.
-    fireEvent.click(screen.getByRole('button', { name: `קשרי מחוז (${he.available})` }))
-    await readyRunButton()
+    fireEvent.click(screen.getByRole('button', { name: `תרגום: ספרייה (${he.available})` }))
     fireEvent.click(document.querySelector('[data-npc-id="archivist-mera"]')!)
     expect(screen.getByTestId('npc-bio-panel')).toBeInTheDocument()
 
@@ -284,7 +319,7 @@ describe('New Game reset', () => {
     // activeLessonId/sceneState) survived New Game entirely, so a mission
     // loaded in the console or an open NPC bio could persist into the "new"
     // game within the same mounted session.
-    expect(screen.getByRole('heading', { name: 'מגע ראשון' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'הקיסר הראשון' })).toBeInTheDocument()
     expect(screen.queryByTestId('npc-bio-panel')).not.toBeInTheDocument()
   })
 
@@ -297,7 +332,7 @@ describe('New Game reset', () => {
     saveCurrentGame(createWorldState(initialDistricts), progress)
 
     renderGameApp()
-    await readyRunButton()
+    switchToClassicDashboard()
     expect(screen.getByTestId('quest-track-archive-pages-button')).toHaveTextContent(/1$/)
 
     newGame()
@@ -333,7 +368,7 @@ describe('New Game reset', () => {
     saveCurrentGame(createWorldState(initialDistricts), progressed)
 
     renderGameApp()
-    await readyRunButton()
+    switchToClassicDashboard()
     ensureSettingsMenuOpen()
     expect(screen.getByTestId('difficulty-level-3-button')).toHaveAttribute('aria-checked', 'true')
     expect(screen.getByTestId('progress-badge')).toHaveAttribute('data-percentage', ONE_MISSION_PERCENTAGE.toString())
@@ -356,7 +391,7 @@ describe('New Game reset', () => {
 
   it('a fresh save with no prior difficultyLevel still defaults to 1 after New Game', async () => {
     renderGameApp()
-    await readyRunButton()
+    switchToClassicDashboard()
     ensureSettingsMenuOpen()
     expect(screen.getByTestId('difficulty-level-1-button')).toHaveAttribute('aria-checked', 'true')
 
@@ -368,13 +403,10 @@ describe('New Game reset', () => {
 
   it('does nothing until the reset is confirmed, and Cancel dismisses the prompt without resetting', async () => {
     renderGameApp()
-    const runButton = await readyRunButton()
+    switchToClassicDashboard()
 
-    fireEvent.change(screen.getByPlaceholderText(he.sqlPlaceholder), {
-      target: { value: 'SELECT * FROM citizens;' },
-    })
-    fireEvent.click(runButton)
-    await screen.findByText(he.pass)
+    submitMultipleChoiceAnswer(0) // אוגוסטוס — the correct answer
+    await screen.findByText(he.exerciseCorrectFeedback)
     await waitFor(() => expect(screen.getByText(`${he.progressLabelPrefix}${ONE_MISSION_PERCENTAGE}%`)).toBeInTheDocument())
 
     ensureSettingsMenuOpen()
