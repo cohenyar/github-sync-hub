@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
+import { he } from '../../i18n'
 import type { NpcConfig } from '../../npcs'
 import type { NpcDialogueContext } from '../logic/npcDialogueState'
 import { NpcDialogue } from './NpcDialogue'
@@ -88,6 +89,24 @@ describe('NpcDialogue', () => {
   it('exposes the NPC id as a data attribute for stable selection', () => {
     render(<NpcDialogue npc={devrin} context={context()} onClose={vi.fn()} />)
     expect(screen.getByTestId('npc-dialogue')).toHaveAttribute('data-npc-id', 'north-warden')
+  })
+
+  it('gives the close button an accessible name beyond just its visible text', () => {
+    render(<NpcDialogue npc={devrin} context={context()} onClose={vi.fn()} />)
+    expect(screen.getByTestId('npc-dialogue-close-button')).toHaveAttribute('aria-label', he.dialogueCloseButton)
+  })
+
+  it('marks the dialog as a modal and labels it via the NPC name heading', () => {
+    render(<NpcDialogue npc={devrin} context={context()} onClose={vi.fn()} />)
+
+    const dialog = screen.getByTestId('npc-dialogue')
+    expect(dialog).toHaveAttribute('aria-modal', 'true')
+
+    const labelledBy = dialog.getAttribute('aria-labelledby')
+    expect(labelledBy).toBeTruthy()
+    const heading = document.getElementById(labelledBy!)
+    expect(heading).toHaveTextContent('Devrin Kass')
+    expect(heading?.tagName).toBe('H3')
   })
 
   it('calls onOpen exactly once when the dialogue mounts', () => {

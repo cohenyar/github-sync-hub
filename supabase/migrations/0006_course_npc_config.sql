@@ -1,0 +1,17 @@
+-- Additive only, same convention as every prior migration in this set: does
+-- not touch the existing hardcoded SQL campaign, and does not replace or
+-- alter any existing courses/lessons/missions row. Adds a single nullable
+-- jsonb column to public.courses so each admin-authored course can carry an
+-- associated course NPC's appearance/identity as metadata — no new table,
+-- no rendering change, no AI generation involved.
+--
+-- Shape of the JSON object (all fields optional at the DB layer; the admin
+-- UI is the only writer and always fills every required field before save):
+--   { displayName, role, bodyColor, skinTone, hairColor, hairStyle,
+--     shirtColor, pantsColor, accessory? }
+--
+-- No RLS change needed: the existing courses policies from
+-- 0004_cms_content_tables.sql (SELECT for active rows to anon/authenticated,
+-- SELECT-all/INSERT/UPDATE/DELETE gated on public.is_admin(auth.uid()) for
+-- authenticated) apply to every column on the table, this one included.
+alter table public.courses add column if not exists npc_config jsonb;

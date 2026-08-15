@@ -71,9 +71,46 @@ describe('AdminCourses', () => {
     fireEvent.change(screen.getByLabelText(he.adminFieldSubject), { target: { value: 'history' } })
     fireEvent.click(screen.getByText(he.adminSaveAction))
     expect(mocks.create).toHaveBeenCalledWith(
-      expect.objectContaining({ title: 'קורס חדש', subject: 'history', status: 'draft' }),
+      expect.objectContaining({
+        title: 'קורס חדש',
+        subject: 'history',
+        status: 'draft',
+        npcConfig: expect.objectContaining({
+          displayName: expect.any(String),
+          role: expect.any(String),
+          bodyColor: expect.stringMatching(/^#[0-9a-f]{6}$/i),
+          skinTone: expect.stringMatching(/^#[0-9a-f]{6}$/i),
+          hairColor: expect.stringMatching(/^#[0-9a-f]{6}$/i),
+          shirtColor: expect.stringMatching(/^#[0-9a-f]{6}$/i),
+          pantsColor: expect.stringMatching(/^#[0-9a-f]{6}$/i),
+          hairStyle: expect.stringMatching(/^(short|long|bald|bun)$/),
+        }),
+      }),
     )
     expect(await screen.findByText(he.adminSaveSuccessMessage)).toBeInTheDocument()
+  })
+
+  it('prefills the course NPC section with sensible, non-empty defaults as soon as the create form opens', () => {
+    renderPage()
+    fireEvent.click(screen.getByRole('button', { name: he.adminAddCourse }))
+
+    const displayNameInput = screen.getByLabelText('שם הדמות') as HTMLInputElement
+    const roleInput = screen.getByLabelText('תפקיד') as HTMLInputElement
+    const bodyColorInput = screen.getByLabelText('צבע גוף') as HTMLInputElement
+    const skinToneInput = screen.getByLabelText('גוון עור') as HTMLInputElement
+    const hairColorInput = screen.getByLabelText('צבע שיער') as HTMLInputElement
+    const shirtColorInput = screen.getByLabelText('צבע חולצה') as HTMLInputElement
+    const pantsColorInput = screen.getByLabelText('צבע מכנסיים') as HTMLInputElement
+    const hairStyleSelect = screen.getByLabelText('סגנון שיער') as HTMLSelectElement
+
+    expect(displayNameInput.value).not.toBe('')
+    expect(roleInput.value).not.toBe('')
+    expect(bodyColorInput.value).toMatch(/^#[0-9a-f]{6}$/i)
+    expect(skinToneInput.value).toMatch(/^#[0-9a-f]{6}$/i)
+    expect(hairColorInput.value).toMatch(/^#[0-9a-f]{6}$/i)
+    expect(shirtColorInput.value).toMatch(/^#[0-9a-f]{6}$/i)
+    expect(pantsColorInput.value).toMatch(/^#[0-9a-f]{6}$/i)
+    expect(['short', 'long', 'bald', 'bun']).toContain(hairStyleSelect.value)
   })
 
   it('warns before discarding unsaved changes instead of closing silently', () => {

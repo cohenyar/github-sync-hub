@@ -22,12 +22,12 @@ function switchToClassicDashboard() {
 }
 
 describe('The second mission is gated behind the first, live in the app', () => {
-  it(`shows District Ties as Locked, and "Mission 1 of ${TOTAL_MISSIONS}", before First Contact passes`, () => {
+  it(`shows District Ties as Available (Meridian 2.0 open-world pass — English never waits on History), and "Mission 1 of ${TOTAL_MISSIONS}", from the very start`, () => {
     renderGameApp()
     switchToClassicDashboard()
 
     expect(screen.getByText(`${he.missionLabel} 1 ${he.ofLabel} ${TOTAL_MISSIONS}`)).toBeInTheDocument()
-    expect(screen.getByText(`${he.nextLabelPrefix}${DISTRICT_TIES_TITLE} (${he.locked})`)).toBeInTheDocument()
+    expect(screen.getByText(`${he.nextLabelPrefix}${DISTRICT_TIES_TITLE} (${he.available})`)).toBeInTheDocument()
   })
 
   it(`flips District Ties to Available once First Contact passes, while First Contact (still the active mission) stays "Mission 1 of ${TOTAL_MISSIONS}" (Meridian 1.4)`, async () => {
@@ -51,7 +51,7 @@ describe('The second mission is gated behind the first, live in the app', () => 
     expect(screen.getByText(`${he.missionLabel} 2 ${he.ofLabel} ${TOTAL_MISSIONS}`)).toBeInTheDocument()
   })
 
-  it(`leaves District Ties Locked and stays on "Mission 1 of ${TOTAL_MISSIONS}" if First Contact fails`, async () => {
+  it(`leaves District Ties Available (it was never gated behind First Contact) and stays on "Mission 1 of ${TOTAL_MISSIONS}" if First Contact fails`, async () => {
     renderGameApp()
     switchToClassicDashboard()
 
@@ -65,6 +65,6 @@ describe('The second mission is gated behind the first, live in the app', () => 
     expect(screen.getByTestId('question-feedback')).toHaveAttribute('data-verdict', 'fail')
 
     expect(screen.getByText(`${he.missionLabel} 1 ${he.ofLabel} ${TOTAL_MISSIONS}`)).toBeInTheDocument()
-    expect(screen.getByText(`${he.nextLabelPrefix}${DISTRICT_TIES_TITLE} (${he.locked})`)).toBeInTheDocument()
+    expect(screen.getByText(`${he.nextLabelPrefix}${DISTRICT_TIES_TITLE} (${he.available})`)).toBeInTheDocument()
   })
 })

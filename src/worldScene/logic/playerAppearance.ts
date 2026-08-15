@@ -29,6 +29,8 @@ export interface PlayerAvatarPreset {
   eyebrowColor: string
   pantsColor: string
   shoeColor: string
+  /** Character visual upgrade pass — the Shirt overlay's own color (characterParts.tsx), a distinct top layer over the torso's bodyColor. Manually chosen per preset (like bodyColor/accentColor), not derived, so it can read as a real contrasting shirt tone rather than a shade of the jacket. */
+  shirtColor: string
 }
 
 const SHARED_SKIN_TONE = '#e8b48a'
@@ -51,6 +53,7 @@ interface PlayerAvatarRecipe {
   label: string
   bodyColor: string
   accentColor: string
+  shirtColor: string
 }
 
 /**
@@ -60,12 +63,12 @@ interface PlayerAvatarRecipe {
  * avatar never visibly changes just because this feature shipped.
  */
 const PLAYER_AVATAR_RECIPES: readonly PlayerAvatarRecipe[] = [
-  { id: 'ember', label: 'ענבר', bodyColor: '#ff7530', accentColor: '#ffd9a0' },
-  { id: 'azure', label: 'תכלת', bodyColor: '#3d9dff', accentColor: '#cfe8ff' },
-  { id: 'violet', label: 'סגול', bodyColor: '#a94dff', accentColor: '#e6cdff' },
-  { id: 'verdant', label: 'ירוק', bodyColor: '#33d17a', accentColor: '#c8ffe0' },
-  { id: 'crimson', label: 'אדום', bodyColor: '#ff4d6a', accentColor: '#ffd0da' },
-  { id: 'cyan', label: 'ציאן', bodyColor: '#22e0d6', accentColor: '#c8fff9' },
+  { id: 'ember', label: 'ענבר', bodyColor: '#ff7530', accentColor: '#ffd9a0', shirtColor: '#2f6f8f' },
+  { id: 'azure', label: 'תכלת', bodyColor: '#3d9dff', accentColor: '#cfe8ff', shirtColor: '#e0b24a' },
+  { id: 'violet', label: 'סגול', bodyColor: '#a94dff', accentColor: '#e6cdff', shirtColor: '#4fae7a' },
+  { id: 'verdant', label: 'ירוק', bodyColor: '#33d17a', accentColor: '#c8ffe0', shirtColor: '#d97a4e' },
+  { id: 'crimson', label: 'אדום', bodyColor: '#ff4d6a', accentColor: '#ffd0da', shirtColor: '#3d99a3' },
+  { id: 'cyan', label: 'ציאן', bodyColor: '#22e0d6', accentColor: '#c8fff9', shirtColor: '#e0785c' },
 ]
 
 export const PLAYER_AVATAR_PRESETS: readonly PlayerAvatarPreset[] = PLAYER_AVATAR_RECIPES.map((recipe) => ({

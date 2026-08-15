@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import './App.css'
 import { getArchivePageByLessonId, getArchivePageById } from './archive'
 import { defaultCampaign, getCampaignSummary, isCampaignComplete, type CampaignProgress } from './campaign'
@@ -11,6 +11,7 @@ import {
   getMissionById,
   getMissionDisplayText,
   missionRegistry,
+  resolveMissionForDifficulty,
   useQuestionMission,
   type QuestionMissionPhase,
 } from './missions'
@@ -178,7 +179,7 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
   const [activeMissionId, setActiveMissionId] = useState(
     () => bootSave?.playerProgress.campaignProgress.currentMissionId ?? getDefaultMission().id,
   )
-  const activeMission = getMissionById(activeMissionId) ?? getDefaultMission()
+  const baseMission = getMissionById(activeMissionId) ?? getDefaultMission()
   const {
     progress: playerProgress,
     recordCompletion,
@@ -194,6 +195,17 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
   // campaign; resolved fresh from progress every render, same
   // default-safely convention as every other optional PlayerProgress field.
   const difficultyLevel = getDifficultyLevel(playerProgress)
+  // Real difficulty differentiation pass — the mission actually shown to
+  // the player, with its question swapped in from the subject's difficulty
+  // pool (see resolveMissionForDifficulty.ts). Memoized so its reference
+  // stays stable across renders when neither the mission nor the difficulty
+  // actually changed — useQuestionMission's own reset effect keys off this
+  // object's identity, so a fresh object every render would wipe pass/fail
+  // state on every re-render instead of only on a real mission change.
+  const activeMission = useMemo(
+    () => resolveMissionForDifficulty(baseMission, difficultyLevel),
+    [baseMission, difficultyLevel],
+  )
   // Meridian 1.3 — Core Loop §04: resolved fresh from progress every render, same fallback-to-empty convention as completedLessonIds.
   const collectedArchivePages = (playerProgress.collectedArchivePageIds ?? [])
     .map((pageId) => getArchivePageById(pageId))

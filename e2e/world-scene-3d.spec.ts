@@ -170,18 +170,18 @@ test.describe('Phase 2 primary 3D scene: the canonical world-scene loop', () => 
     await expect(page.getByTestId('question-panel')).toBeVisible()
   })
 
-  test('Hub World, A1: a locked destination shows the locked prompt and never opens a Terminal on interaction', async ({
+  test('Hub World, A1 (Meridian 2.0 open-world pass): North\'s own course is already open from the very start, not locked behind History', async ({
     page,
   }) => {
     await page.goto('/world')
     await expect(page.getByTestId('world-scene-3d')).toBeVisible()
 
-    // North's own course (District Ties) is locked until First Contact is
-    // completed. Walk 2 units past the spawn point itself (which is already
-    // within range of both north-warden and the North marker) so the
-    // district marker — not the closer NPC — becomes the nearest
-    // interactable, the same way the canonical loop test above walks past
-    // the Core to reach Mera Solt.
+    // North's own course (District Ties, English) no longer waits on First
+    // Contact (History) — the three subjects never gate each other. Walk 2
+    // units past the spawn point itself (which is already within range of
+    // both north-warden and the North marker) so the district marker — not
+    // the closer NPC — becomes the nearest interactable, the same way the
+    // canonical loop test above walks past the Core to reach Mera Solt.
     const prompt = page.getByTestId('interaction-prompt')
     await expect(prompt).toHaveAttribute('data-interactable-id', 'north-warden')
     await page.keyboard.down('KeyW')
@@ -189,19 +189,14 @@ test.describe('Phase 2 primary 3D scene: the canonical world-scene loop', () => 
     await page.keyboard.up('KeyW')
     await expect(prompt).toHaveAttribute('data-interactable-id', 'north')
 
-    await expect(prompt).toHaveAttribute('data-locked', 'true')
+    await expect(prompt).toHaveAttribute('data-locked', 'false')
     await expect(prompt).toContainText('מסלול הצפון')
-    // Playtest fix pass (issue 4) — a locked destination now names the real
-    // blocking mission (District Ties requires First Contact) instead of
-    // showing only the bare "Locked" label. SQL-removal pass: First
-    // Contact's title is now "הקיסר הראשון" (The First Emperor).
-    await expect(prompt).toContainText('נדרש: השלמת הקיסר הראשון')
+    await expect(prompt).not.toContainText('נדרש: השלמת')
 
-    // A deliberate, explained no-op — not a silent failure: interacting
-    // with a locked destination must not open a Terminal.
+    // Not a no-op: an unlocked destination opens a real Terminal on interact.
     await page.keyboard.press('KeyE')
-    await expect(page.getByTestId('terminal-view')).not.toBeVisible()
-    await expect(page.getByTestId('world-scene-3d')).toBeVisible()
+    await expect(page.getByTestId('terminal-view')).toBeVisible()
+    await expect(page.getByTestId('question-panel')).toBeVisible()
   })
 
   test('Hub World, A1: entering an unlocked course world shows its name/progress in the prompt and Terminal, and completing its mission advances that progress', async ({

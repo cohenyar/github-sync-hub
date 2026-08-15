@@ -30,6 +30,8 @@ export type CourseRow = {
   display_order: number
   created_at: string
   updated_at: string
+  /** See supabase/migrations/0006_course_npc_config.sql — added additively, no RLS change needed. */
+  npc_config: Json | null
 }
 
 export type CourseInsert = {
@@ -41,6 +43,7 @@ export type CourseInsert = {
   display_order?: number
   created_at?: string
   updated_at?: string
+  npc_config?: Json | null
 }
 
 export type CourseUpdate = Partial<CourseInsert>

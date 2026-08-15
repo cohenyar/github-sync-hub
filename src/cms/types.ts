@@ -9,6 +9,24 @@
  */
 export type ContentStatus = 'draft' | 'active'
 
+/**
+ * A course's associated NPC — display-only metadata, never a new 3D model
+ * or an AI-generated identity: a small fixed set of deterministic presets
+ * (see npcConfigDefaults.ts) the admin can hand-edit afterward. All color
+ * fields are hex color strings (e.g. '#3d6b8a').
+ */
+export interface CourseNpcConfig {
+  displayName: string
+  role: string
+  bodyColor: string
+  skinTone: string
+  hairColor: string
+  hairStyle: 'short' | 'long' | 'bald' | 'bun'
+  shirtColor: string
+  pantsColor: string
+  accessory?: string
+}
+
 export interface Course {
   id: string
   title: string
@@ -16,6 +34,7 @@ export interface Course {
   subject: string
   status: ContentStatus
   displayOrder: number
+  npcConfig: CourseNpcConfig | null
   createdAt: string
   updatedAt: string
 }

@@ -52,6 +52,11 @@ export function AskOdinPanel({
 }: AskOdinPanelProps) {
   const [answer, setAnswer] = useState<string | null>(null)
   const [freeText, setFreeText] = useState('')
+  // Dialogue UI polish pass — the panel is always embedded (never a blocking
+  // overlay), so "closable" means collapsible rather than dismissible.
+  // Defaults to expanded so every existing test that interacts with the six
+  // buttons or the free-text form keeps working unchanged.
+  const [isExpanded, setIsExpanded] = useState(true)
 
   const context = {
     subjectHe,
@@ -78,43 +83,59 @@ export function AskOdinPanel({
 
   return (
     <section className={styles.panel} aria-label={he.askOdinPanelTitle} data-testid="ask-odin-panel">
-      <h3 className={styles.title}>{he.askOdinPanelTitle}</h3>
-      <div className={styles.buttons}>
-        {QUESTIONS.map(({ id, label }) => (
-          <button
-            key={id}
-            type="button"
-            className={styles.questionButton}
-            data-testid={`ask-odin-${id}`}
-            onClick={() => ask(id)}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-      <form className={styles.freeTextForm} onSubmit={handleFreeTextSubmit}>
-        <input
-          className={styles.freeTextInput}
-          type="text"
-          value={freeText}
-          onChange={(event) => setFreeText(event.target.value)}
-          placeholder={he.askOdinFreeTextPlaceholder}
-          aria-label={he.askOdinFreeTextLabel}
-          data-testid="ask-odin-free-text-input"
-        />
+      <div className={styles.header}>
+        <h3 className={styles.title}>{he.askOdinPanelTitle}</h3>
         <button
-          type="submit"
-          className={styles.freeTextSubmitButton}
-          data-testid="ask-odin-free-text-submit"
-          disabled={freeText.trim().length === 0}
+          type="button"
+          className={styles.collapseButton}
+          data-testid="ask-odin-collapse-button"
+          aria-expanded={isExpanded}
+          aria-label={isExpanded ? he.askOdinCollapseLabel : he.askOdinExpandLabel}
+          onClick={() => setIsExpanded((expanded) => !expanded)}
         >
-          {he.askOdinFreeTextSubmitCta}
+          {isExpanded ? '−' : '+'}
         </button>
-      </form>
-      {answer && (
-        <p className={styles.answer} data-testid="ask-odin-answer">
-          {answer}
-        </p>
+      </div>
+      {isExpanded && (
+        <>
+          <div className={styles.buttons}>
+            {QUESTIONS.map(({ id, label }) => (
+              <button
+                key={id}
+                type="button"
+                className={styles.questionButton}
+                data-testid={`ask-odin-${id}`}
+                onClick={() => ask(id)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <form className={styles.freeTextForm} onSubmit={handleFreeTextSubmit}>
+            <input
+              className={styles.freeTextInput}
+              type="text"
+              value={freeText}
+              onChange={(event) => setFreeText(event.target.value)}
+              placeholder={he.askOdinFreeTextPlaceholder}
+              aria-label={he.askOdinFreeTextLabel}
+              data-testid="ask-odin-free-text-input"
+            />
+            <button
+              type="submit"
+              className={styles.freeTextSubmitButton}
+              data-testid="ask-odin-free-text-submit"
+              disabled={freeText.trim().length === 0}
+            >
+              {he.askOdinFreeTextSubmitCta}
+            </button>
+          </form>
+          {answer && (
+            <p className={styles.answer} data-testid="ask-odin-answer">
+              {answer}
+            </p>
+          )}
+        </>
       )}
     </section>
   )

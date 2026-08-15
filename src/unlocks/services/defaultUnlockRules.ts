@@ -11,12 +11,17 @@ import type { UnlockCondition, UnlockRule } from '../types'
  * unlocked, matching the very first mission's behavior. This is exactly
  * the "data change here, not an engine change" the engine was built for.
  */
+/**
+ * Meridian 2.0 "open learning world" pass — History/English/Math are three
+ * independent tracks now, not one cross-subject chain. Each subject's own
+ * first mission (first-contact/district-ties/south-stability) has no entry
+ * here and defaults to `always`; each subject's second mission is gated
+ * behind that SAME subject's first mission only, never another subject's.
+ */
 const MISSION_UNLOCK_CONDITIONS: Record<string, readonly UnlockCondition[]> = {
-  'district-ties': [{ kind: 'missionCompleted', missionId: 'first-contact' }],
-  'south-stability': [{ kind: 'missionCompleted', missionId: 'district-ties' }],
-  'full-signal': [{ kind: 'missionCompleted', missionId: 'south-stability' }],
-  'linked-records': [{ kind: 'missionCompleted', missionId: 'full-signal' }],
-  'priority-signal': [{ kind: 'missionCompleted', missionId: 'linked-records' }],
+  'full-signal': [{ kind: 'missionCompleted', missionId: 'first-contact' }],
+  'linked-records': [{ kind: 'missionCompleted', missionId: 'district-ties' }],
+  'priority-signal': [{ kind: 'missionCompleted', missionId: 'south-stability' }],
 }
 
 export const defaultUnlockRules: UnlockRule[] = [

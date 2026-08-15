@@ -8,7 +8,7 @@ import {
 } from './helpers.js'
 
 test.describe('Mission progression and unlock gating', () => {
-  test('starts at Mission 1 of 6, 0% progress, with District Ties locked', async ({ page }) => {
+  test('starts at Mission 1 of 6, 0% progress, with District Ties already open (Meridian 2.0 open-world pass)', async ({ page }) => {
     await page.goto('/world')
     await waitForQuestionPanel(page)
 
@@ -16,8 +16,11 @@ test.describe('Mission progression and unlock gating', () => {
     await expect(page.getByTestId('mission-index-badge')).toHaveAttribute('data-total', '6')
     await expect(page.getByTestId('progress-badge')).toHaveAttribute('data-percentage', '0')
     await expect(page.getByTestId('content-status-badge')).toHaveAttribute('data-status', 'available')
+    // History/English/Math no longer gate each other — District Ties
+    // (English's own first mission) is unlocked from the very start, same
+    // as First Contact (History) and South Stability (Math).
     await expect(page.getByTestId('next-mission-label')).toHaveAttribute('data-mission-id', 'district-ties')
-    await expect(page.getByTestId('next-mission-label')).toHaveAttribute('data-status', 'locked')
+    await expect(page.getByTestId('next-mission-label')).toHaveAttribute('data-status', 'available')
   })
 
   test('unlocks District Ties once First Contact passes, while First Contact (still the active mission) stays at index 1 (Meridian 1.4)', async ({
@@ -56,7 +59,10 @@ test.describe('Mission progression and unlock gating', () => {
 
     await expect(page.getByTestId('mission-index-badge')).toHaveAttribute('data-current', '1')
     await expect(page.getByTestId('progress-badge')).toHaveAttribute('data-percentage', '0')
-    await expect(page.getByTestId('next-mission-label')).toHaveAttribute('data-status', 'locked')
+    // District Ties (English) was never gated behind First Contact (History)
+    // in the first place, so a failed attempt leaves it exactly as open as
+    // it always was — "unchanged" now means still available, not still locked.
+    await expect(page.getByTestId('next-mission-label')).toHaveAttribute('data-status', 'available')
   })
 
   test('revisiting an already-completed mission shows a completed phase, never an active one', async ({ page }) => {

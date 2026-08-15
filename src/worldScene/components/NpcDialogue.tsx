@@ -1,4 +1,4 @@
-import { useEffect, useRef, type CSSProperties } from 'react'
+import { useEffect, useId, useRef, type CSSProperties } from 'react'
 import { he } from '../../i18n'
 import { getLessonIdForNpc } from '../../learning'
 import type { NpcConfig } from '../../npcs'
@@ -64,6 +64,10 @@ export function NpcDialogue({
   const isLessonCompleted = Boolean(linkedLessonId && (context.completedLessonIds ?? []).includes(linkedLessonId))
   const npcHue = npcIdToHue(npc.id)
   const playerPreset = getPlayerAvatarPreset(playerAvatarId)
+  // Accessibility pass — a stable, unique id for the NPC name heading so the
+  // dialog's aria-labelledby always points at real, non-colliding content
+  // even if more than one NpcDialogue instance were ever mounted at once.
+  const headingId = useId()
 
   useEffect(() => {
     onOpen?.()
@@ -88,7 +92,14 @@ export function NpcDialogue({
   }, [])
 
   return (
-    <div className={styles.dialogue} data-testid="npc-dialogue" data-npc-id={npc.id} role="dialog">
+    <div
+      className={styles.dialogue}
+      data-testid="npc-dialogue"
+      data-npc-id={npc.id}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={headingId}
+    >
       <div className={styles.header}>
         <span className={styles.npcIdentity}>
           <span
@@ -97,7 +108,7 @@ export function NpcDialogue({
             aria-hidden="true"
             style={{ background: `hsl(${npcHue}, 55%, 55%)` }}
           />
-          <h3 className={styles.name}>
+          <h3 id={headingId} className={styles.name}>
             {npc.name}
             {familiarityTier && (
               <span className={styles.familiarityBadge} data-testid="npc-familiarity-badge">
@@ -134,7 +145,13 @@ export function NpcDialogue({
           {isLessonCompleted ? he.replayLessonAction : he.startLessonAction}
         </button>
       )}
-      <button type="button" className={styles.closeButton} data-testid="npc-dialogue-close-button" onClick={onClose}>
+      <button
+        type="button"
+        className={styles.closeButton}
+        data-testid="npc-dialogue-close-button"
+        aria-label={he.dialogueCloseButton}
+        onClick={onClose}
+      >
         {he.dialogueCloseButton}
       </button>
     </div>

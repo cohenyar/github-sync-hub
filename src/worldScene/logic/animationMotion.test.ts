@@ -9,6 +9,7 @@ import {
   computeGreetingBob,
   computeIdleLookYaw,
   computeIdlePose,
+  computeNpcTalkBob,
   computePulseIntensity,
   computePulseScale,
   computeSwayAngle,
@@ -105,6 +106,28 @@ describe('computeTalkingHeadNod', () => {
     const a = computeTalkingHeadNod(0)
     const b = computeTalkingHeadNod(0.2)
     expect(a).not.toBe(b)
+  })
+})
+
+describe('computeNpcTalkBob', () => {
+  it('oscillates rather than staying fixed', () => {
+    const a = computeNpcTalkBob(0)
+    const b = computeNpcTalkBob(0.2)
+    expect(a).not.toBe(b)
+  })
+
+  it('is 0 at t=0 (so it never yanks an NPC on the very first talking frame)', () => {
+    expect(computeNpcTalkBob(0)).toBeCloseTo(0, 10)
+  })
+
+  it('stays subtle — bounded by a small amplitude, well under the player head-nod amplitude', () => {
+    for (let t = 0; t < 10; t += 0.37) {
+      expect(Math.abs(computeNpcTalkBob(t))).toBeLessThanOrEqual(0.035 + 1e-9)
+    }
+  })
+
+  it('is a distinct function from computeTalkingHeadNod (own amplitude/rate, not a re-export)', () => {
+    expect(computeNpcTalkBob(0.3)).not.toBeCloseTo(computeTalkingHeadNod(0.3), 5)
   })
 })
 

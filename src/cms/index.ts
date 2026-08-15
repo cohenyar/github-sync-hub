@@ -1,4 +1,5 @@
 export * from './types'
+export * from './npcConfigDefaults'
 export * from './api/courses'
 export * from './api/lessons'
 export * from './api/missions'

@@ -6,6 +6,7 @@ import {
   computeGreetingBob,
   computeIdleLookYaw,
   computeIdlePose,
+  computeNpcTalkBob,
   computeVisualFacingAngle,
   computeYawTowards,
   createIdleGreetingState,
@@ -75,9 +76,11 @@ export function NpcMarker3D({
       isNoticed && playerPosition ? computeYawTowards(position, playerPosition) : computeIdleLookYaw(state.clock.elapsedTime, phaseSeed)
     visualYawRef.current = computeVisualFacingAngle(visualYawRef.current, targetYaw, delta)
 
+    const talkBob = isTalking ? computeNpcTalkBob(state.clock.elapsedTime) : 0
+
     if (groupRef.current) {
       groupRef.current.rotation.y = visualYawRef.current
-      groupRef.current.position.y = idle.breatheOffsetY + computeGreetingBob(greetingStateRef.current)
+      groupRef.current.position.y = idle.breatheOffsetY + computeGreetingBob(greetingStateRef.current) + talkBob
       groupRef.current.scale.setScalar(1 + idle.breatheScaleY)
     }
   })

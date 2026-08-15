@@ -25,6 +25,25 @@
   gap: var(--ds-space-3);
 }
 
+/* Responsive pass — actionsCorner can hold up to five simultaneous items
+   (saved confirmation, admin link, archive toggle, settings trigger, auth
+   control), none of which can flex-shrink (icon buttons are fixed-size,
+   text buttons/name are white-space: nowrap or ellipsis-capped). On a
+   ~390px phone with a normal-length signed-in name, that combination
+   already exceeds the available width next to the brand chip; adding the
+   admin link or a "Saved." confirmation on top pushes it further. Since
+   .bar never clips (no overflow: hidden — it's a floating, non-space-
+   reserving shell), unwrapped overflow here doesn't scroll into view, it
+   just runs off the fixed bar silently. Wrapping keeps every control
+   visible and tappable on a second line instead. */
+@media (max-width: 479.98px) {
+  .actionsCorner {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--ds-space-2);
+  }
+}
+
 .brandCorner {
   padding: 6px 14px 6px 6px;
   border-radius: var(--ds-radius-pill);

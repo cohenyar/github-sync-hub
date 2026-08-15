@@ -57,20 +57,36 @@ export function getDestinationMissions(destinationId: string): MissionConfig[] {
  * three missions across repeat visits — a plain array scan over the
  * existing progress, nothing stored per destination.
  */
+/**
+ * Meridian 2.0 "open learning world" pass — East hosts one continuation
+ * mission per subject (History/English/Math), each gated only by that
+ * subject's own first mission (see defaultUnlockRules.ts), so array order no
+ * longer implies unlock order the way it did under the old single
+ * cross-subject chain. Prefer a mission that's actually playable right now;
+ * only fall back to "first incomplete" (which may still be locked) once
+ * nothing in the destination is currently available.
+ */
 export function getDestinationEntryMission(
   destinationId: string,
   playerProgress: PlayerProgress,
 ): MissionConfig | undefined {
   const missions = getDestinationMissions(destinationId)
   if (missions.length === 0) return undefined
+  const nextPlayable = missions.find((mission) => getMissionContentStatus(playerProgress, mission.id) === 'available')
+  if (nextPlayable) return nextPlayable
   const nextIncomplete = missions.find((mission) => getMissionContentStatus(playerProgress, mission.id) !== 'completed')
   return nextIncomplete ?? missions[missions.length - 1]
 }
 
 /**
- * A destination is locked exactly when its first (earliest, in campaign
- * order) mission is locked — the same three-state vocabulary
- * (locked/available/completed) already used everywhere else in the game.
+ * A destination is locked only when EVERY one of its missions is locked —
+ * not just the first one in the list. Meridian 2.0 "open learning world"
+ * pass: East holds three independent per-subject continuations, so finishing
+ * any single subject's first mission (History/English/Math) must open East
+ * for that subject without requiring the other two at all. The old
+ * "locked iff first-listed mission is locked" rule effectively let one
+ * subject (whichever was first in the array) gate the other two — exactly
+ * the cross-subject lock this pass removes.
  */
 export function getDestinationContentStatus(destinationId: string, playerProgress: PlayerProgress): ContentStatus {
   const missions = getDestinationMissions(destinationId)
@@ -78,7 +94,7 @@ export function getDestinationContentStatus(destinationId: string, playerProgres
 
   const statuses = missions.map((mission) => getMissionContentStatus(playerProgress, mission.id))
   if (statuses.every((status) => status === 'completed')) return 'completed'
-  if (statuses[0] === 'locked') return 'locked'
+  if (statuses.every((status) => status === 'locked')) return 'locked'
   return 'available'
 }
 

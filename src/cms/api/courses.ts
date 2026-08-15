@@ -1,4 +1,5 @@
-import type { CmsResult, Course, CourseInput } from '../types'
+import type { Json } from '../../integrations/supabase/types'
+import type { CmsResult, Course, CourseInput, CourseNpcConfig } from '../types'
 import { getCmsClient, toCmsError, unavailableResult } from './shared'
 
 function fromRow(row: {
@@ -10,6 +11,7 @@ function fromRow(row: {
   display_order: number
   created_at: string
   updated_at: string
+  npc_config: Json | null
 }): Course {
   return {
     id: row.id,
@@ -18,6 +20,9 @@ function fromRow(row: {
     subject: row.subject,
     status: row.status === 'active' ? 'active' : 'draft',
     displayOrder: row.display_order,
+    // JSON pass-through, no validation: this admin UI is the only writer of
+    // npc_config, so the shape is trusted rather than re-checked here.
+    npcConfig: (row.npc_config as unknown as CourseNpcConfig | null) ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }
@@ -30,6 +35,7 @@ function toRow(input: CourseInput) {
     subject: input.subject,
     status: input.status,
     display_order: input.displayOrder,
+    npc_config: input.npcConfig as unknown as Json | null,
   }
 }
 

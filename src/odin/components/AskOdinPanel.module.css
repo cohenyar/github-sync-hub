@@ -9,14 +9,52 @@
   text-align: start;
 }
 
+/* Dialogue UI polish pass — the title now sits alongside the collapse
+   toggle instead of alone, so its own bottom margin moves to .header. */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ds-space-2);
+  margin-bottom: var(--ds-space-3);
+}
+
 .title {
-  margin: 0 0 var(--ds-space-3);
+  margin: 0;
   font-family: var(--ds-font-display);
   font-size: var(--ds-text-xs);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--ds-accent-strong);
+}
+
+/* Always-visible collapse/expand toggle — the panel is an embedded side
+   panel, not a blocking modal, so "closable" means collapsible: this stays
+   on screen (and re-expandable) even while the body below it is hidden. */
+.collapseButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: var(--ds-radius-md);
+  border: 1px solid var(--ds-border);
+  background: var(--ds-surface-muted);
+  color: var(--ds-text);
+  font-size: var(--ds-text-sm);
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    border-color var(--ds-duration-base) var(--ds-ease-out),
+    background var(--ds-duration-base) var(--ds-ease-out);
+}
+
+.collapseButton:hover,
+.collapseButton:focus-visible {
+  border-color: var(--ds-border-strong);
+  background: var(--ds-surface-strong);
 }
 
 .buttons {
@@ -100,4 +138,21 @@
 .freeTextSubmitButton:disabled {
   cursor: not-allowed;
   opacity: 0.5;
+}
+
+/* Mobile — same breakpoint as NpcDialogue.module.css/ModalOverlay.module.css/
+   ConfirmDialog.module.css's own narrow-viewport handling. The button row
+   already wraps per-button via .buttons' flex-wrap, but the free-text input
+   (flex: 1, min-width: 0) can otherwise shrink to an unusably narrow sliver
+   instead of wrapping — stack it above a full-width submit button instead. */
+@media (max-width: 480px) {
+  .freeTextForm {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .freeTextInput,
+  .freeTextSubmitButton {
+    width: 100%;
+  }
 }

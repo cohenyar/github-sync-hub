@@ -62,8 +62,8 @@ test.describe('Records Hub identity and Mera\'s dialogue (issue 2)', () => {
   })
 })
 
-test.describe('Priya Nandall explains her own prerequisite (issue 3)', () => {
-  test('her locked-phase line names the concrete next step, not a vague "not yet time"', async ({ page }) => {
+test.describe('Priya Nandall welcomes the player into Math from the very start (Meridian 2.0 open-world pass)', () => {
+  test('greets with an available, welcoming line and hands off her mission — no "not yet"/cross-subject prerequisite, on a brand new game', async ({ page }) => {
     await page.goto('/world')
     const prompt = page.getByTestId('interaction-prompt')
     await expect(prompt).toHaveAttribute('data-interactable-id', 'north-warden')
@@ -83,19 +83,24 @@ test.describe('Priya Nandall explains her own prerequisite (issue 3)', () => {
     const dialogue = page.getByTestId('npc-dialogue')
     await expect(dialogue).toBeVisible()
     await expect(dialogue).toHaveAttribute('data-npc-id', 'south-organizer')
-    await expect(dialogue).toContainText('קשרי המחוזות במוקד הרשומות')
+    // South Stability (Math) is always unlocked from the start — Priya
+    // hands off her mission immediately, with no "not yet"/prerequisite
+    // framing naming another subject.
+    await expect(dialogue).toContainText('דוחות חמורים מהדרום')
+    await expect(dialogue).not.toContainText('קשרי המחוזות')
+    await expect(dialogue).not.toContainText('עדיין לא')
   })
 })
 
-test.describe('Tomas Reyeth and the East district explain the real prerequisite (issue 4)', () => {
-  test('Tomas names South\'s instability as what is blocking East trade, and the East prompt names the real blocking mission', async ({
+test.describe('Tomas Reyeth and the East district open per-subject, not behind an unrelated subject (Meridian 2.0)', () => {
+  test('completing History alone (no English/Math) already opens East and drops the old cross-subject blame', async ({
     page,
   }) => {
     await page.goto('/world')
     const prompt = page.getByTestId('interaction-prompt')
     await expect(prompt).toHaveAttribute('data-interactable-id', 'north-warden')
 
-    // Complete First Contact first — east-broker is hidden until then.
+    // Complete First Contact (History) only — east-broker is hidden until then.
     await page.keyboard.down('KeyS')
     await page.waitForTimeout(900)
     await page.keyboard.up('KeyS')
@@ -123,18 +128,22 @@ test.describe('Tomas Reyeth and the East district explain the real prerequisite 
     const dialogue = page.getByTestId('npc-dialogue')
     await expect(dialogue).toBeVisible()
     await expect(dialogue).toHaveAttribute('data-npc-id', 'east-broker')
-    await expect(dialogue).toContainText('הדרום לא יציב')
+    // Meridian 2.0 open-world pass — full-signal's own prerequisite is now
+    // first-contact (History's own first mission), already satisfied, so
+    // Tomas no longer blames an unrelated subject (the old "הדרום לא יציב"
+    // line) for the delay.
+    await expect(dialogue).not.toContainText('הדרום')
     await page.getByTestId('npc-dialogue-close-button').click()
 
     await page.keyboard.down('KeyD')
     await page.waitForTimeout(900)
     await page.keyboard.up('KeyD')
     await expect(prompt).toHaveAttribute('data-interactable-id', 'east')
-    // The East district's "locked, here's what unblocks it" line names the
-    // real blocking mission's own title live — South Stability is now
-    // "כפל: 8 × 7" (Math, short text; see missions/southStability.ts) rather
-    // than its old SQL-era title, so the composed prompt text changed too.
-    await expect(prompt).toContainText('נדרש: השלמת כפל: 8 × 7')
+    // East is open the moment ANY one subject's first mission is done — no
+    // "נדרש: השלמת ..." lock text naming a different subject like the old
+    // cross-subject chain used to require.
+    await expect(prompt).not.toContainText('נדרש: השלמת')
+    await expect(prompt).toContainText('היכנס/י אל רובע הסוחרים')
   })
 })
 

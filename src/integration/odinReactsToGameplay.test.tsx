@@ -47,7 +47,7 @@ describe('Odin reacts to real gameplay end to end', () => {
     })
   })
 
-  it('comments on the restored signal when First Contact passes, then hints at District Ties unlocking', async () => {
+  it('comments on the restored signal when First Contact passes, then hints at Full Signal unlocking (Meridian 2.0 open-world pass)', async () => {
     renderGameApp()
     switchToClassicDashboard()
 
@@ -58,11 +58,13 @@ describe('Odin reacts to real gameplay end to end', () => {
       expect(screen.getByText('האות יציב כעת. מרידיאן שוב רואה את תושביה.')).toBeInTheDocument()
     })
 
-    // District Ties unlocking follows in the narration history once the
-    // unlock-reaction effect catches up to the updated progress.
+    // District Ties (English) is always unlocked from the start now, so it
+    // never transitions here — completing First Contact instead unlocks
+    // History's own second mission (Full Signal), which follows in the
+    // narration history once the unlock-reaction effect catches up.
     await waitFor(() => {
       expect(
-        screen.getByText('העיר מתחילה להשיב. אפשר כעת להתחקות אחר קשרי המחוז.'),
+        screen.getByText('אות מלא מוכן — כל העיר, נראית כאחת בפעם הראשונה.'),
       ).toBeInTheDocument()
     })
   })

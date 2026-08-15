@@ -54,9 +54,15 @@ export function useQuestionMission(
   const initiallyCompletedRef = useRef(initiallyCompleted)
   initiallyCompletedRef.current = initiallyCompleted
 
+  // Keyed on the mission's id, not the object reference: real difficulty
+  // differentiation resolves a fresh mission object (same id, different
+  // question) whenever the player's difficulty level changes (see
+  // resolveMissionForDifficulty.ts), and that must not wipe an
+  // already-submitted pass/fail result for the mission the player is still
+  // on — only switching to an actually different mission should reset it.
   useEffect(() => {
     setRuntime({ completed: initiallyCompletedRef.current, lastResult: null })
-  }, [mission])
+  }, [mission.id])
 
   function submit(answer: string) {
     const pass = checkQuestionAnswer(mission.answerConfig, answer)

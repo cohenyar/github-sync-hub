@@ -33,6 +33,10 @@ export const BLINK_DURATION = 0.12
 export const TALK_NOD_HZ = 1.6
 export const TALK_NOD_AMPLITUDE = 0.12
 
+/** Character visual upgrade pass — NPCs' own talking motion. Deliberately its own constants (not TALK_NOD_HZ/TALK_NOD_AMPLITUDE, which stay the player's) and a smaller amplitude: this rides on top of an NPC's existing idle breathing rather than replacing it, so it needs to read as subtle, not as a second head nod. */
+export const NPC_TALK_BOB_HZ = 1.8
+export const NPC_TALK_BOB_AMPLITUDE = 0.035
+
 export const GREETING_DURATION = 0.7
 export const GREETING_BOB_AMPLITUDE = 0.12
 
@@ -151,6 +155,19 @@ export function computeIdlePose(elapsedSeconds: number, phaseSeed = 0): IdlePose
 
 export function computeTalkingHeadNod(elapsedSeconds: number): number {
   return Math.sin(elapsedSeconds * TALK_NOD_HZ * TWO_PI) * TALK_NOD_AMPLITUDE
+}
+
+/**
+ * A small extra vertical oscillation for an NPC while a dialogue with them
+ * is open — NpcMarker3D adds this on top of (never instead of) its own
+ * existing idle-breathing offset, the same way computeGreetingBob layers
+ * onto that offset for a greeting. NPCs have no jointed head to nod like
+ * the player's (computeTalkingHeadNod), so this moves the whole figure by
+ * a small amount instead — new function, new constants, so
+ * computeTalkingHeadNod's own signature and behavior are untouched.
+ */
+export function computeNpcTalkBob(elapsedSeconds: number): number {
+  return Math.sin(elapsedSeconds * NPC_TALK_BOB_HZ * TWO_PI) * NPC_TALK_BOB_AMPLITUDE
 }
 
 // --- turning (a new, purely visual function — computeFacingAngle in movement.ts is never modified) ---

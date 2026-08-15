@@ -33,7 +33,7 @@ test.describe('Odin narrates real gameplay events', () => {
     expect(errors).toEqual([])
   })
 
-  test('comments on the restored signal, then hints at District Ties unlocking, with no console errors', async ({
+  test('comments on the restored signal, then hints at Full Signal unlocking, with no console errors (Meridian 2.0 open-world pass)', async ({
     page,
   }) => {
     const errors: string[] = []
@@ -51,15 +51,18 @@ test.describe('Odin narrates real gameplay events', () => {
 
     await expect(page.getByText('האות יציב כעת. מרידיאן שוב רואה את תושביה.')).toBeVisible()
 
-    // District Ties unlocking is a few React render cycles downstream of the
-    // Pass verdict (Progression update -> unlock-check effect -> Odin
-    // update), so give it more room than the default timeout, especially
-    // under parallel test load sharing one dev server. It lands somewhere in
-    // the Odin panel (latest message or history — First Contact's completion
-    // also unlocks an NPC via a separate ContentUnlocked event, so which of
-    // the two ends up "latest" isn't guaranteed, only that both appear).
+    // District Ties (English) is always unlocked from the start now, so it
+    // never transitions here — completing First Contact instead unlocks
+    // History's own second mission (Full Signal). Unlocking is a few React
+    // render cycles downstream of the Pass verdict (Progression update ->
+    // unlock-check effect -> Odin update), so give it more room than the
+    // default timeout, especially under parallel test load sharing one dev
+    // server. It lands somewhere in the Odin panel (latest message or
+    // history — First Contact's completion also unlocks an NPC via a
+    // separate ContentUnlocked event, so which of the two ends up "latest"
+    // isn't guaranteed, only that both appear).
     await expect(
-      page.getByTestId('odin-panel').getByText('העיר מתחילה להשיב. אפשר כעת להתחקות אחר קשרי המחוז.'),
+      page.getByTestId('odin-panel').getByText('אות מלא מוכן — כל העיר, נראית כאחת בפעם הראשונה.'),
     ).toBeVisible({ timeout: 10_000 })
 
     const history = page.getByTestId('odin-history')

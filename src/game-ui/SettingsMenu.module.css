@@ -37,6 +37,10 @@
   top: calc(100% + 10px);
   inset-inline-end: 0;
   min-width: 240px;
+  /* Mobile UX pass — mirrors AuthButton.module.css's own .menu: never let
+     this popover exceed the viewport width on a narrow screen (e.g. 320px). */
+  max-width: calc(100vw - 24px);
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: stretch;

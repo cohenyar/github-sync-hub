@@ -178,6 +178,12 @@ export const he = {
   askOdinFreeTextPlaceholder: 'שאל/י את אודין...',
   askOdinFreeTextSubmitCta: 'שלח',
   askOdinUnknownQuestionFallback: 'כרגע אני יכול לעזור רק לגבי השיעור והמשימה הנוכחיים.',
+  // Dialogue UI polish pass — Odin's panel is an always-embedded side panel,
+  // not a blocking modal, so "closable" here means collapsible: a header
+  // toggle that hides the question buttons/free-text form/answer while
+  // keeping the panel itself (and its title) always visible.
+  askOdinCollapseLabel: 'כווץ/י את פאנל אודין',
+  askOdinExpandLabel: 'הרחב/הרחיבי את פאנל אודין',
   npcBioAriaSuffix: 'פרופיל',
   // Distinct from eventCampaignCompleted (the notification-toast title for
   // the same event) — both can be visible on screen at once, so they need

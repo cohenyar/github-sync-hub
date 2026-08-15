@@ -61,13 +61,20 @@ describe('getDestinationEntryMission', () => {
 })
 
 describe('getDestinationContentStatus', () => {
-  it('is locked when the destination has not been reached yet', () => {
-    // south-stability requires district-ties, which requires first-contact.
-    expect(getDestinationContentStatus('south', progress([]))).toBe('locked')
+  it('the three subject-starting destinations (core/north/south) are all open from a brand new game — Meridian 2.0', () => {
+    // History (core), English (north), and Math (south) each start with an
+    // always-unlocked first mission — no subject blocks another.
+    expect(getDestinationContentStatus('core', progress([]))).toBe('available')
+    expect(getDestinationContentStatus('north', progress([]))).toBe('available')
+    expect(getDestinationContentStatus('south', progress([]))).toBe('available')
   })
 
-  it('is available once its first mission unlocks', () => {
-    expect(getDestinationContentStatus('north', progress(['first-contact']))).toBe('available')
+  it('east is locked only until at least one subject\'s first mission is completed', () => {
+    expect(getDestinationContentStatus('east', progress([]))).toBe('locked')
+    // Completing English's first mission alone is enough to open East for
+    // English's own continuation (linked-records) — no History or Math
+    // required, proving East no longer gates one subject behind another.
+    expect(getDestinationContentStatus('east', progress(['district-ties']))).toBe('available')
   })
 
   it('is available mid-way through a multi-mission destination', () => {
@@ -90,12 +97,12 @@ describe('getDestinationContentStatus', () => {
   })
 })
 
-describe('getDestinationLockRequirementMissionId (playtest fix, issue 4)', () => {
-  it('names the real blocking mission for a locked destination — not the destination\'s own first mission id', () => {
-    // East's own first mission is full-signal, but what actually blocks it
-    // (per defaultUnlockRules) is south-stability — that's what a player
-    // needs to be told to go finish, not the internal mission id.
-    expect(getDestinationLockRequirementMissionId('east', progress([]))).toBe('south-stability')
+describe('getDestinationLockRequirementMissionId (Meridian 2.0 open-world pass)', () => {
+  it('names the same-subject prerequisite for a fully locked destination', () => {
+    // East's own first-listed mission is full-signal (History), whose real
+    // prerequisite is now first-contact — History's own first mission, not
+    // an unrelated subject like the old cross-subject chain used to require.
+    expect(getDestinationLockRequirementMissionId('east', progress([]))).toBe('first-contact')
   })
 
   it('is undefined once the destination is no longer locked', () => {

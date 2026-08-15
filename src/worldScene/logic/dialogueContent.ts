@@ -22,14 +22,13 @@ const MISSION_DIALOGUE: Readonly<Record<string, Readonly<Record<MissionDialogueP
     completed: { greeting: 'הצפון נושם קצת יותר בקלות מאז שהמוקד ראה אותנו. תודה לך.' },
   },
   'south-organizer': {
-    // Playtest fix pass (issue 3) — named the concrete prerequisite (finish
-    // District Ties at the Records Hub) instead of a vague "not yet time,"
-    // since she's visible from the start of the game (no unlockConditions)
-    // and most players meet her long before south-stability itself unlocks.
+    // Meridian 2.0 "open learning world" pass — south-stability (Math) is
+    // now always unlocked from the start of the game, same as every other
+    // subject's first mission, so this phase is no longer reachable in
+    // practice. Kept welcoming and free of any "not yet"/cross-subject
+    // framing regardless, matching every other always-open subject's tone.
     locked: {
-      greeting:
-        'שלום, אני פריה ננדל. הדרום עדיין לא יציב — אבל אני לא יכולה להתחיל לטפל בזה עדיין. ' +
-        'צריך קודם לחבר את קשרי המחוזות במוקד הרשומות. אחרי זה יהיו לי דוחות אמיתיים בשבילך.',
+      greeting: 'שלום, אני פריה ננדל. מחוז הדרום שמח לארח לומדים חדשים בכל עת.',
     },
     available: {
       greeting: 'שלום, אני פריה ננדל. אני פועלת לייצב את מחוז הדרום.',
@@ -54,20 +53,19 @@ const MISSION_DIALOGUE: Readonly<Record<string, Readonly<Record<MissionDialogueP
   // stat (loyalty/stability: 75, see initialDistricts.ts) never changes
   // anywhere in the campaign — East is always 'thriving' by that measure,
   // so his old 'unstable' line was dead content no playthrough could ever
-  // reach. full-signal is the mission that actually gates the East course
-  // (its unlock condition is south-stability — see defaultUnlockRules.ts),
-  // so linking him to it makes his dialogue track the real, reachable gate
-  // instead of an always-happy stat.
+  // reach. full-signal is the mission that actually gates the East course.
+  // Meridian 2.0 "open learning world" pass — full-signal's own prerequisite
+  // is now first-contact (History's own first mission), not an unrelated
+  // subject, so this NPC no longer blames a different course for the delay.
   'east-broker': {
     locked: {
       greeting: 'שלום, אני תומאס רייט, מתווך הסחר.',
       missionContext:
-        'מסלולי הסחר במזרח חסומים כל עוד הדרום לא יציב — הדיווחים משם מדברים על עיכובי שוק. ' +
-        'כשהדרום יתייצב, מוקד הרשומות יוכל לפתוח כאן את נתוני הסוחרים.',
+        'עוד לא ראיתי מספיק חתימות מהמוקד כדי לפתוח כאן משהו רציני — בינתיים, יש כבר תנועה קטנה ומבטיחה.',
     },
     available: {
       greeting: 'שלום, אני תומאס רייט, מתווך הסחר.',
-      missionContext: 'הדרום התייצב, ומסלולי הסחר במזרח סוף סוף יכולים לזוז — יש עוד עבודה, אבל זה מתחיל.',
+      missionContext: 'המוקד סימן שיש כאן עכשיו מספיק נתונים לעבוד איתם — מסלולי הסחר במזרח סוף סוף יכולים לזוז.',
     },
     inProgress: { greeting: 'עוד לא השלמת את איתור האות המלא? אני עדיין מחכה שהמסחר במזרח יוכר במוקד.' },
     completed: { greeting: 'שלום, אני תומאס רייט. המזרח משגשג — הסחר עובר דרכי בלי הפרעה.' },

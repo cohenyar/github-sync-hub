@@ -102,4 +102,57 @@ describe('AskOdinPanel (general educational assistant pass)', () => {
       expect(screen.getByTestId('ask-odin-answer')).toHaveTextContent(he.askOdinUnknownQuestionFallback)
     })
   })
+
+  describe('collapse/expand toggle (dialogue UI polish pass)', () => {
+    it('starts expanded, with the collapse button reflecting that state', () => {
+      render(<AskOdinPanel {...BASE_PROPS} />)
+
+      const collapseButton = screen.getByTestId('ask-odin-collapse-button')
+      expect(collapseButton).toHaveAttribute('aria-expanded', 'true')
+      expect(screen.getByTestId('ask-odin-what-now')).toBeInTheDocument()
+      expect(screen.getByTestId('ask-odin-free-text-input')).toBeInTheDocument()
+    })
+
+    it('hides the body (question buttons and free-text form) when the collapse button is clicked', () => {
+      render(<AskOdinPanel {...BASE_PROPS} />)
+
+      fireEvent.click(screen.getByTestId('ask-odin-collapse-button'))
+
+      expect(screen.getByTestId('ask-odin-collapse-button')).toHaveAttribute('aria-expanded', 'false')
+      expect(screen.queryByTestId('ask-odin-what-now')).not.toBeInTheDocument()
+      expect(screen.queryByTestId('ask-odin-free-text-input')).not.toBeInTheDocument()
+      expect(screen.queryByTestId('ask-odin-free-text-submit')).not.toBeInTheDocument()
+    })
+
+    it('shows the body again when the collapse button is clicked a second time', () => {
+      render(<AskOdinPanel {...BASE_PROPS} />)
+
+      const collapseButton = screen.getByTestId('ask-odin-collapse-button')
+      fireEvent.click(collapseButton)
+      fireEvent.click(collapseButton)
+
+      expect(collapseButton).toHaveAttribute('aria-expanded', 'true')
+      expect(screen.getByTestId('ask-odin-what-now')).toBeInTheDocument()
+      expect(screen.getByTestId('ask-odin-free-text-input')).toBeInTheDocument()
+    })
+
+    it('gives the collapse button an accessible label that changes with its state', () => {
+      render(<AskOdinPanel {...BASE_PROPS} />)
+
+      const collapseButton = screen.getByTestId('ask-odin-collapse-button')
+      expect(collapseButton).toHaveAttribute('aria-label', he.askOdinCollapseLabel)
+
+      fireEvent.click(collapseButton)
+      expect(collapseButton).toHaveAttribute('aria-label', he.askOdinExpandLabel)
+    })
+
+    it('never hides the title itself, so the panel stays re-expandable', () => {
+      render(<AskOdinPanel {...BASE_PROPS} />)
+
+      fireEvent.click(screen.getByTestId('ask-odin-collapse-button'))
+
+      expect(screen.getByText(he.askOdinPanelTitle)).toBeInTheDocument()
+      expect(screen.getByTestId('ask-odin-collapse-button')).toBeInTheDocument()
+    })
+  })
 })

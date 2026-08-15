@@ -84,9 +84,11 @@ describe('The event bus publishes real gameplay events end to end', () => {
 
     // ContentUnlocked is published from a useEffect keyed off playerProgress
     // (Step 21), so it can land on a later tick than the synchronous
-    // WorldStateChanged/MissionCompleted pair. Completing First Contact
-    // unlocks both the District Ties mission and the east-broker NPC
-    // (Step 26), so two ContentUnlocked events fire.
+    // WorldStateChanged/MissionCompleted pair. Meridian 2.0 open-world pass —
+    // District Ties (English) is always unlocked from the very start now,
+    // so it never transitions here; completing First Contact instead
+    // unlocks History's OWN second mission (full-signal) and the
+    // east-broker NPC, so two ContentUnlocked events fire.
     await waitFor(() => {
       const relevant = events.filter((e) => e.type !== 'MissionStarted')
       expect(relevant.map((e) => e.type)).toEqual([
@@ -101,7 +103,7 @@ describe('The event bus publishes real gameplay events end to end', () => {
     expect(relevant[1]).toEqual({ type: 'MissionCompleted', missionId: 'first-contact' })
     expect(relevant[2]).toEqual({
       type: 'ContentUnlocked',
-      target: { type: 'mission', id: 'district-ties' },
+      target: { type: 'mission', id: 'full-signal' },
     })
     expect(relevant[3]).toEqual({
       type: 'ContentUnlocked',

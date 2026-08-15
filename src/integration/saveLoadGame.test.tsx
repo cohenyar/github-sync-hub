@@ -78,8 +78,10 @@ describe('Save/Load restores world and progress across a simulated reload', () =
     // reopen the already-finished First Contact and require a "Continue"
     // click just to get back to where the player actually was.
     expect(screen.getByRole('heading', { name: 'תרגום: ספרייה' })).toBeInTheDocument()
+    // Meridian 2.0 open-world pass — South Stability (Math) is always
+    // unlocked from the very start, never gated behind another subject.
     expect(
-      screen.getByText(new RegExp(`${he.nextLabelPrefix}כפל: 8 × 7 \\(${he.locked}\\)`)),
+      screen.getByText(new RegExp(`${he.nextLabelPrefix}כפל: 8 × 7 \\(${he.available}\\)`)),
     ).toBeInTheDocument()
   })
 

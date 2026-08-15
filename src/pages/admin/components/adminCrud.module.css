@@ -213,6 +213,38 @@
   align-items: center;
 }
 
+.npcSectionSummary {
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 12px;
+}
+
+.colorFieldsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.colorSwatchField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 90px;
+}
+
+.colorSwatchInput {
+  width: 100%;
+  min-height: 44px;
+  padding: 4px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  cursor: pointer;
+}
+
 .saveBanner {
   padding: 10px 14px;
   border-radius: 8px;

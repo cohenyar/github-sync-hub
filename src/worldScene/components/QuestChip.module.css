@@ -34,3 +34,20 @@
   color: var(--text-muted);
   font-size: 0.72rem;
 }
+
+/* Bug fix — 390px mobile: the chip is right-anchored (physical, via
+   inset-inline-start under RTL) at up to 320px wide, which is most of a
+   390px viewport's width; InteractionPrompt sits centered in that same
+   bottom band, so their footprints necessarily overlapped regardless of
+   text length. Moving the chip's floor above InteractionPrompt's own
+   worst-case height (44px touch-target button + 12px vertical padding +
+   its own 16px offset = ~72px), with margin to spare, separates them
+   vertically instead of fighting over horizontal space — correct no
+   matter how long the mission goal/title or the prompt's label gets.
+   Scoped to the same narrow breakpoint used elsewhere in this app (e.g.
+   GameControlBar, AuthButton); desktop/tablet layout is untouched. */
+@media (max-width: 479.98px) {
+  .chip {
+    bottom: 100px;
+  }
+}

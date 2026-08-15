@@ -107,6 +107,26 @@ describe('useQuestionMission', () => {
     expect(onComplete).not.toHaveBeenCalled()
   })
 
+  it('does not reset an already-passed result when a new mission OBJECT with the SAME id arrives (real difficulty differentiation)', () => {
+    // resolveMissionForDifficulty.ts resolves a fresh MissionConfig object
+    // (same id, different taskHe/answerConfig) whenever the player's
+    // difficulty level changes. That must never wipe an already-submitted
+    // pass result for the mission the player is still on.
+    const { result, rerender } = renderHook(({ mission }: { mission: MissionConfig }) => useQuestionMission(mission), {
+      initialProps: { mission: mcMission },
+    })
+
+    act(() => result.current.submit('1'))
+    expect(result.current.status.phase).toBe('completed')
+    expect(result.current.status.lastResult).toEqual({ pass: true, submittedAnswer: '1' })
+
+    const sameIdDifferentContent: MissionConfig = { ...mcMission, taskHe: 'שאלה שונה לגמרי', answerConfig: { type: 'exact_text', acceptedAnswers: ['משהו'] } }
+    rerender({ mission: sameIdDifferentContent })
+
+    expect(result.current.status.phase).toBe('completed')
+    expect(result.current.status.lastResult).toEqual({ pass: true, submittedAnswer: '1' })
+  })
+
   it('resets to active with no result when the mission changes', () => {
     const { result, rerender } = renderHook(({ mission }: { mission: MissionConfig }) => useQuestionMission(mission), {
       initialProps: { mission: mcMission },

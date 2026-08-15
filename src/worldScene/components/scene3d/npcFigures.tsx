@@ -228,6 +228,58 @@ function CityVoiceFigure({ appearance, isHighlighted }: NpcFigureProps) {
   )
 }
 
+/** The math teacher — precise and orderly: a straight, upright body and a small ruler held flat at the hip, always close at hand. */
+function MathTeacherFigure({ appearance, isHighlighted }: NpcFigureProps) {
+  const { bodyColor, accentColor, glowColor } = appearance
+  return (
+    <group>
+      <mesh position={[0, 0.4, 0]}>
+        <cylinderGeometry args={[0.28, 0.3, 0.8, 12]} />
+        <meshStandardMaterial {...bodyMaterialProps(bodyColor, isHighlighted)} />
+      </mesh>
+      <mesh position={[0, 1.1, 0]}>
+        <sphereGeometry args={[0.32, 14, 14]} />
+        <meshStandardMaterial {...bodyMaterialProps(bodyColor, isHighlighted)} />
+      </mesh>
+      <Eyes headRadius={0.32} />
+      <mesh position={[0.3, 0.55, 0.08]} rotation={[0, 0.3, 0]}>
+        <boxGeometry args={[0.5, 0.05, 0.1]} />
+        <meshStandardMaterial color={accentColor} flatShading />
+      </mesh>
+      <mesh position={[0, 0.42, -0.3]}>
+        <sphereGeometry args={[0.05, 8, 8]} />
+        <meshStandardMaterial color={glowColor} emissive={glowColor} emissiveIntensity={0.9} flatShading />
+      </mesh>
+    </group>
+  )
+}
+
+/** The english teacher — warm and well-read: a softly rounded body and a small book held at the chest. */
+function EnglishTeacherFigure({ appearance, isHighlighted }: NpcFigureProps) {
+  const { bodyColor, accentColor, glowColor } = appearance
+  return (
+    <group>
+      <mesh position={[0, 0.38, 0]}>
+        <cylinderGeometry args={[0.3, 0.34, 0.76, 12]} />
+        <meshStandardMaterial {...bodyMaterialProps(bodyColor, isHighlighted)} />
+      </mesh>
+      <mesh position={[0, 1.06, 0]}>
+        <sphereGeometry args={[0.32, 14, 14]} />
+        <meshStandardMaterial {...bodyMaterialProps(bodyColor, isHighlighted)} />
+      </mesh>
+      <Eyes headRadius={0.32} />
+      <mesh position={[0, 0.58, -0.3]} rotation={[0.3, 0, 0]}>
+        <boxGeometry args={[0.26, 0.32, 0.06]} />
+        <meshStandardMaterial color={accentColor} flatShading />
+      </mesh>
+      <mesh position={[0, 0.4, -0.36]}>
+        <sphereGeometry args={[0.05, 8, 8]} />
+        <meshStandardMaterial color={glowColor} emissive={glowColor} emissiveIntensity={0.9} flatShading />
+      </mesh>
+    </group>
+  )
+}
+
 /** Used only for an NPC id with no bespoke figure yet — a plain, readable placeholder, not a dropped character. */
 function DefaultFigure({ appearance, isHighlighted }: NpcFigureProps) {
   const { bodyColor, accentColor } = appearance
@@ -258,6 +310,8 @@ const NPC_FIGURES: Record<string, (props: NpcFigureProps) => ReactElement> = {
   'east-broker': BrokerFigure,
   'archivist-mera': ArchivistFigure,
   'city-voice': CityVoiceFigure,
+  'math-teacher': MathTeacherFigure,
+  'english-teacher': EnglishTeacherFigure,
 }
 
 export function getNpcFigure(npcId: string): (props: NpcFigureProps) => ReactElement {

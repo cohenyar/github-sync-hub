@@ -23,38 +23,38 @@ describe('defaultUnlockRules', () => {
     })
   })
 
-  it('the second mission is gated behind completing the first', () => {
+  it('English\'s own first mission (district-ties) is also always unlocked — subjects never gate each other', () => {
     expect(ruleFor({ type: 'mission', id: 'district-ties' })).toEqual({
       target: { type: 'mission', id: 'district-ties' },
+      conditions: [{ kind: 'always' }],
+    })
+  })
+
+  it('Math\'s own first mission (south-stability) is also always unlocked — subjects never gate each other', () => {
+    expect(ruleFor({ type: 'mission', id: 'south-stability' })).toEqual({
+      target: { type: 'mission', id: 'south-stability' },
+      conditions: [{ kind: 'always' }],
+    })
+  })
+
+  it('History\'s second mission is gated behind completing History\'s own first mission, not another subject', () => {
+    expect(ruleFor({ type: 'mission', id: 'full-signal' })).toEqual({
+      target: { type: 'mission', id: 'full-signal' },
       conditions: [{ kind: 'missionCompleted', missionId: 'first-contact' }],
     })
   })
 
-  it('the third mission is gated behind completing the second', () => {
-    expect(ruleFor({ type: 'mission', id: 'south-stability' })).toEqual({
-      target: { type: 'mission', id: 'south-stability' },
+  it('English\'s second mission is gated behind completing English\'s own first mission, not another subject', () => {
+    expect(ruleFor({ type: 'mission', id: 'linked-records' })).toEqual({
+      target: { type: 'mission', id: 'linked-records' },
       conditions: [{ kind: 'missionCompleted', missionId: 'district-ties' }],
     })
   })
 
-  it('the fourth mission is gated behind completing the third', () => {
-    expect(ruleFor({ type: 'mission', id: 'full-signal' })).toEqual({
-      target: { type: 'mission', id: 'full-signal' },
-      conditions: [{ kind: 'missionCompleted', missionId: 'south-stability' }],
-    })
-  })
-
-  it('the fifth mission is gated behind completing the fourth', () => {
-    expect(ruleFor({ type: 'mission', id: 'linked-records' })).toEqual({
-      target: { type: 'mission', id: 'linked-records' },
-      conditions: [{ kind: 'missionCompleted', missionId: 'full-signal' }],
-    })
-  })
-
-  it('the finale mission is gated behind completing the fifth', () => {
+  it('Math\'s second mission is gated behind completing Math\'s own first mission, not another subject', () => {
     expect(ruleFor({ type: 'mission', id: 'priority-signal' })).toEqual({
       target: { type: 'mission', id: 'priority-signal' },
-      conditions: [{ kind: 'missionCompleted', missionId: 'linked-records' }],
+      conditions: [{ kind: 'missionCompleted', missionId: 'south-stability' }],
     })
   })
 

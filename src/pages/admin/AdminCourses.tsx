@@ -1,7 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useCourses } from '../../cms'
-import type { Course, ContentStatus } from '../../cms'
+import type { Course, ContentStatus, CourseNpcConfig } from '../../cms'
+// Imported from its own module, not the '../../cms' barrel: AdminCourses.test.tsx
+// mocks that barrel down to just { useCourses }, and this needs to keep working
+// (unmocked, real) even under that mock.
+import { generateDefaultNpcConfig } from '../../cms/npcConfigDefaults'
 import { he } from '../../i18n'
 import { ConfirmDialog } from './components/ConfirmDialog'
 import { ModalOverlay } from './components/ModalOverlay'
@@ -16,17 +20,60 @@ interface FormState {
   subject: string
   status: ContentStatus
   displayOrder: string
+  npcDisplayName: string
+  npcRole: string
+  npcBodyColor: string
+  npcSkinTone: string
+  npcHairColor: string
+  npcHairStyle: CourseNpcConfig['hairStyle']
+  npcShirtColor: string
+  npcPantsColor: string
+  npcAccessory: string
 }
 
-const EMPTY_FORM: FormState = { title: '', description: '', subject: '', status: 'draft', displayOrder: '0' }
+// A brand-new course has no real id yet (the DB assigns one on insert), so
+// the create form's default NPC is seeded from this fixed placeholder —
+// still a pure, deterministic call into generateDefaultNpcConfig, just with
+// a stand-in id instead of a not-yet-created one. The admin can override
+// every field before saving; whatever they submit is what gets persisted.
+const NEW_COURSE_NPC_SEED = { id: 'new-course', title: '', subject: '' }
+
+function npcConfigToFormFields(config: CourseNpcConfig) {
+  return {
+    npcDisplayName: config.displayName,
+    npcRole: config.role,
+    npcBodyColor: config.bodyColor,
+    npcSkinTone: config.skinTone,
+    npcHairColor: config.hairColor,
+    npcHairStyle: config.hairStyle,
+    npcShirtColor: config.shirtColor,
+    npcPantsColor: config.pantsColor,
+    npcAccessory: config.accessory ?? '',
+  }
+}
+
+const EMPTY_FORM: FormState = {
+  title: '',
+  description: '',
+  subject: '',
+  status: 'draft',
+  displayOrder: '0',
+  ...npcConfigToFormFields(generateDefaultNpcConfig(NEW_COURSE_NPC_SEED)),
+}
 
 function formFromCourse(course: Course): FormState {
+  // Legacy rows (created before this feature) have no npcConfig yet — fall
+  // back to the same deterministic generator, keyed by the course's real id,
+  // so reopening this course's edit form always shows the same default
+  // until the admin actually changes and saves something.
+  const npc = course.npcConfig ?? generateDefaultNpcConfig(course)
   return {
     title: course.title,
     description: course.description ?? '',
     subject: course.subject,
     status: course.status,
     displayOrder: String(course.displayOrder),
+    ...npcConfigToFormFields(npc),
   }
 }
 
@@ -42,6 +89,7 @@ export function AdminCourses() {
   })
   const [pendingClose, setPendingClose] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<Course | null>(null)
+  const [npcSectionOpen, setNpcSectionOpen] = useState(true)
 
   function openCreate() {
     setForm(EMPTY_FORM)
@@ -93,12 +141,26 @@ export function AdminCourses() {
     setErrors(nextErrors)
     if (Object.keys(nextErrors).length > 0) return
 
+    const trimmedAccessory = form.npcAccessory.trim()
+    const npcConfig: CourseNpcConfig = {
+      displayName: form.npcDisplayName.trim() || 'Course Guide',
+      role: form.npcRole.trim() || 'Course Guide',
+      bodyColor: form.npcBodyColor,
+      skinTone: form.npcSkinTone,
+      hairColor: form.npcHairColor,
+      hairStyle: form.npcHairStyle,
+      shirtColor: form.npcShirtColor,
+      pantsColor: form.npcPantsColor,
+      ...(trimmedAccessory ? { accessory: trimmedAccessory } : {}),
+    }
+
     const input = {
       title: form.title.trim(),
       description: form.description.trim() || null,
       subject: form.subject.trim(),
       status: form.status,
       displayOrder: Number.parseInt(form.displayOrder, 10) || 0,
+      npcConfig,
     }
 
     const result = mode.kind === 'edit' ? await update(mode.course.id, input) : await create(input)
@@ -242,6 +304,111 @@ export function AdminCourses() {
                 onChange={(event) => updateField('description', event.target.value)}
               />
             </label>
+
+            <details
+              className={styles.formFieldWide}
+              open={npcSectionOpen}
+              onToggle={(event) => setNpcSectionOpen(event.currentTarget.open)}
+            >
+              <summary className={styles.npcSectionSummary}>{'הופעת דמות הקורס (NPC)'}</summary>
+
+              <div className={styles.formGrid}>
+                <label className={styles.formField}>
+                  <span className={styles.formLabel}>{'שם הדמות'}</span>
+                  <input
+                    className={styles.formInput}
+                    value={form.npcDisplayName}
+                    onChange={(event) => updateField('npcDisplayName', event.target.value)}
+                  />
+                </label>
+
+                <label className={styles.formField}>
+                  <span className={styles.formLabel}>{'תפקיד'}</span>
+                  <input
+                    className={styles.formInput}
+                    value={form.npcRole}
+                    onChange={(event) => updateField('npcRole', event.target.value)}
+                  />
+                </label>
+
+                <label className={styles.formField}>
+                  <span className={styles.formLabel}>{'סגנון שיער'}</span>
+                  <select
+                    className={styles.formSelect}
+                    value={form.npcHairStyle}
+                    onChange={(event) =>
+                      updateField('npcHairStyle', event.target.value as CourseNpcConfig['hairStyle'])
+                    }
+                  >
+                    <option value="short">{'קצר'}</option>
+                    <option value="long">{'ארוך'}</option>
+                    <option value="bald">{'קרח'}</option>
+                    <option value="bun">{'קוקו'}</option>
+                  </select>
+                </label>
+
+                <label className={styles.formField}>
+                  <span className={styles.formLabel}>{'אביזר (אופציונלי)'}</span>
+                  <input
+                    className={styles.formInput}
+                    value={form.npcAccessory}
+                    onChange={(event) => updateField('npcAccessory', event.target.value)}
+                  />
+                </label>
+              </div>
+
+              <div className={styles.colorFieldsRow}>
+                <label className={styles.colorSwatchField}>
+                  <span className={styles.formLabel}>{'צבע גוף'}</span>
+                  <input
+                    type="color"
+                    className={styles.colorSwatchInput}
+                    value={form.npcBodyColor}
+                    onChange={(event) => updateField('npcBodyColor', event.target.value)}
+                  />
+                </label>
+
+                <label className={styles.colorSwatchField}>
+                  <span className={styles.formLabel}>{'גוון עור'}</span>
+                  <input
+                    type="color"
+                    className={styles.colorSwatchInput}
+                    value={form.npcSkinTone}
+                    onChange={(event) => updateField('npcSkinTone', event.target.value)}
+                  />
+                </label>
+
+                <label className={styles.colorSwatchField}>
+                  <span className={styles.formLabel}>{'צבע שיער'}</span>
+                  <input
+                    type="color"
+                    className={styles.colorSwatchInput}
+                    value={form.npcHairColor}
+                    onChange={(event) => updateField('npcHairColor', event.target.value)}
+                  />
+                </label>
+
+                <label className={styles.colorSwatchField}>
+                  <span className={styles.formLabel}>{'צבע חולצה'}</span>
+                  <input
+                    type="color"
+                    className={styles.colorSwatchInput}
+                    value={form.npcShirtColor}
+                    onChange={(event) => updateField('npcShirtColor', event.target.value)}
+                  />
+                </label>
+
+                <label className={styles.colorSwatchField}>
+                  <span className={styles.formLabel}>{'צבע מכנסיים'}</span>
+                  <input
+                    type="color"
+                    className={styles.colorSwatchInput}
+                    value={form.npcPantsColor}
+                    onChange={(event) => updateField('npcPantsColor', event.target.value)}
+                  />
+                </label>
+              </div>
+            </details>
           </div>
 
           <div className={styles.formActions}>

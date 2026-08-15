@@ -5,6 +5,7 @@ import {
   questionFeedbackIsFail,
   questionFeedbackIsPass,
   submitMultipleChoiceAnswer,
+  submitShortTextAnswer,
   test,
   waitForQuestionPanel,
 } from './helpers.js'
@@ -124,10 +125,11 @@ test.describe('First Mission UX pass — difficulty persistence and Settings', (
     await page.getByTestId('difficulty-level-3-button').click()
     await page.keyboard.press('Escape')
 
-    // 2. Make gameplay progress.
+    // 2. Make gameplay progress. Difficulty is already 3 at this point, so
+    // First Contact shows its Level-3 History pool question (short answer,
+    // not multiple choice) — see questionPools/history.ts's history-l3-a.
     await waitForQuestionPanel(page)
-    // First Contact / "הקיסר הראשון" — אוגוסטוס (index 0) is correct.
-    await submitMultipleChoiceAnswer(page, 0)
+    await submitShortTextAnswer(page, 'אברהם לינקולן')
     await questionFeedbackIsPass(page)
     await expect(page.getByTestId('progress-badge')).toHaveAttribute('data-percentage', '17')
 
@@ -212,11 +214,15 @@ test.describe('First Mission UX pass — scaffolding differences are visible in 
     await page.getByTestId('difficulty-level-3-button').click()
     await page.keyboard.press('Escape')
 
-    // נירון (index 1) is a distractor, not the correct answer (אוגוסטוס, index 0).
-    await submitMultipleChoiceAnswer(page, 1)
+    // Real difficulty differentiation pass — Hard shows a genuinely
+    // different, harder History question from the Level-3 pool (short
+    // answer, more reasoning), not just a stricter view of Easy's "מי היה
+    // הקיסר הראשון של רומא?". See questionPools/history.ts's history-l3-a:
+    // "מי היה נשיא ארצות הברית בזמן מלחמת האזרחים האמריקאית?" — לינקולן.
+    await submitShortTextAnswer(page, 'תשובה שגויה')
 
     await questionFeedbackIsFail(page)
     await expect(page.getByTestId('question-feedback')).toHaveText('לא נכון.')
-    await expect(page.getByTestId('question-feedback')).not.toContainText('אוגוסטוס')
+    await expect(page.getByTestId('question-feedback')).not.toContainText('לינקולן')
   })
 })

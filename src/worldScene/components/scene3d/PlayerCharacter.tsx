@@ -1,7 +1,7 @@
 import { useRef, type RefObject } from 'react'
 import type { Group } from 'three'
 import type { PlayerAvatarPreset } from '../../logic/playerAppearance'
-import { Eyebrows, Hair } from './characterParts'
+import { Eyebrows, Hair, Shirt, type HairStyle } from './characterParts'
 import { Eyes } from './npcFigures'
 
 /** Where the pelvis (the rig's root joint) sits above the ground — PlayerAvatar writes the live y (bob + breathe) here every frame; this is only the first-paint default. */
@@ -39,6 +39,8 @@ export function usePlayerJointRefs(): PlayerJointRefs {
 export interface PlayerCharacterProps {
   appearance: PlayerAvatarPreset
   jointRefs: PlayerJointRefs
+  /** Character visual upgrade pass — forwarded to Hair as-is. Optional and defaults to undefined (Hair's own 'short' default), so none of the 6 PLAYER_AVATAR_PRESETS (which carry no hairStyle field) change how they look just because this prop exists. */
+  hairStyle?: HairStyle
 }
 
 /**
@@ -52,8 +54,8 @@ export interface PlayerCharacterProps {
  * internals — the joint-ref contract (and PlayerAvatar's usage of it) can
  * stay the same.
  */
-export function PlayerCharacter({ appearance, jointRefs }: PlayerCharacterProps) {
-  const { bodyColor, skinTone, hairColor, eyebrowColor, pantsColor, shoeColor } = appearance
+export function PlayerCharacter({ appearance, jointRefs, hairStyle }: PlayerCharacterProps) {
+  const { bodyColor, skinTone, hairColor, eyebrowColor, pantsColor, shoeColor, shirtColor } = appearance
   const headRadius = 0.3
 
   return (
@@ -62,6 +64,7 @@ export function PlayerCharacter({ appearance, jointRefs }: PlayerCharacterProps)
         <cylinderGeometry args={[0.26, 0.3, 0.52, 10]} />
         <meshStandardMaterial color={bodyColor} flatShading />
       </mesh>
+      <Shirt color={shirtColor} />
 
       <group ref={jointRefs.hipL} position={[-0.16, -0.02, 0]}>
         <mesh position={[0, -0.2, 0]}>
@@ -146,7 +149,7 @@ export function PlayerCharacter({ appearance, jointRefs }: PlayerCharacterProps)
           </mesh>
           <Eyes headRadius={headRadius} />
           <Eyebrows headRadius={headRadius} color={eyebrowColor} />
-          <Hair headRadius={headRadius} color={hairColor} />
+          <Hair headRadius={headRadius} color={hairColor} style={hairStyle} />
         </group>
       </group>
     </group>

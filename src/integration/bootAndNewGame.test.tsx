@@ -82,7 +82,9 @@ describe('Load-on-boot', () => {
     switchToClassicDashboard()
 
     expect(screen.getByText(`${he.progressLabelPrefix}0%`)).toBeInTheDocument()
-    expect(screen.getByText(new RegExp(`${he.nextLabelPrefix}תרגום: ספרייה \\(${he.locked}\\)`))).toBeInTheDocument()
+    // Meridian 2.0 open-world pass — District Ties (English) is always
+    // unlocked from the very start, never gated behind First Contact.
+    expect(screen.getByText(new RegExp(`${he.nextLabelPrefix}תרגום: ספרייה \\(${he.available}\\)`))).toBeInTheDocument()
     // SQL-removal pass — a question mission has no async "mission database"
     // step, so First Contact (the very first mission of a fresh game) is
     // already active the instant GameApp mounts. That leaves no observable
@@ -109,8 +111,10 @@ describe('Load-on-boot', () => {
     // not re-open the already-finished First Contact and make the player
     // click "Continue" to get anywhere.
     expect(screen.getByRole('heading', { name: 'תרגום: ספרייה' })).toBeInTheDocument()
+    // Meridian 2.0 open-world pass — South Stability (Math) is always
+    // unlocked from the very start too, never gated behind another subject.
     expect(
-      screen.getByText(new RegExp(`${he.nextLabelPrefix}כפל: 8 × 7 \\(${he.locked}\\)`)),
+      screen.getByText(new RegExp(`${he.nextLabelPrefix}כפל: 8 × 7 \\(${he.available}\\)`)),
     ).toBeInTheDocument()
   })
 
@@ -170,9 +174,13 @@ describe('Load-on-boot', () => {
     )
     expect(screen.queryByRole('list', { name: he.odinHistoryAriaLabel })).not.toBeInTheDocument()
     // The one thing this test actually guards: no spurious re-narration of
-    // content unlocked in a prior session (the ContentUnlocked reaction for
-    // District Ties becoming available must not fire again on this boot).
+    // content unlocked in a prior session. District Ties was never gated in
+    // the first place (Meridian 2.0 open-world pass), so the mission that
+    // actually transitioned when First Contact completed is Full Signal
+    // (History's own second mission) — its ContentUnlocked reaction must
+    // not fire again on this boot either.
     expect(screen.queryByText(/להתחקות אחר קשרי המחוז/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/אות מלא מוכן/)).not.toBeInTheDocument()
   })
 
   /**
@@ -221,7 +229,9 @@ describe('Load-on-boot', () => {
     switchToClassicDashboard()
 
     expect(screen.getByText(`${he.progressLabelPrefix}0%`)).toBeInTheDocument()
-    expect(screen.getByText(new RegExp(`${he.nextLabelPrefix}תרגום: ספרייה \\(${he.locked}\\)`))).toBeInTheDocument()
+    // Meridian 2.0 open-world pass — District Ties (English) is always
+    // unlocked from the very start, never gated behind First Contact.
+    expect(screen.getByText(new RegExp(`${he.nextLabelPrefix}תרגום: ספרייה \\(${he.available}\\)`))).toBeInTheDocument()
     expect(errorSpy).not.toHaveBeenCalled()
 
     errorSpy.mockRestore()
@@ -245,7 +255,9 @@ describe('New Game reset', () => {
     newGame()
 
     await waitFor(() => expect(screen.getByText(`${he.progressLabelPrefix}0%`)).toBeInTheDocument())
-    expect(screen.getByText(new RegExp(`${he.nextLabelPrefix}תרגום: ספרייה \\(${he.locked}\\)`))).toBeInTheDocument()
+    // Meridian 2.0 open-world pass — District Ties (English) is always
+    // unlocked from the very start, never gated behind First Contact.
+    expect(screen.getByText(new RegExp(`${he.nextLabelPrefix}תרגום: ספרייה \\(${he.available}\\)`))).toBeInTheDocument()
     expect(screen.queryByText(/"signal": 100/)).not.toBeInTheDocument()
 
     // The save was cleared too, so a later boot won't resurrect the old game.
@@ -266,7 +278,7 @@ describe('New Game reset', () => {
     await screen.findByText(he.exerciseCorrectFeedback)
     await waitFor(() =>
       expect(
-        screen.getByText('העיר מתחילה להשיב. אפשר כעת להתחקות אחר קשרי המחוז.'),
+        screen.getByText('אות מלא מוכן — כל העיר, נראית כאחת בפעם הראשונה.'),
       ).toBeInTheDocument(),
     )
 
@@ -277,7 +289,7 @@ describe('New Game reset', () => {
     // it must not treat anything as newly unlocked and add a second
     // District Ties narration on top of the one already in history.
     expect(
-      screen.getByText('העיר מתחילה להשיב. אפשר כעת להתחקות אחר קשרי המחוז.'),
+      screen.getByText('אות מלא מוכן — כל העיר, נראית כאחת בפעם הראשונה.'),
     ).toBeInTheDocument()
   })
 

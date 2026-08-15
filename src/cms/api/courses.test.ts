@@ -16,6 +16,7 @@ const ROW = {
   display_order: 1,
   created_at: '2026-01-01T00:00:00Z',
   updated_at: '2026-01-01T00:00:00Z',
+  npc_config: null,
 }
 
 describe('courses api', () => {
@@ -34,6 +35,7 @@ describe('courses api', () => {
         subject: 'history',
         status: 'active',
         displayOrder: 1,
+        npcConfig: null,
         createdAt: '2026-01-01T00:00:00Z',
         updatedAt: '2026-01-01T00:00:00Z',
       },
@@ -69,6 +71,7 @@ describe('courses api', () => {
       subject: 'history',
       status: 'active',
       displayOrder: 1,
+      npcConfig: null,
     })
 
     expect(insert).toHaveBeenCalledWith({
@@ -77,6 +80,7 @@ describe('courses api', () => {
       subject: 'history',
       status: 'active',
       display_order: 1,
+      npc_config: null,
     })
     expect(result.data?.id).toBe('c1')
   })
@@ -93,6 +97,7 @@ describe('courses api', () => {
       subject: 'history',
       status: 'draft',
       displayOrder: 2,
+      npcConfig: null,
     })
 
     expect(eq).toHaveBeenCalledWith('id', 'c1')

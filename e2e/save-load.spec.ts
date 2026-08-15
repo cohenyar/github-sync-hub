@@ -45,11 +45,13 @@ test.describe('Save/Load and load-on-boot persist world and progress across a re
     // click needed. Progression fix: it resumes on the player's real
     // current mission (District Ties, the one after the one just
     // completed) directly, not the already-finished First Contact — so
-    // "next" is now South Stability, still locked.
+    // "next" is now South Stability. Meridian 2.0 open-world pass: South
+    // Stability (Math) is always unlocked from the start, never gated
+    // behind another subject.
     await expect(page.getByTestId('progress-badge')).toHaveAttribute('data-percentage', '17')
     await expect(page.getByTestId('active-mission-title')).toHaveAttribute('data-mission-id', 'district-ties')
     await expect(page.getByTestId('next-mission-label')).toHaveAttribute('data-mission-id', 'south-stability')
-    await expect(page.getByTestId('next-mission-label')).toHaveAttribute('data-status', 'locked')
+    await expect(page.getByTestId('next-mission-label')).toHaveAttribute('data-status', 'available')
     await expect(page.getByText(/"signal": 100/)).toBeVisible()
 
     // New Game requires an explicit confirmation step (Sprint 2 polish).
@@ -65,14 +67,18 @@ test.describe('Save/Load and load-on-boot persist world and progress across a re
     await passProfileCreationIfShown(page)
 
     await expect(page.getByTestId('progress-badge')).toHaveAttribute('data-percentage', '0')
-    await expect(page.getByTestId('next-mission-label')).toHaveAttribute('data-status', 'locked')
+    // Meridian 2.0 open-world pass — District Ties (English) is always
+    // unlocked from the very start too, never gated behind First Contact.
+    await expect(page.getByTestId('next-mission-label')).toHaveAttribute('data-status', 'available')
     await expect(page.getByText(/"signal": 0/)).toBeVisible()
 
     // New Game also cleared the save, so the reset isn't undone by a reload.
     await page.reload()
     await waitForQuestionPanel(page)
     await expect(page.getByTestId('progress-badge')).toHaveAttribute('data-percentage', '0')
-    await expect(page.getByTestId('next-mission-label')).toHaveAttribute('data-status', 'locked')
+    // Meridian 2.0 open-world pass — District Ties (English) is always
+    // unlocked from the very start too, never gated behind First Contact.
+    await expect(page.getByTestId('next-mission-label')).toHaveAttribute('data-status', 'available')
 
     expect(errors).toEqual([])
   })

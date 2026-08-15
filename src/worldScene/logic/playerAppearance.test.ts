@@ -38,6 +38,13 @@ describe('PLAYER_AVATAR_PRESETS', () => {
     }
   })
 
+  it('gives every preset a shirtColor distinct from its own bodyColor (character visual upgrade pass)', () => {
+    for (const preset of PLAYER_AVATAR_PRESETS) {
+      expect(preset.shirtColor).toMatch(HEX_COLOR)
+      expect(preset.shirtColor.toLowerCase()).not.toBe(preset.bodyColor.toLowerCase())
+    }
+  })
+
   it("derives pants/shoes from each preset's own bodyColor, so they differ across presets", () => {
     const pantsColors = new Set(PLAYER_AVATAR_PRESETS.map((preset) => preset.pantsColor))
     expect(pantsColors.size).toBe(PLAYER_AVATAR_PRESETS.length)

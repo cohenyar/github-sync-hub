@@ -32,12 +32,15 @@ export function QuestionAnswerPanel({ mission, status, onSubmit, difficultyLevel
 
   // A fresh question starts with a blank slate — otherwise a stale selection
   // from the previous mission could linger (or, for multiple choice, point
-  // at an option index that doesn't exist in the new question).
+  // at an option index that doesn't exist in the new question). Also keyed
+  // on taskHe, not just mission.id: real difficulty differentiation means
+  // changing difficulty mid-mission can swap in a different question from
+  // the subject's pool without the mission id itself changing at all.
   useEffect(() => {
     setSelectedIndex(null)
     setAnswerText('')
     setShowHint(false)
-  }, [mission.id])
+  }, [mission.id, mission.taskHe])
 
   const isMultipleChoice = mission.answerConfig.type === 'multiple_choice'
   const canSubmit = isMultipleChoice ? selectedIndex !== null : answerText.trim().length > 0

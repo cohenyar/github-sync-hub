@@ -55,12 +55,12 @@ describe('getNpcDialogue — Tomas Reyeth (east-broker), playtest fix issue 4', 
   // Moved from a district-status NPC to a mission-linked one: the East
   // district's own stats (initialDistricts.ts) never change anywhere in
   // the campaign, so an 'unstable'-keyed line on him was dead content no
-  // playthrough could ever reach — full-signal (whose unlock condition is
-  // south-stability) is the mission that actually gates the East course.
-  it('explains what is blocking East while full-signal is locked, naming the real prerequisite', () => {
+  // playthrough could ever reach — full-signal is the mission that
+  // actually gates the East course.
+  it('never blames an unrelated subject for the delay (Meridian 2.0 open-world pass)', () => {
     const dialogue = getNpcDialogue('east-broker', { kind: 'mission', phase: 'locked' })
     expect(dialogue.missionContext).toBeDefined()
-    expect(dialogue.missionContext).toContain('הדרום')
+    expect(dialogue.missionContext).not.toContain('הדרום')
   })
 
   it('drops the "blocked" explanation once full-signal unlocks, replacing it with a distinct line', () => {
