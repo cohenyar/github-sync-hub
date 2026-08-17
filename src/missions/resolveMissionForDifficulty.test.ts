@@ -68,6 +68,49 @@ describe('resolveMissionForDifficulty — Levels 2 and 3 show genuinely differen
   })
 })
 
+describe("resolveMissionForDifficulty — rotationSeed rotates within the mission's own slot rotation", () => {
+  // first-contact (History) and district-ties (English) both rotate through
+  // slots [0, 2, 4] in SLOT_ROTATION_BY_MISSION_ID — two different subjects,
+  // same rotation shape.
+  const ROTATION_TEST_MISSIONS = [firstContactMission, districtTiesMission]
+
+  it('omitting rotationSeed produces the exact same result as passing rotationSeed=0 explicitly, at every difficulty level', () => {
+    for (const mission of ROTATION_TEST_MISSIONS) {
+      for (const level of [1, 2, 3] as const) {
+        expect(resolveMissionForDifficulty(mission, level)).toEqual(resolveMissionForDifficulty(mission, level, 0))
+      }
+    }
+  })
+
+  it('a different rotationSeed produces a genuinely different taskHe at levels 2 and 3, now that pools have 6 entries per level', () => {
+    for (const mission of ROTATION_TEST_MISSIONS) {
+      for (const level of [2, 3] as const) {
+        const seed0 = resolveMissionForDifficulty(mission, level, 0)
+        const seed1 = resolveMissionForDifficulty(mission, level, 1)
+        expect(seed1.taskHe, `${mission.id} level ${level}`).not.toBe(seed0.taskHe)
+      }
+    }
+  })
+
+  it("the mission's own id field is unchanged regardless of rotationSeed, at every difficulty level", () => {
+    for (const mission of ROTATION_TEST_MISSIONS) {
+      for (const level of [1, 2, 3] as const) {
+        for (const seed of [0, 1, 2, 5, 99]) {
+          expect(resolveMissionForDifficulty(mission, level, seed).id).toBe(mission.id)
+        }
+      }
+    }
+  })
+
+  it('difficulty level 1 remains a strict no-op (same object reference) regardless of any rotationSeed value passed', () => {
+    for (const mission of ROTATION_TEST_MISSIONS) {
+      for (const seed of [0, 1, 2, 5, 99]) {
+        expect(resolveMissionForDifficulty(mission, 1, seed)).toBe(mission)
+      }
+    }
+  })
+})
+
 describe('resolveMissionForDifficulty — hint wiring', () => {
   it('Level 2 exposes its pool hint via guidanceLevel2 (and hintHe), matching what QuestionAnswerPanel/Ask Odin read', () => {
     const resolved = resolveMissionForDifficulty(firstContactMission, 2)
@@ -150,6 +193,52 @@ describe('question pools — real difficulty differentiation pass', () => {
       expect(POOLS[subject][1][0].answerConfig).toEqual(slotA.answerConfig)
       expect(POOLS[subject][1][1].taskHe).toBe(slotB.taskHe)
       expect(POOLS[subject][1][1].answerConfig).toEqual(slotB.answerConfig)
+    }
+  })
+})
+
+describe('question pools — expanded totals (6+ per level, 18+ per subject, 54+ grand total)', () => {
+  it('each subject has at least 6 questions at every one of the 3 difficulty levels', () => {
+    for (const [subject, pool] of Object.entries(POOLS)) {
+      for (const level of [1, 2, 3] as const) {
+        expect(pool[level].length, `${subject} level ${level}`).toBeGreaterThanOrEqual(6)
+      }
+    }
+  })
+
+  it('each subject has at least 18 questions total across its 3 levels combined', () => {
+    for (const [subject, pool] of Object.entries(POOLS)) {
+      const total = ([1, 2, 3] as const).reduce((sum, level) => sum + pool[level].length, 0)
+      expect(total, subject).toBeGreaterThanOrEqual(18)
+    }
+  })
+
+  it('the grand total across every subject and level combined is at least 54', () => {
+    let grandTotal = 0
+    for (const pool of Object.values(POOLS)) {
+      for (const level of [1, 2, 3] as const) grandTotal += pool[level].length
+    }
+    expect(grandTotal).toBeGreaterThanOrEqual(54)
+  })
+})
+
+describe('question pools — level differentiation (no verbatim question text reused across difficulty levels)', () => {
+  it('the set of taskHe texts in one level is disjoint from every other level, within the same subject pool', () => {
+    for (const [subject, pool] of Object.entries(POOLS)) {
+      const byLevel = {
+        1: new Set(pool[1].map((q) => q.taskHe)),
+        2: new Set(pool[2].map((q) => q.taskHe)),
+        3: new Set(pool[3].map((q) => q.taskHe)),
+      }
+      for (const text of byLevel[2]) {
+        expect(byLevel[1].has(text), `${subject}: "${text}" reused from level 1 in level 2`).toBe(false)
+      }
+      for (const text of byLevel[3]) {
+        expect(byLevel[1].has(text), `${subject}: "${text}" reused from level 1 in level 3`).toBe(false)
+      }
+      for (const text of byLevel[3]) {
+        expect(byLevel[2].has(text), `${subject}: "${text}" reused from level 2 in level 3`).toBe(false)
+      }
     }
   })
 })

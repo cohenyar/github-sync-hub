@@ -57,6 +57,13 @@
   align-items: flex-start;
   gap: var(--ds-space-2);
   min-height: 44px;
+  /* A <label> isn't a form control, so unlike the <button>/<input> siblings
+     in this file it does NOT get box-sizing: border-box for free from the
+     browser's UA stylesheet — without this, min-height's 44px applies only
+     to the content box and the padding/border below get added ON TOP of
+     it, inflating every option row to ~62px (measured via Playwright at
+     390x844) regardless of how short the answer text is. */
+  box-sizing: border-box;
   padding: var(--ds-space-2) var(--ds-space-3);
   border-radius: var(--ds-radius-sm);
   border: 1px solid var(--ds-border);

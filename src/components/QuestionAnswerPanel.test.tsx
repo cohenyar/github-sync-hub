@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { he } from '../i18n'
 import type { MissionConfig } from '../missions/types'
@@ -154,6 +154,34 @@ describe('QuestionAnswerPanel', () => {
     render(<QuestionAnswerPanel mission={mcMission} status={status()} onSubmit={vi.fn()} difficultyLevel={3} />)
     expect(screen.queryByTestId('question-inline-hint')).not.toBeInTheDocument()
     expect(screen.queryByTestId('question-hint-button')).not.toBeInTheDocument()
+  })
+
+  it('renders exactly one radio input and one text span per option row (mobile min-height/box-sizing fix, no structural regression)', () => {
+    render(<QuestionAnswerPanel mission={mcMission} status={status()} onSubmit={vi.fn()} />)
+
+    const options = mcMission.answerConfig.type === 'multiple_choice' ? mcMission.answerConfig.options : []
+    for (let index = 0; index < options.length; index += 1) {
+      const optionRow = screen.getByTestId(`question-option-${index}`)
+      expect(optionRow.querySelectorAll('input[type="radio"]')).toHaveLength(1)
+      expect(optionRow.querySelectorAll('span')).toHaveLength(1)
+      expect(within(optionRow).getAllByRole('radio')).toHaveLength(1)
+    }
+  })
+
+  it('still selects the option when clicking the option text (not just the radio itself)', () => {
+    const onSubmit = vi.fn()
+    render(<QuestionAnswerPanel mission={mcMission} status={status()} onSubmit={onSubmit} />)
+
+    const optionRow = screen.getByTestId('question-option-1')
+    // Click the rendered option text, deliberately not the radio input
+    // itself — proves the whole label row (not just the input) remains a
+    // valid click target after the mobile box-sizing fix to .option.
+    fireEvent.click(within(optionRow).getByText('4'))
+
+    expect(within(optionRow).getByRole('radio')).toBeChecked()
+
+    fireEvent.click(screen.getByTestId('question-submit-button'))
+    expect(onSubmit).toHaveBeenCalledWith('1')
   })
 
   it('resets the selection and hides any shown hint when the mission changes', () => {

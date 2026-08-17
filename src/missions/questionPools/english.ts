@@ -23,6 +23,18 @@ export const englishPool: QuestionPool = {
       answerConfig: { type: 'multiple_choice', options: ['House', 'Car', 'Tree', 'Sun'], correctIndex: 0 },
       hintHe: 'רמז: זה המקום שבו גרים.',
     },
+    {
+      id: 'english-l1-e',
+      taskHe: "בחר/י את התרגום הנכון למילה 'חלון'",
+      answerConfig: { type: 'multiple_choice', options: ['Window', 'Door', 'Wall', 'Roof'], correctIndex: 0 },
+      hintHe: 'רמז: דרכו אפשר לראות החוצה מהבית.',
+    },
+    {
+      id: 'english-l1-f',
+      taskHe: "השלימו: 'She ___ a student.'",
+      answerConfig: { type: 'multiple_choice', options: ['is', 'are', 'am', 'be'], correctIndex: 0 },
+      hintHe: 'רמז: מדובר בגוף שלישי יחיד (she) בזמן הווה.',
+    },
   ],
   2: [
     {
@@ -39,11 +51,20 @@ export const englishPool: QuestionPool = {
       hintHe: 'רמז: פועל הוא מילה שמתארת פעולה.',
     },
     { id: 'english-l2-d', taskHe: "מהו הניגוד (antonym) של המילה 'hot'?", answerConfig: { type: 'exact_text', acceptedAnswers: ['cold'] }, hintHe: 'רמז: חשבו על מזג האוויר בחורף.' },
+    { id: 'english-l2-e', taskHe: "תרגם/י את המילה 'water' לעברית.", answerConfig: { type: 'exact_text', acceptedAnswers: ['מים'] }, hintHe: 'רמז: אפשר לשתות את זה, וזה יורד כשיש גשם.' },
+    {
+      id: 'english-l2-f',
+      taskHe: "בחר/י את מילת היחס הנכונה: 'I live ___ Tel Aviv.'",
+      answerConfig: { type: 'multiple_choice', options: ['in', 'at', 'on', 'to'], correctIndex: 0 },
+      hintHe: 'רמז: משתמשים במילה הזו כשמדברים על להיות בתוך עיר או מדינה.',
+    },
   ],
   3: [
     { id: 'english-l3-a', taskHe: "מהי צורת העבר (past tense) של הפועל 'go'?", answerConfig: { type: 'exact_text', acceptedAnswers: ['went'] }, hintHe: 'זהו פועל יוצא דופן (irregular) — הצורה לא נגמרת ב-ed.' },
     { id: 'english-l3-b', taskHe: "השלימו את המשפט בצורה הנכונה: 'She ___ to school every day.'", answerConfig: { type: 'exact_text', acceptedAnswers: ['goes'] }, hintHe: 'חשבו על הטיית הפועל בגוף שלישי יחיד בהווה.' },
     { id: 'english-l3-c', taskHe: "מהו שם התואר (adjective) במשפט: 'The tall man walked in.'?", answerConfig: { type: 'exact_text', acceptedAnswers: ['tall'] }, hintHe: 'חשבו על המילה שמתארת את האיש.' },
     { id: 'english-l3-d', taskHe: "מהי צורת הרבים (plural) של המילה 'mouse'?", answerConfig: { type: 'exact_text', acceptedAnswers: ['mice'] }, hintHe: 'זו אחת מצורות הרבים היוצאות מן הכלל באנגלית.' },
+    { id: 'english-l3-e', taskHe: "השלימו את המשפט בצורה הנכונה: 'How ___ money do you have?'", answerConfig: { type: 'exact_text', acceptedAnswers: ['much'] }, hintHe: 'רמז: חשבו אם אפשר לספור את הדבר הזה במספרים (אחד, שניים) או לא — זה משפיע על מילת הכמות המתאימה.' },
+    { id: 'english-l3-f', taskHe: "מהי צורת ההשוואה (comparative) של שם התואר 'good'?", answerConfig: { type: 'exact_text', acceptedAnswers: ['better'] }, hintHe: 'רמז: זו אחת מצורות ההשוואה החריגות באנגלית — היא לא נוצרת רק בהוספת סיומת בסוף המילה המקורית.' },
   ],
 }

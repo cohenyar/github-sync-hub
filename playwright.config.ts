@@ -23,7 +23,10 @@ export default defineConfig({
     // assertions (VirtualJoystick never mounts without a real/emulated
     // touch context) hang for the full 30s timeout under plain
     // Desktop Chrome instead of being skipped.
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] }, testIgnore: /world-scene-mobile-layout\.spec\.ts/ },
+    // lesson-ux-mobile.spec.ts joins this ignore list for the same reason —
+    // it needs the same touch emulation as world-scene-mobile-layout, so it
+    // only runs under mobile-chromium below, never here too.
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] }, testIgnore: /(world-scene-mobile-layout|lesson-ux-mobile)\.spec\.ts/ },
     // Mobile UX pass — touch gestures (drag, tap) need hasTouch/isMobile,
     // which the desktop project above doesn't set. Scoped to the specs
     // that need it so the other desktop specs never run twice.
@@ -31,6 +34,8 @@ export default defineConfig({
     // its joystick-safe-zone assertions exercise CSS gated on
     // `(pointer: coarse)` (InteractionPrompt/OdinPresence/QuestChip), which
     // only matches under a touch-emulated context.
-    { name: 'mobile-chromium', testMatch: /(touch-controls|world-scene-mobile-layout)\.spec\.ts/, use: { ...devices['Pixel 7'] } },
+    // lesson-ux-mobile.spec.ts joins this list too, for the same reason —
+    // its phone-width checks need the same touch-emulated context.
+    { name: 'mobile-chromium', testMatch: /(touch-controls|world-scene-mobile-layout|lesson-ux-mobile)\.spec\.ts/, use: { ...devices['Pixel 7'] } },
   ],
 })

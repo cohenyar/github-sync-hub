@@ -203,8 +203,8 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
   // object's identity, so a fresh object every render would wipe pass/fail
   // state on every re-render instead of only on a real mission change.
   const activeMission = useMemo(
-    () => resolveMissionForDifficulty(baseMission, difficultyLevel),
-    [baseMission, difficultyLevel],
+    () => resolveMissionForDifficulty(baseMission, difficultyLevel, playerProgress.completedMissionIds.length),
+    [baseMission, difficultyLevel, playerProgress.completedMissionIds.length],
   )
   // Meridian 1.3 — Core Loop §04: resolved fresh from progress every render, same fallback-to-empty convention as completedLessonIds.
   const collectedArchivePages = (playerProgress.collectedArchivePageIds ?? [])

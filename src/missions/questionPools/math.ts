@@ -18,6 +18,13 @@ export const mathPool: QuestionPool = {
       hintHe: 'רמז: ספרו על האצבעות אם צריך.',
     },
     { id: 'math-l1-d', taskHe: 'מה התוצאה של 10 - 3?', answerConfig: { type: 'exact_text', acceptedAnswers: ['7'] }, hintHe: 'רמז: התחילו מ-10 וספרו אחורה 3 פעמים.' },
+    {
+      id: 'math-l1-e',
+      taskHe: 'מה התוצאה של 6 × 3?',
+      answerConfig: { type: 'multiple_choice', options: ['18', '16', '21', '15'], correctIndex: 0 },
+      hintHe: 'רמז: 6 × 3 זה כמו לחבר 3 שש פעמים (3+3+3+3+3+3).',
+    },
+    { id: 'math-l1-f', taskHe: 'מה התוצאה של 25 + 14?', answerConfig: { type: 'exact_text', acceptedAnswers: ['39'] }, hintHe: 'רמז: חברו קודם את העשרות (20 + 10) ואז את היחידות (5 + 4).' },
   ],
   2: [
     { id: 'math-l2-a', taskHe: 'מה התוצאה של 15 × 4?', answerConfig: { type: 'exact_text', acceptedAnswers: ['60'] }, hintHe: 'רמז: 15 × 4 = 15 × 2 × 2.' },
@@ -34,11 +41,20 @@ export const mathPool: QuestionPool = {
       answerConfig: { type: 'multiple_choice', options: ['36', '12', '24', '32'], correctIndex: 0 },
       hintHe: 'רמז: בריבוע פירושו להכפיל את המספר בעצמו.',
     },
+    {
+      id: 'math-l2-e',
+      taskHe: 'מה התוצאה של 2 + 3 × 4?',
+      answerConfig: { type: 'multiple_choice', options: ['14', '20', '9', '24'], correctIndex: 0 },
+      hintHe: 'רמז: כשיש גם חיבור וגם כפל, יש לבצע קודם את הכפל ורק אחר כך את החיבור.',
+    },
+    { id: 'math-l2-f', taskHe: 'מה התוצאה של 96 ÷ 8?', answerConfig: { type: 'exact_text', acceptedAnswers: ['12'] }, hintHe: 'רמז: כמה פעמים 8 נכנס בתוך 96? נסו להתחיל מ-8 × 10 ולהמשיך משם.' },
   ],
   3: [
     { id: 'math-l3-a', taskHe: 'מה התוצאה של 17 × 13?', answerConfig: { type: 'exact_text', acceptedAnswers: ['221'] }, hintHe: 'נסו לפרק אחד המספרים לסכום של שני מספרים עגולים יותר.' },
     { id: 'math-l3-b', taskHe: 'מה התוצאה של 25% מתוך 80?', answerConfig: { type: 'exact_text', acceptedAnswers: ['20'] }, hintHe: 'חשבו על 25% כרבע מהמספר.' },
     { id: 'math-l3-c', taskHe: 'מה התוצאה של 144 ÷ 12?', answerConfig: { type: 'exact_text', acceptedAnswers: ['12'] }, hintHe: 'חשבו איזה מספר כפול עצמו קרוב ל-144.' },
     { id: 'math-l3-d', taskHe: 'מה התוצאה של 7 בשלישית (7³)?', answerConfig: { type: 'exact_text', acceptedAnswers: ['343'] }, hintHe: 'בשלישית פירושו להכפיל את המספר בעצמו פעמיים.' },
+    { id: 'math-l3-e', taskHe: 'לחנות הגיעו 9 ארגזים ובכל ארגז 14 בקבוקי מים. אם נמכרו 68 בקבוקים, כמה בקבוקים נשארו?', answerConfig: { type: 'exact_text', acceptedAnswers: ['58'] }, hintHe: 'חשבו כמה בקבוקים הגיעו בסך הכל, ולאחר מכן הפחיתו את הכמות שנמכרה.' },
+    { id: 'math-l3-f', taskHe: '150 מטבעות מתחלקים בשווה בין 6 חברים. כמה מטבעות מקבל כל חבר?', answerConfig: { type: 'exact_text', acceptedAnswers: ['25'] }, hintHe: 'נסו לפרק את 150 לחלקים עגולים שקל לחלק ב-6.' },
   ],
 }

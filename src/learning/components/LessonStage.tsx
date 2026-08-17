@@ -38,31 +38,40 @@ export function LessonStage({ lesson, onResult, onReturnToWorld }: LessonStagePr
   return (
     <div className={styles.overlay} role="dialog" data-testid="lesson-stage" data-lesson-id={lesson.id}>
       <div className={styles.panel}>
-        <h2 className={styles.title}>{lesson.title}</h2>
-        {showSuccess && (
-          <>
-            <p className={styles.successMessage} data-testid="lesson-success-message">
-              {he.lessonSuccessMessage}
-            </p>
-            {/* A generic what's-next hint, deliberately distinct from
-                Odin's own (more specific) success reaction shown separately
-                via OdinPresence — see defaultOdinReactions.ts's
-                lesson-math-completed/lesson-english-completed. */}
-            <p className={styles.nextStepsMessage} data-testid="lesson-success-next-steps">
-              {he.lessonSuccessNextStepsMessage}
-            </p>
-          </>
-        )}
-        {!showSuccess && isMathLesson(lesson) && <MathExercisePanel lesson={lesson} onResult={handleResult} />}
-        {!showSuccess && isEnglishLesson(lesson) && <EnglishExercisePanel lesson={lesson} onResult={handleResult} />}
-        <button
-          type="button"
-          className={styles.returnButton}
-          data-testid="lesson-return-to-world-button"
-          onClick={onReturnToWorld}
-        >
-          {he.returnToWorldButton}
-        </button>
+        {/* Header is a fixed toolbar — it never scrolls. The return button
+            lives here (not after the exercise content) so it's reachable
+            immediately, even on a short viewport with a long lesson (e.g.
+            English's 5 vocabulary inputs vs Math's 1). See LessonStage
+            bug-fix pass: "unreachable return button" investigation. */}
+        <div className={styles.header}>
+          <h2 className={styles.title}>{lesson.title}</h2>
+          <button
+            type="button"
+            className={styles.returnButton}
+            data-testid="lesson-return-to-world-button"
+            onClick={onReturnToWorld}
+          >
+            {he.returnToWorldButton}
+          </button>
+        </div>
+        <div className={styles.body}>
+          {showSuccess && (
+            <>
+              <p className={styles.successMessage} data-testid="lesson-success-message">
+                {he.lessonSuccessMessage}
+              </p>
+              {/* A generic what's-next hint, deliberately distinct from
+                  Odin's own (more specific) success reaction shown separately
+                  via OdinPresence — see defaultOdinReactions.ts's
+                  lesson-math-completed/lesson-english-completed. */}
+              <p className={styles.nextStepsMessage} data-testid="lesson-success-next-steps">
+                {he.lessonSuccessNextStepsMessage}
+              </p>
+            </>
+          )}
+          {!showSuccess && isMathLesson(lesson) && <MathExercisePanel lesson={lesson} onResult={handleResult} />}
+          {!showSuccess && isEnglishLesson(lesson) && <EnglishExercisePanel lesson={lesson} onResult={handleResult} />}
+        </div>
       </div>
     </div>
   )

@@ -115,3 +115,67 @@ describe('LessonStage — success wording (Batch 3A.5)', () => {
     expect(screen.queryByTestId('lesson-success-next-steps')).not.toBeInTheDocument()
   })
 })
+
+describe('LessonStage — return-to-world button is unique across every render state and never triggers onResult', () => {
+  it('renders exactly one return-to-world button for a math lesson while the exercise is active, including after a wrong answer', () => {
+    render(<LessonStage lesson={MATH_LESSON} onResult={vi.fn()} onReturnToWorld={vi.fn()} />)
+    expect(screen.getAllByTestId('lesson-return-to-world-button')).toHaveLength(1)
+
+    fireEvent.change(screen.getByTestId('math-answer-input'), { target: { value: '7' } })
+    fireEvent.click(screen.getByTestId('math-submit-button'))
+    expect(screen.getAllByTestId('lesson-return-to-world-button')).toHaveLength(1)
+  })
+
+  it('renders exactly one return-to-world button for a math lesson after a passing answer (success state)', () => {
+    render(<LessonStage lesson={MATH_LESSON} onResult={vi.fn()} onReturnToWorld={vi.fn()} />)
+    fireEvent.change(screen.getByTestId('math-answer-input'), { target: { value: '11' } })
+    fireEvent.click(screen.getByTestId('math-submit-button'))
+
+    expect(screen.getByTestId('lesson-success-message')).toBeInTheDocument()
+    expect(screen.getAllByTestId('lesson-return-to-world-button')).toHaveLength(1)
+  })
+
+  it('renders exactly one return-to-world button for an english lesson while the exercise is active, including after a wrong answer', () => {
+    render(<LessonStage lesson={ENGLISH_LESSON} onResult={vi.fn()} onReturnToWorld={vi.fn()} />)
+    expect(screen.getAllByTestId('lesson-return-to-world-button')).toHaveLength(1)
+
+    fireEvent.change(screen.getByTestId('english-answer-input-0'), { target: { value: 'cat' } })
+    fireEvent.click(screen.getByTestId('english-submit-button'))
+    expect(screen.getAllByTestId('lesson-return-to-world-button')).toHaveLength(1)
+  })
+
+  it('renders exactly one return-to-world button for an english lesson after a passing answer (success state)', () => {
+    render(<LessonStage lesson={ENGLISH_LESSON} onResult={vi.fn()} onReturnToWorld={vi.fn()} />)
+    fireEvent.change(screen.getByTestId('english-answer-input-0'), { target: { value: 'dog' } })
+    fireEvent.click(screen.getByTestId('english-submit-button'))
+
+    expect(screen.getByTestId('lesson-success-message')).toBeInTheDocument()
+    expect(screen.getAllByTestId('lesson-return-to-world-button')).toHaveLength(1)
+  })
+
+  it('clicking the return button while the exercise is active calls onReturnToWorld exactly once and never calls onResult', () => {
+    const onResult = vi.fn()
+    const onReturnToWorld = vi.fn()
+    render(<LessonStage lesson={MATH_LESSON} onResult={onResult} onReturnToWorld={onReturnToWorld} />)
+
+    fireEvent.click(screen.getByTestId('lesson-return-to-world-button'))
+
+    expect(onReturnToWorld).toHaveBeenCalledTimes(1)
+    expect(onResult).not.toHaveBeenCalled()
+  })
+
+  it('clicking the return button after a passing answer still calls onReturnToWorld exactly once, with no additional onResult calls', () => {
+    const onResult = vi.fn()
+    const onReturnToWorld = vi.fn()
+    render(<LessonStage lesson={MATH_LESSON} onResult={onResult} onReturnToWorld={onReturnToWorld} />)
+
+    fireEvent.change(screen.getByTestId('math-answer-input'), { target: { value: '11' } })
+    fireEvent.click(screen.getByTestId('math-submit-button'))
+    expect(onResult).toHaveBeenCalledTimes(1)
+
+    fireEvent.click(screen.getByTestId('lesson-return-to-world-button'))
+
+    expect(onReturnToWorld).toHaveBeenCalledTimes(1)
+    expect(onResult).toHaveBeenCalledTimes(1)
+  })
+})

@@ -26,6 +26,18 @@ export const historyPool: QuestionPool = {
       answerConfig: { type: 'multiple_choice', options: ['וינסטון צ\'רצ\'יל', 'נפוליאון', 'נלסון מנדלה', 'אברהם לינקולן'], correctIndex: 0 },
       hintHe: 'רמז: שמו קשור לנאומים המפורסמים שנשא ברדיו בזמן המלחמה.',
     },
+    {
+      id: 'history-l1-e',
+      taskHe: 'באיזו מדינה נערכו לראשונה המשחקים האולימפיים בעת העתיקה?',
+      answerConfig: { type: 'multiple_choice', options: ['יוון', 'רומא', 'מצרים', 'פרס'], correctIndex: 0 },
+      hintHe: 'רמז: זו אותה מדינה שבה נמצאת העיר אתונה, בירתה.',
+    },
+    {
+      id: 'history-l1-f',
+      taskHe: 'איזו עיר-מדינה יוונית עתיקה נודעה בלוחמיה האמיצים ובאורח חיים צבאי מחמיר?',
+      answerConfig: { type: 'multiple_choice', options: ['ספרטה', 'אתונה', 'קורינתוס', 'תבאי'], correctIndex: 0 },
+      hintHe: 'רמז: שם העיר הפך במרוצת הדורות למילה נרדפת לאורח חיים קשוח וצבאי.',
+    },
   ],
   2: [
     {
@@ -42,11 +54,25 @@ export const historyPool: QuestionPool = {
       hintHe: 'רמז: שלוש הספינות שלו נקראו נינה, פינטה וסנטה מריה.',
     },
     { id: 'history-l2-d', taskHe: 'מהי בירת האימפריה הרומית?', answerConfig: { type: 'exact_text', acceptedAnswers: ['רומא'] }, hintHe: 'רמז: האימפריה נקראת על שם עירה הראשית.' },
+    {
+      id: 'history-l2-e',
+      taskHe: 'מי היה הפילוסוף היווני שהיה מורו האישי של אלכסנדר הגדול בצעירותו?',
+      answerConfig: { type: 'exact_text', acceptedAnswers: ['אריסטו', 'אריסטוטלס'] },
+      hintHe: 'רמז: הוא היה תלמידו של אפלטון, שהיה בעצמו תלמידו של סוקרטס.',
+    },
+    {
+      id: 'history-l2-f',
+      taskHe: 'איזו תרבות עתיקה בנתה את "החומה הגדולה" כדי להגן על שטחה מפני פולשים מהצפון?',
+      answerConfig: { type: 'multiple_choice', options: ['סין', 'יוון', 'רומא', 'פרס'], correctIndex: 0 },
+      hintHe: 'רמז: זו אותה תרבות שהמציאה את הנייר ואת אבק השריפה.',
+    },
   ],
   3: [
     { id: 'history-l3-a', taskHe: 'מי היה נשיא ארצות הברית בזמן מלחמת האזרחים האמריקאית?', answerConfig: { type: 'exact_text', acceptedAnswers: ['אברהם לינקולן', 'לינקולן'] }, hintHe: 'חשבו על הנשיא שפעל לביטול העבדות.' },
     { id: 'history-l3-b', taskHe: 'באיזו יבשת שכנה האימפריה המצרית העתיקה?', answerConfig: { type: 'exact_text', acceptedAnswers: ['אפריקה'] }, hintHe: 'חשבו על מיקומו של נהר הנילוס.' },
     { id: 'history-l3-c', taskHe: 'איזו מעצמה עתיקה נלחמה ברומא במלחמות הפוניות?', answerConfig: { type: 'exact_text', acceptedAnswers: ['קרתגו'] }, hintHe: 'חשבו על העיר שממנה יצא חניבעל.' },
     { id: 'history-l3-d', taskHe: 'מהו שם התקופה הארוכה של יציבות ושלום יחסי באימפריה הרומית שהחלה עם אוגוסטוס?', answerConfig: { type: 'exact_text', acceptedAnswers: ['פקס רומאנה'] }, hintHe: 'חשבו על צירוף מילים לטיני שמשמעותו "שלום רומי".' },
+    { id: 'history-l3-e', taskHe: 'מי היה הפילוסוף היווני שהואשם בהשחתת הנוער באתונה, נדון למוות בשתיית רעל, ושימש מורה לאפלטון?', answerConfig: { type: 'exact_text', acceptedAnswers: ['סוקרטס'] }, hintHe: 'חשבו על הפילוסוף שהתפרסם באמרה "אני יודע שאינני יודע דבר".' },
+    { id: 'history-l3-f', taskHe: 'מהו שמה של החומה שבנו הרומאים בצפון בריטניה כדי לסמן ולהגן על גבול האימפריה מפני שבטים מהצפון?', answerConfig: { type: 'exact_text', acceptedAnswers: ['חומת הדריאנוס', 'חומת אדריאנוס'] }, hintHe: 'החומה נקראת על שמו של הקיסר הרומי שציווה לבנות אותה.' },
   ],
 }
