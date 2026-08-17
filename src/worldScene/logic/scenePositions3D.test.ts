@@ -70,8 +70,13 @@ describe('getNpcPosition3D', () => {
   })
 
   it('places the Batch 3A.3 teacher NPCs just outside their own building, clear of its collider', () => {
-    expect(getNpcPosition3D('math-teacher', 'core')).toEqual({ x: -6, z: -4.9 })
-    expect(getNpcPosition3D('english-teacher', 'core')).toEqual({ x: 6, z: -4.9 })
+    // Game Feel pass (occlusion fix, full resolution) — shifted from the
+    // building's own centerline (x=-6/+6) to x=-4.2/+4.2 (see
+    // scenePositions3D.ts's own comment): a lateral shift, not a depth one,
+    // since the actual cause was standing dead-center in front of the door
+    // on the same sightline the fixed south-facing camera looks down.
+    expect(getNpcPosition3D('math-teacher', 'core')).toEqual({ x: -4.2, z: -5.3 })
+    expect(getNpcPosition3D('english-teacher', 'core')).toEqual({ x: 4.2, z: -5.3 })
 
     for (const [npcId, buildingPosition] of [
       ['math-teacher', MATH_ACADEMY_POSITION],
@@ -139,7 +144,12 @@ describe('Batch 3A.2 — learning plaza positions', () => {
 
 describe('Batch 3A.5 — building scale and collider safety margin', () => {
   it('keeps the collider radius below a fully proportional scale-up, so each teacher stays reachable', () => {
-    const teacherDistance = 1.9 // distance from each building's center to its own teacher, see NPC_POSITIONS
+    // 1.9 was each teacher's original distance to their building's center
+    // (see NPC_POSITIONS) — kept as the historical, more conservative
+    // threshold here even though the Game Feel occlusion-fix passes widened
+    // the real distance to 2.9 (the final, fully-resolved lateral position);
+    // a smaller margin only makes this assertion stronger.
+    const teacherDistance = 1.9
     expect(LEARNING_BUILDING_COLLIDER_RADIUS).toBeLessThan(teacherDistance)
     expect(LEARNING_BUILDING_COLLIDER_RADIUS).toBeLessThan(1.6 * LEARNING_BUILDING_SCALE)
   })
@@ -243,10 +253,11 @@ describe('spawn and camera constants', () => {
   })
 
   it('fixes the camera looking at the plaza center', () => {
-    // Scaled up alongside the Visual World Upgrade's larger world (from
-    // Game Feel Sprint 1's [0, 17, 20]) — the look-at target and FOV are
-    // unchanged.
-    expect(CAMERA_POSITION).toEqual([0, 27, 32])
+    // Design pass — scaled in ~10% from [0, 27, 32] (itself scaled up
+    // alongside the Visual World Upgrade's larger world, from Game Feel
+    // Sprint 1's [0, 17, 20]) for a less visually distant framing — the
+    // look-at target and FOV are unchanged.
+    expect(CAMERA_POSITION).toEqual([0, 24.3, 28.8])
     expect(CAMERA_LOOK_AT).toEqual([0, 0, 0])
     expect(CAMERA_FOV).toBe(45)
   })

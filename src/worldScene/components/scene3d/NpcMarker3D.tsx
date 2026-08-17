@@ -1,6 +1,6 @@
 import { useFrame, type ThreeEvent } from '@react-three/fiber'
 import { useMemo, useRef, type RefObject } from 'react'
-import type { Group } from 'three'
+import { DoubleSide, type Group } from 'three'
 import {
   advanceGreeting,
   computeGreetingBob,
@@ -21,6 +21,23 @@ import { getNpcFigure } from './npcFigures'
 
 /** Wider than the talk/interaction radius — an NPC turns to face the player well before they're close enough to talk. */
 export const NPC_NOTICE_RADIUS = 7
+
+/**
+ * Visibility pass — a thin ring flat on the ground under every NPC (not
+ * just the two teachers, who already get their own proximity ring via
+ * TeacherNpcAccents). Two purposes: it's a ground anchor that stays
+ * visible even when the figure above it is partly occluded by scenery
+ * (e.g. a building), and its own brightening on approach reads as "this
+ * is interactive" well before a player is close enough to see the
+ * highlight glow on the figure itself. y=0.02 sits just proud of the
+ * ground plane (GroundPlane.tsx is flat at y=0) — enough to avoid
+ * z-fighting without visibly floating.
+ */
+const GROUND_RING_Y = 0.02
+const GROUND_RING_INNER_RADIUS = 0.42
+const GROUND_RING_OUTER_RADIUS = 0.5
+const GROUND_RING_IDLE_INTENSITY = 0.35
+const GROUND_RING_HIGHLIGHT_INTENSITY = 1.1
 
 export interface NpcMarker3DProps {
   npcId: string
@@ -91,8 +108,24 @@ export function NpcMarker3D({
   }
 
   return (
-    <group ref={groupRef} position={[position.x, 0, position.z]} onClick={handleClick}>
-      <Figure appearance={appearance} isHighlighted={isHighlighted} />
+    <group position={[position.x, 0, position.z]}>
+      {/* Ground anchor ring — a sibling of the animated group below, not a
+          child of it, so it stays flat on the ground at a fixed y rather
+          than bobbing/scaling with the figure's own idle breathing and
+          greeting animation. */}
+      <mesh position={[0, GROUND_RING_Y, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[GROUND_RING_INNER_RADIUS, GROUND_RING_OUTER_RADIUS, 24]} />
+        <meshStandardMaterial
+          color={appearance.glowColor}
+          emissive={appearance.glowColor}
+          emissiveIntensity={isHighlighted ? GROUND_RING_HIGHLIGHT_INTENSITY : GROUND_RING_IDLE_INTENSITY}
+          flatShading
+          side={DoubleSide}
+        />
+      </mesh>
+      <group ref={groupRef} onClick={handleClick}>
+        <Figure appearance={appearance} isHighlighted={isHighlighted} />
+      </group>
     </group>
   )
 }

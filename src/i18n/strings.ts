@@ -87,6 +87,11 @@ export const he = {
   northCourseName: 'מסלול הצפון',
   southCourseName: 'רובע היציבות',
   eastCourseName: 'רובע הסוחרים',
+  // Design pass — floating name labels for the Central Plaza's two
+  // learning buildings (see WorldLabel.tsx), matching the wording already
+  // used inside the teacher NPCs' own descriptionHe in npcs/registry.ts.
+  mathAcademyName: 'אקדמיית המתמטיקה',
+  englishCenterName: 'מרכז השפה האנגלית',
   enterDestinationPrefix: 'היכנס/י אל ',
   destinationLockedLabel: 'נעול',
   courseProgressPrefix: 'התקדמות מסלול: ',

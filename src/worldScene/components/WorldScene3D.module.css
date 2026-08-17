@@ -1,19 +1,21 @@
 .scene {
-  /* Meridian UI stability pass: was a hardcoded max-width:720px/height:480px
-     box — small and non-responsive on any real desktop viewport, and the
-     actual root cause of the game area rendering tiny (confirmed: on a
-     1440px-wide screen this filled barely a quarter of it, with no way to
-     grow). Full available width; height is a safe, bounded calculation
-     (clamp, not a raw vh value) rather than a fixed pixel box, staying
-     within the requested ~600-720px range at any reasonable viewport
-     height without ever exceeding it. React Three Fiber's own Canvas
-     already measures this container (via its react-use-measure dependency)
-     and updates the renderer size / camera aspect whenever it resizes — no
-     extra resize code is needed once this box can actually resize. */
+  /* Design pass — viewport dominance: the previous clamp(600px, 80vh, 720px)
+     capped out at 720px even on a 1080px-tall screen, leaving ~350px of
+     plain dark page below the box and reading as a small window onto the
+     world rather than the world itself. GameControlBar/QuestChip/
+     InteractionPrompt all float via position: fixed and reserve no layout
+     height of their own, so the scene can safely claim nearly the full
+     viewport height with only a small margin — raising the cap (not
+     removing the clamp/min bounds, so a very short window still gets a
+     sane floor) is what actually "uses most of the available viewport."
+     Width is unconstrained (100%, no ancestor max-width) already. React
+     Three Fiber's Canvas measures this container itself and updates the
+     renderer size / camera aspect on every resize — no extra resize code
+     needed. */
   position: relative;
   width: 100%;
   min-width: 0;
-  height: clamp(600px, 80vh, 720px);
+  height: clamp(640px, 92vh, 1040px);
   box-sizing: border-box;
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -21,12 +23,13 @@
   background: #0a0f1a;
 }
 
-/* Narrow/short viewports (phones): the desktop 600-720px minimum would
-   force the whole page to scroll past the controls above it. A smaller,
-   still-responsive range keeps the scene usable without that. */
+/* Narrow/short viewports (phones): still a generous majority of the
+   viewport (prioritizing the player/nearby interaction area per the
+   brief), but capped lower than desktop so the fixed HUD corners and the
+   bottom-anchored quest chip/interaction prompt keep comfortable room. */
 @media (max-width: 639.98px) {
   .scene {
-    height: clamp(360px, 70vh, 600px);
+    height: clamp(420px, 82vh, 760px);
   }
 }
 

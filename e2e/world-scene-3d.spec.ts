@@ -989,9 +989,11 @@ test.describe('Meridian UI stability pass: game container size', () => {
       // than the raw viewport.
       const availableWidth = Math.min(width, 1400)
       expect(box!.width).toBeGreaterThan(availableWidth * 0.85)
-      // Desktop minimum height in the requested ~600-720px range.
-      expect(box!.height).toBeGreaterThanOrEqual(600)
-      expect(box!.height).toBeLessThanOrEqual(730)
+      // Design pass — viewport dominance: raised from clamp(600px, 80vh,
+      // 720px) to clamp(640px, 92vh, 1040px) so the world uses much more of
+      // the viewport instead of capping out at 720px even on a tall screen.
+      expect(box!.height).toBeGreaterThanOrEqual(640)
+      expect(box!.height).toBeLessThanOrEqual(1040)
 
       const canvasBox = await scene.locator('canvas').boundingBox()
       expect(canvasBox!.width).toBeGreaterThan(availableWidth * 0.8)

@@ -1,5 +1,5 @@
-import { Html } from '@react-three/drei'
 import { getNpcPosition3D } from '../../logic/scenePositions3D'
+import { WorldLabel } from './WorldLabel'
 
 export interface TeacherNpcAccentsProps {
   npcId: string
@@ -37,22 +37,7 @@ export function TeacherNpcAccents({
 
   return (
     <group position={[position.x, 0, position.z]}>
-      {/* Plain DOM text projected at this world position — deliberately not
-          drei's <Text> (troika-three-text fetches a font over the network,
-          which stalled the whole frame loop in testing; confirmed by
-          removing it). <Html> has no such dependency: it's just CSS text. */}
-      <Html position={[0, 1.85, 0]} center distanceFactor={8} style={{ pointerEvents: 'none' }}>
-        <span
-          style={{
-            color: '#f5ead8',
-            fontSize: '14px',
-            whiteSpace: 'nowrap',
-            textShadow: '0 0 4px #0e1524, 0 0 4px #0e1524',
-          }}
-        >
-          {name}
-        </span>
-      </Html>
+      <WorldLabel position={[0, 1.85, 0]} text={name} />
 
       {/* Selected-path accent: on whenever this NPC's subject is the
           player's chosen learning path, regardless of distance. */}

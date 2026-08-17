@@ -1,4 +1,6 @@
+import { he } from '../../../../i18n'
 import { ENGLISH_CENTER_POSITION, LEARNING_BUILDING_SCALE } from '../../../logic/scenePositions3D'
+import { WorldLabel } from '../WorldLabel'
 import { DomedRoof } from './parts/DomedRoof'
 import { Door } from './parts/Door'
 import { SignPost } from './parts/SignPost'
@@ -39,6 +41,10 @@ export function EnglishCenter({ isHighlighted = false, isCompleted = false }: En
 
   return (
     <group position={[x, 0, z]} scale={LEARNING_BUILDING_SCALE}>
+      {/* Design pass — local Y is pre-scale (this whole group scales by
+          LEARNING_BUILDING_SCALE=1.2), chosen so the label lands just
+          above the dome's actual world-space peak (~3.35 * 1.2 ≈ 4.0). */}
+      <WorldLabel position={[0, 3.77, 0]} text={he.englishCenterName} testId="english-center-label" />
       <mesh position={[0, 1.0, 0]}>
         <cylinderGeometry args={[1.3, 1.4, 2.0, 16]} />
         <meshStandardMaterial color={WALL_COLOR} flatShading />

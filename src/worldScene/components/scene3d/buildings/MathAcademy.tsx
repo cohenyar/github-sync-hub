@@ -1,4 +1,6 @@
+import { he } from '../../../../i18n'
 import { LEARNING_BUILDING_SCALE, MATH_ACADEMY_POSITION } from '../../../logic/scenePositions3D'
+import { WorldLabel } from '../WorldLabel'
 import { Door } from './parts/Door'
 import { SignPost } from './parts/SignPost'
 import { WindowFrame } from './parts/WindowFrame'
@@ -40,6 +42,10 @@ export function MathAcademy({ isHighlighted = false, isCompleted = false }: Math
 
   return (
     <group position={[x, 0, z]} scale={LEARNING_BUILDING_SCALE}>
+      {/* Design pass — local Y is pre-scale (this whole group scales by
+          LEARNING_BUILDING_SCALE=1.2), chosen so the label lands just
+          above the roof's actual world-space peak (~3.1 * 1.2 ≈ 3.7). */}
+      <WorldLabel position={[0, 3.5, 0]} text={he.mathAcademyName} testId="math-academy-label" />
       <mesh position={[0, 1.1, 0]}>
         <boxGeometry args={[2.6, 2.2, 2.2]} />
         <meshStandardMaterial color={WALL_COLOR} flatShading />

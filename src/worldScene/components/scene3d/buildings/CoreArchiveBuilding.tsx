@@ -1,6 +1,6 @@
-import { Html } from '@react-three/drei'
 import { he } from '../../../../i18n'
 import { CORE_ARCHIVE_POSITION } from '../../../logic/scenePositions3D'
+import { WorldLabel } from '../WorldLabel'
 import { Door } from './parts/Door'
 import { SignPost } from './parts/SignPost'
 import { WindowFrame } from './parts/WindowFrame'
@@ -29,19 +29,7 @@ export function CoreArchiveBuilding() {
 
   return (
     <group position={[x, 0, z]}>
-      <Html position={[0, 3.1, 0]} center distanceFactor={8} style={{ pointerEvents: 'none' }}>
-        <span
-          data-testid="core-archive-building-label"
-          style={{
-            color: '#f5ead8',
-            fontSize: '14px',
-            whiteSpace: 'nowrap',
-            textShadow: '0 0 4px #0e1524, 0 0 4px #0e1524',
-          }}
-        >
-          {he.recordsCoreName}
-        </span>
-      </Html>
+      <WorldLabel position={[0, 3.1, 0]} text={he.recordsCoreName} testId="core-archive-building-label" />
       {/* Meridian 1.2 palette pass: nudged from #4a4358/#5f5570 toward the
           brand's violet, matching DistrictMarker's Core landmark color —
           both were already this hue family, just desaturated. */}

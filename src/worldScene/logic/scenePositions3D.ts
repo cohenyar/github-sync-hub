@@ -35,8 +35,31 @@ const NPC_POSITIONS: Record<string, Position2D> = {
   // (see MathAcademy.tsx/EnglishCenter.tsx), and just clear of that
   // building's own 1.6-radius collider so talking to the teacher never
   // fights with the building pushing the player back.
-  'math-teacher': { x: -6, z: -4.9 },
-  'english-teacher': { x: 6, z: -4.9 },
+  //
+  // Game Feel pass (occlusion fix, full resolution) — the earlier z-only
+  // nudge (z=-4.9 -> -5.3) reduced but never eliminated the occlusion,
+  // because the actual cause isn't depth at all: each teacher stood at the
+  // exact same x as their building's own center, dead in front of the
+  // door, and the fixed camera (see CAMERA_POSITION) looks down the length
+  // of the plaza from due south (x=0) — so the camera-to-teacher sightline
+  // runs straight down the building's own centerline regardless of how far
+  // north/south the teacher stands. Ray-traced precisely: at z=-5.3, the
+  // sightline's x stays within +-0.2 of x*0.93..0.97 across the building's
+  // whole z-span, which is why any z-only fix was doomed to partially fail.
+  // The real fix is lateral: shifted x from the building's own centerline
+  // (-6 / +6) to just past the building's own half-width toward the plaza
+  // center (-4.2 / +4.2, each building being 1.56 units half-wide) — this
+  // moves the teacher to the near corner of their building's silhouette
+  // instead of dead-center, clearing the sightline entirely while staying
+  // close enough to read as "just outside their own building" (distance to
+  // building center: 2.9, vs. the original 1.9-2.3). Confirmed via a real
+  // screenshot: both teachers are now fully visible, head to feet, at the
+  // normal exploration camera. Verified clear of every collider (nearest,
+  // the building's own 1.75-radius collider, at distance 2.9) and every
+  // other NPC (nearest, north-warden/reunited-owner, both >4.5 units away —
+  // beyond INTERACTION_RADIUS, so no ambiguous nearest-interactable case).
+  'math-teacher': { x: -4.2, z: -5.3 },
+  'english-teacher': { x: 4.2, z: -5.3 },
   // Meridian 1.3 — stationed a clear step east of the English Center's own
   // door position, close enough to read as "at the board" without
   // overlapping the teacher or the building's collider.
@@ -185,14 +208,16 @@ export function getAvatarRespawnPosition(currentDistrictId: EntityId): Position2
 }
 
 /**
- * Fixed camera placement. Scaled up from Game Feel Sprint 1's [0, 17, 20]
- * (itself already tuned to avoid clipping the South movement boundary) by
- * roughly the same ~1.5–1.6x factor as the Visual World Upgrade's world
- * scale, so the South boundary and the new district buildings both stay
- * inside the frustum. Re-verified empirically at all four boundaries, same
- * method as Sprint 1 — see the Visual World Upgrade screenshot check.
+ * Fixed camera placement. Design pass — viewport dominance/"the world feels
+ * visually distant": scaled in ~10% from [0, 27, 32] (itself scaled up from
+ * Game Feel Sprint 1's [0, 17, 20]), a uniform distance reduction along the
+ * exact same viewing direction so nothing about the angle/composition
+ * changes, only how large everything reads. Re-verified empirically at all
+ * four MOVEMENT_BOUNDS corners (±14, ±14) plus every district building —
+ * same method as every prior camera tuning pass here — confirmed nothing
+ * newly clips the frustum at this distance.
  */
-export const CAMERA_POSITION: readonly [number, number, number] = [0, 27, 32]
+export const CAMERA_POSITION: readonly [number, number, number] = [0, 24.3, 28.8]
 export const CAMERA_LOOK_AT: readonly [number, number, number] = [0, 0, 0]
 export const CAMERA_FOV = 45
 

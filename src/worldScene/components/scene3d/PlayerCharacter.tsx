@@ -36,6 +36,30 @@ export function usePlayerJointRefs(): PlayerJointRefs {
   }
 }
 
+/**
+ * Visibility pass — every preset's shoeColor is derived (playerAppearance.ts)
+ * by darkening its own bodyColor by 0.7, which lands close to (in the
+ * default 'ember' preset's case, almost exactly on) the ground plane's own
+ * dark end (GroundPlane.tsx runs from #0e1428 at the district edges to
+ * #3d4a70 near the plaza center) — the feet are exactly where the
+ * character visually meets the ground, so losing contrast there undercuts
+ * the whole silhouette reading clearly against it. This lightens shoeColor
+ * only for rendering here (not a change to playerAppearance.ts's shared
+ * preset data, which nothing else reads shoeColor from), applied evenly
+ * across every preset so shoes stay each preset's own darkest tone —
+ * just no longer dark enough to disappear into the ground.
+ */
+function lightenForGroundContrast(hex: string): string {
+  const value = Number.parseInt(hex.slice(1), 16)
+  const channel = (shift: number) => {
+    const component = (value >> shift) & 0xff
+    return Math.round(component + (255 - component) * 0.25)
+      .toString(16)
+      .padStart(2, '0')
+  }
+  return `#${channel(16)}${channel(8)}${channel(0)}`
+}
+
 export interface PlayerCharacterProps {
   appearance: PlayerAvatarPreset
   jointRefs: PlayerJointRefs
@@ -57,6 +81,7 @@ export interface PlayerCharacterProps {
 export function PlayerCharacter({ appearance, jointRefs, hairStyle }: PlayerCharacterProps) {
   const { bodyColor, skinTone, hairColor, eyebrowColor, pantsColor, shoeColor, shirtColor } = appearance
   const headRadius = 0.3
+  const groundedShoeColor = lightenForGroundContrast(shoeColor)
 
   return (
     <group ref={jointRefs.pelvis} position={[0, PLAYER_PELVIS_HEIGHT, 0]}>
@@ -78,7 +103,7 @@ export function PlayerCharacter({ appearance, jointRefs, hairStyle }: PlayerChar
           </mesh>
           <mesh position={[0, -0.4, -0.04]}>
             <boxGeometry args={[0.15, 0.08, 0.24]} />
-            <meshStandardMaterial color={shoeColor} flatShading />
+            <meshStandardMaterial color={groundedShoeColor} flatShading />
           </mesh>
         </group>
       </group>
@@ -95,7 +120,7 @@ export function PlayerCharacter({ appearance, jointRefs, hairStyle }: PlayerChar
           </mesh>
           <mesh position={[0, -0.4, -0.04]}>
             <boxGeometry args={[0.15, 0.08, 0.24]} />
-            <meshStandardMaterial color={shoeColor} flatShading />
+            <meshStandardMaterial color={groundedShoeColor} flatShading />
           </mesh>
         </group>
       </group>

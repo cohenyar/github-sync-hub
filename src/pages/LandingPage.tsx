@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { Link, NavLink } from 'react-router-dom'
+import { useAuth } from '../auth'
 import { markBootStage } from '../bootDiagnostics'
 import { he } from '../i18n'
 
@@ -43,6 +44,12 @@ const STATS = [
 ] as const
 
 export function LandingPage() {
+  // Design pass — global admin nav: reuses the same isAdmin the app already
+  // establishes via Supabase-backed role resolution (see AuthProvider/
+  // ProtectedAdminRoute) — same source PageShell/GameControlBar already use
+  // for their own admin links, never a hardcoded email/role check here.
+  const { isAdmin } = useAuth()
+
   // Startup instrumentation only — no behavioral effect.
   useEffect(() => {
     markBootStage('landing-rendered')
@@ -72,6 +79,14 @@ export function LandingPage() {
                 {l.label}
               </NavLink>
             ))}
+            {isAdmin && (
+              <NavLink
+                to="/admin"
+                className={({ isActive }) => (isActive ? `${styles.navLink} ${styles.navActive}` : styles.navLink)}
+              >
+                {he.navAdminLabel}
+              </NavLink>
+            )}
           </nav>
           <LandingAuth />
         </div>
