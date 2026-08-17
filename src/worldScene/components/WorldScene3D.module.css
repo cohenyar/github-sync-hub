@@ -23,13 +23,35 @@
   background: #0a0f1a;
 }
 
-/* Narrow/short viewports (phones): still a generous majority of the
-   viewport (prioritizing the player/nearby interaction area per the
-   brief), but capped lower than desktop so the fixed HUD corners and the
-   bottom-anchored quest chip/interaction prompt keep comfortable room. */
+/* Narrow/short viewports (phones).
+   Bug Group B pass — this used to cap at 82vh specifically to leave room
+   below the scene for "the fixed HUD corners and the bottom-anchored quest
+   chip/interaction prompt." That reasoning no longer holds: GameControlBar/
+   QuestChip/VirtualJoystick are all position:fixed (viewport-relative, they
+   float *over* the scene and reserve no layout space), while
+   InteractionPrompt/.hud are position:absolute *relative to this element*.
+   The 82vh cap on a typical phone (e.g. 844px tall -> 692px scene) left a
+   ~150px gap between the scene's own bottom edge and the real viewport
+   bottom — invisible dead space, but more importantly a coordinate-frame
+   mismatch: InteractionPrompt's bottom:16 (measured from the *scene's*
+   bottom, at ~676px down) and QuestChip's bottom:100 (measured from the
+   *viewport's* bottom, at 744px down) were computed as if both shared one
+   frame, so they visibly overlapped on real phones (confirmed via a real
+   touch-emulated 390x844 render) despite the values looking safely
+   separated in each file. Raising this to 96vh shrinks that mismatch to a
+   few px at every tested breakpoint (360x800 through 412x915) — small
+   enough that QuestChip's own bottom offset (see QuestChip.module.css)
+   clears it with intentional margin, instead of relying on the two frames
+   coincidentally lining up. */
 @media (max-width: 639.98px) {
   .scene {
-    height: clamp(420px, 82vh, 760px);
+    /* 880px cap confirmed (via a real render sweep across 360x800/390x844/
+       412x915) to sit above 96% of every specified tall-phone height, so
+       the clamp never gets pinned to the cap and reintroduce the same
+       gap/mismatch this fix exists to close — an earlier 760px cap did
+       exactly that at 412x915 (96vh = 878px > 760px), regressing back into
+       the coordinate mismatch this comment's sibling block describes. */
+    height: clamp(420px, 96vh, 880px);
   }
 }
 
@@ -40,7 +62,22 @@
 }
 
 .hud {
-  position: absolute;
+  /* Bug Group B pass — position:fixed (viewport-relative), not absolute
+     (relative to .scene). .scene's own height is intentionally less than
+     100% of the viewport at some breakpoints (see the height rule above),
+     which left a gap between .scene's bottom edge and the real viewport
+     bottom. QuestChip/VirtualJoystick/GameControlBar are already
+     position:fixed for the same reason ("floats over the world instead of
+     occupying real layout height") — .hud/.prompt being the odd ones out,
+     positioned relative to a box shorter than the viewport, is what caused
+     a real, measured overlap between InteractionPrompt and QuestChip (and
+     separately, InteractionPrompt and the joystick) despite each one's own
+     numeric offset looking safely separated on paper. .hud is top-anchored
+     and .scene's top always coincides with the viewport's, so this is a
+     no-op for .hud specifically — changed alongside .prompt for the same
+     documented reason and to keep every floating world-scene element on
+     one consistent coordinate frame. */
+  position: fixed;
   /* GameControlBar's brand mark is now a fixed corner chip (Meridian 1.2)
      floating over this same top-start corner of the viewport, since the
      control bar no longer reserves layout height — push this district
@@ -56,4 +93,10 @@
   /* Plain status readout, no clickable content — same pointer-events gap
      and fix as InteractionPrompt (Bug B). */
   pointer-events: none;
+  /* Layering pass — world HUD tier, just above WorldLabel's pinned
+     zIndexRange (2). Needs its own explicit value: position:absolute with
+     z-index:auto does NOT win against a sibling with any positive z-index
+     regardless of DOM order (auto-z-index positioned elements paint below
+     any positively-z-indexed sibling in the same stacking context). */
+  z-index: 5;
 }

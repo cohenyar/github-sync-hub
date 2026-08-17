@@ -56,6 +56,14 @@ export interface WorldScene3DProps {
   completedLessonIds?: readonly string[]
   /** Meridian 1.4 — Player Identity MVP; the local profile's chosen avatar preset id. Undefined resolves to the original colors, so every existing caller/test is unaffected. */
   playerAvatarId?: string
+  /** Layering pass — true while GameApp's LessonStage overlay (the Math/
+      English "Start Lesson" flow) is covering the screen. WorldScene3D stays
+      mounted underneath that overlay (unlike the Terminal flow, which fully
+      replaces it), so movement/the joystick need to be suspended the same
+      way they already are for a dialogue — matching existing precedent
+      rather than introducing new gameplay state. Defaults to false so every
+      existing caller/test is unaffected. */
+  isLessonActive?: boolean
 }
 
 const CORE_DISTRICT_ID = 'core'
@@ -79,6 +87,7 @@ export function WorldScene3D({
   highlightedNpcId,
   completedLessonIds = [],
   playerAvatarId,
+  isLessonActive = false,
 }: WorldScene3DProps) {
   const [nearestInteractable, setNearestInteractable] = useState<Interactable | null>(null)
   const [inRangeIds, setInRangeIds] = useState<ReadonlySet<string>>(new Set())
@@ -130,7 +139,7 @@ export function WorldScene3D({
     visibleNpcs.map((npc) => [npc.id, npc.name]),
   )
 
-  const isMovementEnabled = sceneState.mode.kind !== 'dialogue'
+  const isMovementEnabled = sceneState.mode.kind !== 'dialogue' && !isLessonActive
 
   // The whole scene (including the avatar's position ref) unmounts while
   // the Terminal is open — see App.tsx's mode switch — so the avatar

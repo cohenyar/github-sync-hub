@@ -45,9 +45,65 @@
    vertically instead of fighting over horizontal space — correct no
    matter how long the mission goal/title or the prompt's label gets.
    Scoped to the same narrow breakpoint used elsewhere in this app (e.g.
-   GameControlBar, AuthButton); desktop/tablet layout is untouched. */
+   GameControlBar, AuthButton); desktop/tablet layout is untouched.
+
+   Bug Group B pass, requirements 4 + 6 — further mobile compaction, and a
+   width cap that reserves VirtualJoystick's own bottom-left safe zone
+   (fixed at left:24px, 96px wide, so its footprint's right edge sits at
+   120px). This chip is right-anchored (physical, via inset-inline-start
+   under RTL), so shrinking its max-width pulls its *left* edge away from
+   that zone: at the 390px reference width, calc(100vw - 156px) leaves the
+   chip's left edge at ~136px — 16px clear of the joystick's 120px edge, at
+   any viewport this narrow. The goal line is clamped to a single line
+   (was unbounded) so a long objective can't push the collapsed chip's
+   height up. */
 @media (max-width: 479.98px) {
   .chip {
-    bottom: 100px;
+    /* 200px clears both InteractionPrompt AND OdinPresence stacked below it
+       in the same right-anchored mobile column (prompt closest to the
+       bottom, Odin's ambient message above it — see each of those files'
+       own comments), with margin for Odin's message wrapping to 2-3 lines.
+       Confirmed via a real touch-emulated 390x844 render, not just
+       computed on paper — the different elements' bottom offsets don't
+       simply add up on paper because OdinPresence's height varies with
+       message length. */
+    bottom: 200px;
+    /* border-box makes max-width the chip's true rendered width (padding +
+       border included) — without it, the browser's default content-box
+       sizing adds this padding *on top* of max-width, silently eating the
+       margin this value is meant to guarantee against VirtualJoystick's
+       zone (confirmed empirically: without this, the chip's real left edge
+       landed 10px *inside* the joystick's own footprint). */
+    box-sizing: border-box;
+    max-width: calc(100vw - 156px);
+    padding: 8px 12px;
+    gap: 1px;
+  }
+
+  .goal {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+/* Tablet range — found via a real render sweep (section 10's required
+   768x1024 check): InteractionPrompt is centered and reaches further
+   toward this chip's own right-anchored corner at these in-between widths
+   than it does on a true desktop viewport (>=1024px, where the two sit
+   comfortably apart horizontally) or true mobile (<=479.98px, covered by
+   InteractionPrompt's own joystick-safe-zone rule). Raising the chip clear
+   of InteractionPrompt's worst-case height removes the overlap regardless
+   of horizontal position — same technique as the mobile rule above, just a
+   smaller bump since there's no joystick to clear here. */
+@media (min-width: 480px) and (max-width: 1023.98px) {
+  .chip {
+    /* 190px clears OdinPresence too (base bottom:84, height variable with
+       message length) — not just InteractionPrompt — confirmed via a real
+       render at 768x1024 after raising OdinPresence's own bottom offset
+       (see OdinPresence.module.css) reduced but didn't eliminate its
+       overlap with this chip at this breakpoint. */
+    bottom: 190px;
   }
 }

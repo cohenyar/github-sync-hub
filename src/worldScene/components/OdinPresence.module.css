@@ -1,6 +1,13 @@
 .presence {
   position: fixed;
-  bottom: 28px;
+  /* Bug Group B pass — raised from 28px: now that InteractionPrompt is
+     also position:fixed (see WorldScene3D.module.css's .hud comment), both
+     pills sit in the same viewport-relative coordinate frame, and 28px put
+     this one close enough to the prompt's own bottom:16 (worst-case height
+     ~60px) to overlap on every breakpoint where both show at once —
+     confirmed via a real render at 390 and 1280 width alike, not a mobile-
+     only issue. 84px clears the prompt's height with margin, universally. */
+  bottom: 84px;
   left: 50%;
   transform: translateX(-50%);
   max-width: min(90vw, 560px);
@@ -27,5 +34,25 @@
 @media (prefers-reduced-motion: reduce) {
   .presence {
     transition: none;
+  }
+}
+
+/* Bug Group B pass, requirement 6/8 — this pill's centered, near-full-width
+   (90vw) layout reached over VirtualJoystick's reserved bottom-left zone,
+   and its bottom:28 sat close enough to InteractionPrompt's own bottom:16
+   that the two overlapped once both were confirmed viewport-relative (see
+   WorldScene3D.module.css's .hud comment) — both are visible at once
+   during ordinary exploration (Odin's ambient message + a nearby NPC's
+   talk prompt), confirmed via a real touch-emulated 390x844 render. Same
+   joystick-safe-zone technique as InteractionPrompt: right-anchored with a
+   reserved max-width, stacked above the prompt's own worst-case height
+   (60px) plus margin. */
+@media (max-width: 479.98px) and (pointer: coarse) {
+  .presence {
+    left: auto;
+    right: 16px;
+    transform: none;
+    box-sizing: border-box;
+    max-width: calc(100vw - 152px);
   }
 }

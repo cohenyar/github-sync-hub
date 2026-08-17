@@ -1,10 +1,17 @@
 import { Html } from '@react-three/drei'
+import styles from './WorldLabel.module.css'
 
 export interface WorldLabelProps {
   position: readonly [number, number, number]
   text: string
   testId?: string
   distanceFactor?: number
+  /** Bug Group B, requirement 2 — mobile-only visual de-emphasis for a
+      "secondary" label (e.g. an NPC that isn't the current nearest
+      interactable), so a narrow screen doesn't show every label at equal
+      weight. No effect above the 479.98px breakpoint. Defaults to false so
+      every existing caller keeps today's exact appearance. */
+  deprioritized?: boolean
 }
 
 /**
@@ -17,25 +24,36 @@ export interface WorldLabelProps {
  * drei's <Text>/troika-three-text, which fetches a font over the network
  * and stalled the frame loop in earlier testing) — just CSS text, same
  * technique as before, just styled properly and de-duplicated.
+ *
+ * Layering pass — drei's <Html> defaults to zIndexRange={[16777271, 0]},
+ * writing an inline z-index in the millions on every label's wrapper
+ * element. That vastly exceeds every deliberate z-index used anywhere else
+ * in the app (the real scheme tops out at 70 for WelcomeScreen), so a label
+ * would render above literally any overlay — including a full-screen
+ * question/lesson panel — regardless of that overlay's own z-index or DOM
+ * order. Pinning a single constant value (range min === max, so drei's
+ * distance-based interpolation collapses to one number) makes world labels
+ * "world HUD"-tier: above the 3D canvas itself, but below every real page
+ * overlay (lowest of which is LessonStage at 20). WorldScene3D.module.css's
+ * .hud and InteractionPrompt.module.css's .prompt are given an explicit
+ * z-index just above this value for the same reason — position:absolute
+ * alone doesn't win against ANY positive z-index sibling regardless of DOM
+ * order, so they need one of their own to reliably stack above the label.
  */
-export function WorldLabel({ position, text, testId, distanceFactor = 8 }: WorldLabelProps) {
+const WORLD_LABEL_Z_INDEX = 2
+
+export function WorldLabel({ position, text, testId, distanceFactor = 8, deprioritized = false }: WorldLabelProps) {
   return (
-    <Html position={position} center distanceFactor={distanceFactor} style={{ pointerEvents: 'none' }}>
+    <Html
+      position={position}
+      center
+      distanceFactor={distanceFactor}
+      zIndexRange={[WORLD_LABEL_Z_INDEX, WORLD_LABEL_Z_INDEX]}
+      style={{ pointerEvents: 'none' }}
+    >
       <span
         data-testid={testId}
-        style={{
-          display: 'inline-block',
-          padding: '5px 14px',
-          borderRadius: '10px',
-          background: 'rgba(10, 15, 26, 0.55)',
-          border: '1px solid rgba(245, 234, 216, 0.2)',
-          color: '#f5ead8',
-          fontSize: '22px',
-          fontWeight: 700,
-          letterSpacing: '0.01em',
-          whiteSpace: 'nowrap',
-          textShadow: '0 0 6px #0e1524, 0 0 6px #0e1524',
-        }}
+        className={deprioritized ? `${styles.label} ${styles.deprioritized}` : styles.label}
       >
         {text}
       </span>

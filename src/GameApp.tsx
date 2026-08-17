@@ -781,8 +781,13 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
               {/* Hidden during an active Math/English lesson — that flow
                   never touches activeMissionId/useMissionManager (see
                   handleStartLesson), so this SQL-campaign readout would be
-                  showing the wrong context otherwise. */}
-              {!activeLesson && (
+                  showing the wrong context otherwise. Also hidden while an
+                  NPC dialogue is open (Bug Group B, section 8 — "no
+                  simultaneous UI collisions"): both are bottom-anchored
+                  panels that overlap at narrow widths, and the mission
+                  readout adds nothing while a conversation has visual
+                  priority. */}
+              {!activeLesson && sceneState.mode.kind !== 'dialogue' && (
                 <QuestChip
                   title={getMissionDisplayText(activeMission).title}
                   goal={getMissionDisplayText(activeMission).goal}
@@ -802,6 +807,7 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
                 highlightedNpcId={learningPath?.npcId}
                 completedLessonIds={completedLessonIds}
                 playerAvatarId={playerProgress.playerAvatarId}
+                isLessonActive={Boolean(activeLesson)}
               />
               {sceneState.mode.kind === 'dialogue' &&
                 (() => {

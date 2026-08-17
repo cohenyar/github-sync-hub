@@ -37,7 +37,17 @@ export function TeacherNpcAccents({
 
   return (
     <group position={[position.x, 0, position.z]}>
-      <WorldLabel position={[0, 1.85, 0]} text={name} />
+      {/* Bug Group B, requirement 2 — mobile label priority: deprioritized
+          (visually de-emphasized, mobile-only) whenever this teacher isn't
+          the player's current nearest interactable, using the same
+          isHighlighted signal already driving the proximity ring below —
+          no new gameplay state. */}
+      <WorldLabel
+        position={[0, 1.85, 0]}
+        text={name}
+        testId={`npc-label-${npcId}`}
+        deprioritized={!isHighlighted}
+      />
 
       {/* Selected-path accent: on whenever this NPC's subject is the
           player's chosen learning path, regardless of distance. */}

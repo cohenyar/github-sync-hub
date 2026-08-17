@@ -1,5 +1,11 @@
 .prompt {
-  position: absolute;
+  /* Bug Group B pass — position:fixed (viewport-relative), not absolute
+     (relative to WorldScene3D's .scene, which is shorter than the
+     viewport at some breakpoints). See WorldScene3D.module.css's .hud for
+     the full reasoning — this is the bottom-anchored element that actually
+     moved (down, toward the true viewport bottom) once fixed, which is
+     what closes the real, measured overlap with QuestChip. */
+  position: fixed;
   bottom: 16px;
   left: 50%;
   transform: translateX(-50%);
@@ -18,6 +24,11 @@
      .talkButton below is a deliberate, scoped exception to this, not a
      regression of it. */
   pointer-events: none;
+  /* Layering pass — interaction-UI tier, above WorldLabel's pinned
+     zIndexRange (2) and world HUD (5). Needs its own explicit value for the
+     same reason as WorldScene3D.module.css's .hud: position:absolute with
+     z-index:auto never wins against a positively-z-indexed sibling. */
+  z-index: 6;
 }
 
 .talkButton,
@@ -67,5 +78,30 @@
     max-width: calc(100vw - 24px);
     white-space: normal;
     text-align: center;
+  }
+}
+
+/* Bug Group B pass, requirement 6/8 — joystick safe zone: centered
+   (left:50%/translateX) positioning let this prompt's box reach into
+   VirtualJoystick's reserved bottom-left zone (fixed at left:24px, 96px
+   wide, so its own right edge sits at 120px) on narrower phones, confirmed
+   via a real touch-emulated 360x800 render (a real, measured overlap, not
+   a hypothetical one). Only touch-primary devices ever show the joystick
+   at all, so this is scoped to that same condition alongside the width
+   breakpoint — a mouse/keyboard user at this width keeps the centered
+   layout. Right-anchored (physical, matching VirtualJoystick's own
+   deliberate physical-not-logical reasoning — this fix exists specifically
+   *because of* that physical element), with a max-width that reserves the
+   joystick's zone plus a safety margin, the same reserved-width approach
+   already used for QuestChip. */
+@media (max-width: 479.98px) and (pointer: coarse) {
+  .prompt {
+    left: auto;
+    right: 16px;
+    transform: none;
+    /* border-box so max-width is this box's true rendered width — the
+       same content-box pitfall documented in QuestChip.module.css. */
+    box-sizing: border-box;
+    max-width: calc(100vw - 152px);
   }
 }
