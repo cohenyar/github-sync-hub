@@ -180,6 +180,18 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
     () => bootSave?.playerProgress.campaignProgress.currentMissionId ?? getDefaultMission().id,
   )
   const baseMission = getMissionById(activeMissionId) ?? getDefaultMission()
+  // Question-selection fix pass — which entry of the active mission's own
+  // subject+difficulty pool is currently shown (see
+  // resolveMissionForDifficulty.ts). Deliberately local/ephemeral, never
+  // persisted: it's a "which practice question am I looking at right now"
+  // UI concern, not gameplay progression — save/load and New Game are
+  // unaffected either way. Resets to 0 on a genuine mission switch (a fresh
+  // mission always starts at its own first pool slot, matching this
+  // function's pre-existing rotationSeed=0 default/documented behavior).
+  const [questionSlotSeed, setQuestionSlotSeed] = useState(0)
+  useEffect(() => {
+    setQuestionSlotSeed(0)
+  }, [activeMissionId])
   const {
     progress: playerProgress,
     recordCompletion,
@@ -203,8 +215,8 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
   // object's identity, so a fresh object every render would wipe pass/fail
   // state on every re-render instead of only on a real mission change.
   const activeMission = useMemo(
-    () => resolveMissionForDifficulty(baseMission, difficultyLevel, playerProgress.completedMissionIds.length),
-    [baseMission, difficultyLevel, playerProgress.completedMissionIds.length],
+    () => resolveMissionForDifficulty(baseMission, difficultyLevel, questionSlotSeed),
+    [baseMission, difficultyLevel, questionSlotSeed],
   )
   // Meridian 1.3 — Core Loop §04: resolved fresh from progress every render, same fallback-to-empty convention as completedLessonIds.
   const collectedArchivePages = (playerProgress.collectedArchivePageIds ?? [])
@@ -515,13 +527,28 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
     if (anyDistrictStatusChanged) playStatusChange()
   }
 
-  const { status, submit: submitAnswer } = useQuestionMission(activeMission, {
+  const {
+    status,
+    submit: submitAnswer,
+    advanceToNextQuestion,
+  } = useQuestionMission(activeMission, {
     initiallyCompleted: contentStatus === 'completed',
     onComplete: handleMissionComplete,
     onFailure: () => {
       playFail()
     },
   })
+
+  // Question-selection fix pass — advances to a genuinely different pool
+  // entry (see resolveMissionForDifficulty.ts) and clears the previous
+  // question's pass banner via advanceToNextQuestion, without touching
+  // activeMissionId/completedMissionIds/campaignProgress — the mission
+  // itself already completed on the first correct answer, so this is
+  // additional practice only, never a second completion.
+  function handleNextQuestion() {
+    setQuestionSlotSeed((seed) => seed + 1)
+    advanceToNextQuestion()
+  }
   const effectiveHasAttempted = status.lastResult !== null
 
   // Fires once a mission actually STARTS after the app is already up and
@@ -775,6 +802,7 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
               npc={companion}
               npcMessage={companionMessage}
               difficultyLevel={difficultyLevel}
+              onNextQuestion={handleNextQuestion}
             />
           ) : (
             <>
@@ -901,6 +929,7 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
                   status={status}
                   onSubmit={submitAnswer}
                   difficultyLevel={difficultyLevel}
+                  onNextQuestion={handleNextQuestion}
                 />
               }
             />

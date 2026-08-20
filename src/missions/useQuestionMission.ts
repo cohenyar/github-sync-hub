@@ -24,6 +24,18 @@ export interface UseQuestionMissionOptions {
 export interface UseQuestionMissionResult {
   status: QuestionMissionStatus
   submit: (answer: string) => void
+  /**
+   * Question-selection fix pass — clears lastResult only, leaving completed
+   * untouched, so a caller can swap in a fresh practice question (a
+   * different pool entry, same mission id) without resurrecting the
+   * PREVIOUS question's stale pass/fail banner. Deliberately separate from
+   * the [mission.id]-keyed reset effect below, which must keep preserving
+   * lastResult across a same-id difficulty-driven content swap (that
+   * invariant is intentional and tested — see this hook's own tests) —
+   * this is only ever called explicitly, from a real "Next Question" click,
+   * never implicitly from a mission/content change alone.
+   */
+  advanceToNextQuestion: () => void
 }
 
 interface QuestionRuntimeState {
@@ -77,8 +89,13 @@ export function useQuestionMission(
     }
   }
 
+  function advanceToNextQuestion() {
+    setRuntime((current) => ({ ...current, lastResult: null }))
+  }
+
   return {
     status: { phase: runtime.completed ? 'completed' : 'active', lastResult: runtime.lastResult },
     submit,
+    advanceToNextQuestion,
   }
 }

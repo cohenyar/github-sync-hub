@@ -225,4 +225,38 @@ test.describe('First Mission UX pass — scaffolding differences are visible in 
     await expect(page.getByTestId('question-feedback')).toHaveText('לא נכון.')
     await expect(page.getByTestId('question-feedback')).not.toContainText('לינקולן')
   })
+
+  // Question-selection fix pass — the reported bug: switching Easy/Medium/
+  // Hard could show "effectively the same question". Root cause was
+  // resolveMissionForDifficulty's Level 1 bypass plus a rotationSeed that
+  // never varied per-mission; this proves the fix end to end, in the real
+  // running app, not just at the unit level.
+  test('switching Easy -> Medium -> Hard on the same mission always shows a genuinely different question, never the same text twice', async ({
+    page,
+  }) => {
+    await page.goto('/world')
+    await waitForQuestionPanel(page)
+
+    const easyTask = await page.getByTestId('question-task').textContent()
+
+    await openSettingsMenu(page)
+    await page.getByTestId('difficulty-level-2-button').click()
+    await page.keyboard.press('Escape')
+    const mediumTask = await page.getByTestId('question-task').textContent()
+    expect(mediumTask).not.toBe(easyTask)
+
+    await openSettingsMenu(page)
+    await page.getByTestId('difficulty-level-3-button').click()
+    await page.keyboard.press('Escape')
+    const hardTask = await page.getByTestId('question-task').textContent()
+    expect(hardTask).not.toBe(easyTask)
+    expect(hardTask).not.toBe(mediumTask)
+
+    // And back to Easy again shows the exact original question — same
+    // deterministic pool entry, not a random/lost state.
+    await openSettingsMenu(page)
+    await page.getByTestId('difficulty-level-1-button').click()
+    await page.keyboard.press('Escape')
+    await expect(page.getByTestId('question-task')).toHaveText(easyTask ?? '')
+  })
 })

@@ -34,6 +34,8 @@ export interface TerminalViewProps {
   npcMessage?: string
   /** First Mission UX pass — threaded to MissionPanel/QuestionAnswerPanel unchanged; see their own prop docs. */
   difficultyLevel?: DifficultyLevel
+  /** Question-selection fix pass — threaded to QuestionAnswerPanel unchanged; see its own prop doc. */
+  onNextQuestion?: () => void
 }
 
 /** How long the completion beat plays — short enough to feel snappy, long enough to register as an event. */
@@ -101,6 +103,7 @@ export function TerminalView({
   npc,
   npcMessage,
   difficultyLevel,
+  onNextQuestion,
 }: TerminalViewProps) {
   const glowColor = getDistrictStatusColor(coreStatus)
   const isCelebrating = useCompletionCelebration(status.phase)
@@ -155,7 +158,13 @@ export function TerminalView({
           onContinue={onContinue}
           difficultyLevel={difficultyLevel}
         />
-        <QuestionAnswerPanel mission={mission} status={status} onSubmit={onSubmitAnswer} difficultyLevel={difficultyLevel} />
+        <QuestionAnswerPanel
+          mission={mission}
+          status={status}
+          onSubmit={onSubmitAnswer}
+          difficultyLevel={difficultyLevel}
+          onNextQuestion={onNextQuestion}
+        />
         {/* First Mission UX pass — Mera's greeting is real story, but it's
             also the "long lore copy" the first-mission UX fix specifically
             calls out to de-emphasize: it moved from ahead of the action to

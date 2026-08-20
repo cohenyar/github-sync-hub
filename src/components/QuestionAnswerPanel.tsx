@@ -17,6 +17,17 @@ export interface QuestionAnswerPanelProps {
    * never revealed at any level — only checkQuestionAnswer's pass/fail.
    */
   difficultyLevel?: DifficultyLevel
+  /**
+   * Question-selection fix pass — optional so every existing caller/test
+   * that omits it is unaffected (no button renders at all without it).
+   * Called when the player wants another practice question from the same
+   * subject/difficulty pool after already passing the current one; never
+   * shown for a still-unanswered or failed question. The mission is still
+   * considered complete the moment the FIRST correct answer fires onSubmit
+   * — this button only offers optional extra practice, never required to
+   * finish.
+   */
+  onNextQuestion?: () => void
 }
 
 /**
@@ -25,7 +36,7 @@ export interface QuestionAnswerPanelProps {
  * and renders whatever status useQuestionMission gives it. MVP supports
  * exactly two question shapes: multiple choice and short text.
  */
-export function QuestionAnswerPanel({ mission, status, onSubmit, difficultyLevel }: QuestionAnswerPanelProps) {
+export function QuestionAnswerPanel({ mission, status, onSubmit, difficultyLevel, onNextQuestion }: QuestionAnswerPanelProps) {
   const [selectedIndex, setSelectedIndex] = useState<string | null>(null)
   const [answerText, setAnswerText] = useState('')
   const [showHint, setShowHint] = useState(false)
@@ -124,6 +135,21 @@ export function QuestionAnswerPanel({ mission, status, onSubmit, difficultyLevel
         >
           {feedbackText}
         </p>
+      )}
+
+      {/* Question-selection fix pass — extra practice, never required: the
+          mission itself already completed on the first correct answer
+          (see useQuestionMission's onComplete), so declining this button
+          in favor of Continue/Return to World is always safe. */}
+      {lastResult?.pass && onNextQuestion && (
+        <button
+          type="button"
+          className={styles.nextQuestionButton}
+          data-testid="question-next-button"
+          onClick={onNextQuestion}
+        >
+          {he.nextQuestionCta}
+        </button>
       )}
 
       {canRequestHint && !showHint && (

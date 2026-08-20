@@ -24,10 +24,28 @@ const ALL_BASE_MISSIONS = [
 
 const POOLS: Record<string, QuestionPool> = { history: historyPool, english: englishPool, math: mathPool }
 
-describe('resolveMissionForDifficulty — Level 1 is a strict no-op', () => {
-  it('returns the exact same object reference for every real mission at level 1', () => {
+describe('resolveMissionForDifficulty — Level 1 draws from its own real pool too', () => {
+  // Question-selection fix pass: Level 1 used to be a strict no-op (always
+  // the base mission's own hardcoded content, never touching the pool),
+  // which meant Easy's other 4 pool entries per subject were permanently
+  // unreachable. It now resolves from pool[1] exactly like levels 2/3 — at
+  // the default rotationSeed=0 this is still byte-identical content to
+  // before (see the "first two pool slots" test below), so a fresh game's
+  // very first question at Easy is unchanged; only a non-default seed
+  // reveals the rest of the pool.
+  it('at the default rotationSeed=0, every real mission shows the exact same taskHe/answerConfig as its own original content', () => {
     for (const mission of ALL_BASE_MISSIONS) {
-      expect(resolveMissionForDifficulty(mission, 1)).toBe(mission)
+      const resolved = resolveMissionForDifficulty(mission, 1)
+      expect(resolved.taskHe).toBe(mission.taskHe)
+      expect(resolved.answerConfig).toEqual(mission.answerConfig)
+    }
+  })
+
+  it('a non-zero rotationSeed resolves a genuinely different Level 1 question from the same subject pool', () => {
+    for (const mission of ALL_BASE_MISSIONS) {
+      const seed0 = resolveMissionForDifficulty(mission, 1, 0)
+      const seed1 = resolveMissionForDifficulty(mission, 1, 1)
+      expect(seed1.taskHe, mission.id).not.toBe(seed0.taskHe)
     }
   })
 })
@@ -68,23 +86,18 @@ describe('resolveMissionForDifficulty — Levels 2 and 3 show genuinely differen
   })
 })
 
-describe("resolveMissionForDifficulty — rotationSeed rotates within the mission's own slot rotation", () => {
-  // first-contact (History) and district-ties (English) both rotate through
-  // slots [0, 2, 4] in SLOT_ROTATION_BY_MISSION_ID — two different subjects,
-  // same rotation shape.
-  const ROTATION_TEST_MISSIONS = [firstContactMission, districtTiesMission]
-
+describe('resolveMissionForDifficulty — rotationSeed cycles through the whole subject pool', () => {
   it('omitting rotationSeed produces the exact same result as passing rotationSeed=0 explicitly, at every difficulty level', () => {
-    for (const mission of ROTATION_TEST_MISSIONS) {
+    for (const mission of ALL_BASE_MISSIONS) {
       for (const level of [1, 2, 3] as const) {
         expect(resolveMissionForDifficulty(mission, level)).toEqual(resolveMissionForDifficulty(mission, level, 0))
       }
     }
   })
 
-  it('a different rotationSeed produces a genuinely different taskHe at levels 2 and 3, now that pools have 6 entries per level', () => {
-    for (const mission of ROTATION_TEST_MISSIONS) {
-      for (const level of [2, 3] as const) {
+  it('a different rotationSeed produces a genuinely different taskHe at every difficulty level, for every real mission', () => {
+    for (const mission of ALL_BASE_MISSIONS) {
+      for (const level of [1, 2, 3] as const) {
         const seed0 = resolveMissionForDifficulty(mission, level, 0)
         const seed1 = resolveMissionForDifficulty(mission, level, 1)
         expect(seed1.taskHe, `${mission.id} level ${level}`).not.toBe(seed0.taskHe)
@@ -93,7 +106,7 @@ describe("resolveMissionForDifficulty — rotationSeed rotates within the missio
   })
 
   it("the mission's own id field is unchanged regardless of rotationSeed, at every difficulty level", () => {
-    for (const mission of ROTATION_TEST_MISSIONS) {
+    for (const mission of ALL_BASE_MISSIONS) {
       for (const level of [1, 2, 3] as const) {
         for (const seed of [0, 1, 2, 5, 99]) {
           expect(resolveMissionForDifficulty(mission, level, seed).id).toBe(mission.id)
@@ -102,16 +115,59 @@ describe("resolveMissionForDifficulty — rotationSeed rotates within the missio
     }
   })
 
-  it('difficulty level 1 remains a strict no-op (same object reference) regardless of any rotationSeed value passed', () => {
-    for (const mission of ROTATION_TEST_MISSIONS) {
-      for (const seed of [0, 1, 2, 5, 99]) {
-        expect(resolveMissionForDifficulty(mission, 1, seed)).toBe(mission)
+  it('6 consecutive seeds visit 6 genuinely distinct questions before the 7th deterministically repeats the 1st (no immediate repetition until the pool is exhausted)', () => {
+    for (const mission of ALL_BASE_MISSIONS) {
+      for (const level of [1, 2, 3] as const) {
+        const seen = Array.from({ length: 6 }, (_, seed) => resolveMissionForDifficulty(mission, level, seed).taskHe)
+        expect(new Set(seen).size, `${mission.id} level ${level}`).toBe(6)
+        const wrapped = resolveMissionForDifficulty(mission, level, 6).taskHe
+        expect(wrapped, `${mission.id} level ${level}`).toBe(seen[0])
+      }
+    }
+  })
+
+  it("two missions sharing a subject start at different pool slots, so they don't open on an identical question", () => {
+    const SAME_SUBJECT_PAIRS = [
+      [firstContactMission, fullSignalMission],
+      [districtTiesMission, linkedRecordsMission],
+      [southStabilityMission, prioritySignalMission],
+    ] as const
+    for (const [missionA, missionB] of SAME_SUBJECT_PAIRS) {
+      for (const level of [1, 2, 3] as const) {
+        const a = resolveMissionForDifficulty(missionA, level, 0)
+        const b = resolveMissionForDifficulty(missionB, level, 0)
+        expect(a.taskHe, `${missionA.id} vs ${missionB.id} level ${level}`).not.toBe(b.taskHe)
       }
     }
   })
 })
 
 describe('resolveMissionForDifficulty — hint wiring', () => {
+  it("Level 1 at the mission's own original slot prefers its hand-authored guidanceLevel1 over the pool entry's generic hintHe, when the mission has one", () => {
+    // firstContactMission.guidanceLevel1 ("the answer is mentioned
+    // explicitly in the text above") is a more specific, tailored nudge
+    // than its own hintHe ("he was Julius Caesar's adopted nephew") — Ask
+    // Odin's hint action and QuestionAnswerPanel's inline hint both depend
+    // on this exact preference (see e2e/playtest-fixes.spec.ts's Ask Odin
+    // coverage).
+    const resolved = resolveMissionForDifficulty(firstContactMission, 1)
+    expect(resolved.guidanceLevel1).toBe(firstContactMission.guidanceLevel1)
+    expect(resolved.guidanceLevel1).not.toBe(resolved.hintHe)
+    expect(resolved.guidanceLevel2).toBeUndefined()
+    expect(resolved.guidanceLevel3).toBeUndefined()
+  })
+
+  it('Level 1 at any other pool slot uses that entry\'s own hintHe — there is no mission-specific guidanceLevel1 for a question the mission never originally had', () => {
+    // rotationSeed=2 lands on history-l1-c ("which ancient empire built the
+    // Colosseum"), a pool-only entry with no originating mission at all.
+    const resolved = resolveMissionForDifficulty(firstContactMission, 1, 2)
+    expect(resolved.taskHe).not.toBe(firstContactMission.taskHe)
+    expect(resolved.guidanceLevel1).toBeDefined()
+    expect(resolved.guidanceLevel1).toBe(resolved.hintHe)
+    expect(resolved.guidanceLevel2).toBeUndefined()
+    expect(resolved.guidanceLevel3).toBeUndefined()
+  })
+
   it('Level 2 exposes its pool hint via guidanceLevel2 (and hintHe), matching what QuestionAnswerPanel/Ask Odin read', () => {
     const resolved = resolveMissionForDifficulty(firstContactMission, 2)
     expect(resolved.guidanceLevel2).toBeDefined()

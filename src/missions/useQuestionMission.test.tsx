@@ -140,4 +140,54 @@ describe('useQuestionMission', () => {
     expect(result.current.status.phase).toBe('active')
     expect(result.current.status.lastResult).toBeNull()
   })
+
+  describe('advanceToNextQuestion — question-selection fix pass', () => {
+    it('clears lastResult but leaves completed untouched', () => {
+      const { result } = renderHook(() => useQuestionMission(mcMission))
+
+      act(() => result.current.submit('1'))
+      expect(result.current.status.phase).toBe('completed')
+      expect(result.current.status.lastResult).toEqual({ pass: true, submittedAnswer: '1' })
+
+      act(() => result.current.advanceToNextQuestion())
+
+      expect(result.current.status.phase).toBe('completed')
+      expect(result.current.status.lastResult).toBeNull()
+    })
+
+    it('never calls onComplete again, even after answering a subsequent practice question correctly', () => {
+      const onComplete = vi.fn()
+      const { result } = renderHook(() => useQuestionMission(mcMission, { onComplete }))
+
+      act(() => result.current.submit('1'))
+      expect(onComplete).toHaveBeenCalledTimes(1)
+
+      act(() => result.current.advanceToNextQuestion())
+      act(() => result.current.submit('1'))
+
+      expect(onComplete).toHaveBeenCalledTimes(1)
+    })
+
+    it('a subsequent wrong answer after advancing still calls onFailure, without ever un-completing the mission', () => {
+      const onFailure = vi.fn()
+      const { result } = renderHook(() => useQuestionMission(mcMission, { onFailure }))
+
+      act(() => result.current.submit('1'))
+      act(() => result.current.advanceToNextQuestion())
+      act(() => result.current.submit('0'))
+
+      expect(result.current.status.phase).toBe('completed')
+      expect(result.current.status.lastResult).toEqual({ pass: false, submittedAnswer: '0' })
+      expect(onFailure).toHaveBeenCalledTimes(1)
+    })
+
+    it('does nothing harmful when called before any question has ever been answered', () => {
+      const { result } = renderHook(() => useQuestionMission(mcMission))
+
+      act(() => result.current.advanceToNextQuestion())
+
+      expect(result.current.status.phase).toBe('active')
+      expect(result.current.status.lastResult).toBeNull()
+    })
+  })
 })

@@ -63,7 +63,17 @@ export const englishPool: QuestionPool = {
     { id: 'english-l3-a', taskHe: "מהי צורת העבר (past tense) של הפועל 'go'?", answerConfig: { type: 'exact_text', acceptedAnswers: ['went'] }, hintHe: 'זהו פועל יוצא דופן (irregular) — הצורה לא נגמרת ב-ed.' },
     { id: 'english-l3-b', taskHe: "השלימו את המשפט בצורה הנכונה: 'She ___ to school every day.'", answerConfig: { type: 'exact_text', acceptedAnswers: ['goes'] }, hintHe: 'חשבו על הטיית הפועל בגוף שלישי יחיד בהווה.' },
     { id: 'english-l3-c', taskHe: "מהו שם התואר (adjective) במשפט: 'The tall man walked in.'?", answerConfig: { type: 'exact_text', acceptedAnswers: ['tall'] }, hintHe: 'חשבו על המילה שמתארת את האיש.' },
-    { id: 'english-l3-d', taskHe: "מהי צורת הרבים (plural) של המילה 'mouse'?", answerConfig: { type: 'exact_text', acceptedAnswers: ['mice'] }, hintHe: 'זו אחת מצורות הרבים היוצאות מן הכלל באנגלית.' },
+    {
+      id: 'english-l3-d',
+      // Question-selection fix pass — replaces the original "plural of
+      // 'mouse'? -> mice", a near-duplicate of l2-a ("plural of 'child'?
+      // -> children"): same irregular-plural rule, same exercise shape,
+      // even near-identical hint text. Tests a grammar point not covered
+      // anywhere else in the pool instead.
+      taskHe: "השלימו את המשפט בצורת השייכות (possessive) הנכונה: 'This is ___ (Sarah) book.'",
+      answerConfig: { type: 'exact_text', acceptedAnswers: ["Sarah's"] },
+      hintHe: "רמז: כדי לבטא שייכות לשם פרטי באנגלית (כמו 'של שרה'), בדרך כלל לא משתמשים במילה 'of' אלא בצורה קצרה שמתווספת ישירות לסוף השם.",
+    },
     { id: 'english-l3-e', taskHe: "השלימו את המשפט בצורה הנכונה: 'How ___ money do you have?'", answerConfig: { type: 'exact_text', acceptedAnswers: ['much'] }, hintHe: 'רמז: חשבו אם אפשר לספור את הדבר הזה במספרים (אחד, שניים) או לא — זה משפיע על מילת הכמות המתאימה.' },
     { id: 'english-l3-f', taskHe: "מהי צורת ההשוואה (comparative) של שם התואר 'good'?", answerConfig: { type: 'exact_text', acceptedAnswers: ['better'] }, hintHe: 'רמז: זו אחת מצורות ההשוואה החריגות באנגלית — היא לא נוצרת רק בהוספת סיומת בסוף המילה המקורית.' },
   ],

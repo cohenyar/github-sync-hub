@@ -581,6 +581,9 @@ export const he = {
   questionIncorrectFeedbackSupportive: 'לא מדויק, אבל את/ה מתקרב/ת. אפשר לנסות שוב.',
   // Hard — deliberately terse; never names the correct answer.
   questionIncorrectFeedbackMinimal: 'לא נכון.',
+  // Question-selection fix pass — extra practice after a correct answer,
+  // never required (Continue/Return to World stay available either way).
+  nextQuestionCta: 'שאלה נוספת',
 } as const
 
 export type HebrewStringKey = keyof typeof he

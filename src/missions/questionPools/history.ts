@@ -53,7 +53,22 @@ export const historyPool: QuestionPool = {
       answerConfig: { type: 'multiple_choice', options: ['כריסטופר קולומבוס', 'מרקו פולו', 'ג\'יימס קוק', 'פרדיננד מגלן'], correctIndex: 0 },
       hintHe: 'רמז: שלוש הספינות שלו נקראו נינה, פינטה וסנטה מריה.',
     },
-    { id: 'history-l2-d', taskHe: 'מהי בירת האימפריה הרומית?', answerConfig: { type: 'exact_text', acceptedAnswers: ['רומא'] }, hintHe: 'רמז: האימפריה נקראת על שם עירה הראשית.' },
+    {
+      id: 'history-l2-d',
+      // Question-selection fix pass — replaces the original "what is the
+      // capital of the Roman Empire? -> Rome", a near-duplicate of l1-c
+      // (which ancient empire built the Colosseum? -> Rome): both resolved
+      // to the same bare fact with no real reasoning step up from Level 1,
+      // and the pool was already Rome-heavy (7 of 18 questions). A
+      // genuinely different topic/era/country instead.
+      taskHe: 'מי היה הקיסר הצרפתי שהוכתר לקיסר בשנת 1804 וכבש אחר כך חלקים נרחבים מאירופה?',
+      answerConfig: {
+        type: 'multiple_choice',
+        options: ['נפוליאון בונפרטה', 'לואי ה-14', 'שארל דה גול', 'רובספייר'],
+        correctIndex: 0,
+      },
+      hintHe: 'רמז: הוא נולד באי קורסיקה, ולאחר תבוסתו הסופית הוגלה לאי הרחוק סנט הלנה.',
+    },
     {
       id: 'history-l2-e',
       taskHe: 'מי היה הפילוסוף היווני שהיה מורו האישי של אלכסנדר הגדול בצעירותו?',

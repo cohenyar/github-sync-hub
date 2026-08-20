@@ -192,4 +192,60 @@ describe('QuestionAnswerPanel', () => {
     rerender(<QuestionAnswerPanel mission={shortTextMission} status={status()} onSubmit={vi.fn()} />)
     expect(screen.getByTestId('question-submit-button')).toBeDisabled()
   })
+
+  describe('Next Question — question-selection fix pass', () => {
+    it('shows a Next Question button once passed, when onNextQuestion is provided', () => {
+      render(
+        <QuestionAnswerPanel
+          mission={mcMission}
+          status={status({ lastResult: { pass: true, submittedAnswer: '1' } })}
+          onSubmit={vi.fn()}
+          onNextQuestion={vi.fn()}
+        />,
+      )
+      expect(screen.getByTestId('question-next-button')).toHaveTextContent(he.nextQuestionCta)
+    })
+
+    it('calls onNextQuestion when clicked', () => {
+      const onNextQuestion = vi.fn()
+      render(
+        <QuestionAnswerPanel
+          mission={mcMission}
+          status={status({ lastResult: { pass: true, submittedAnswer: '1' } })}
+          onSubmit={vi.fn()}
+          onNextQuestion={onNextQuestion}
+        />,
+      )
+      fireEvent.click(screen.getByTestId('question-next-button'))
+      expect(onNextQuestion).toHaveBeenCalledTimes(1)
+    })
+
+    it('never renders when onNextQuestion is omitted, even on a passing result (every existing caller that omits it is unaffected)', () => {
+      render(
+        <QuestionAnswerPanel
+          mission={mcMission}
+          status={status({ lastResult: { pass: true, submittedAnswer: '1' } })}
+          onSubmit={vi.fn()}
+        />,
+      )
+      expect(screen.queryByTestId('question-next-button')).not.toBeInTheDocument()
+    })
+
+    it('never renders on a wrong answer, even when onNextQuestion is provided', () => {
+      render(
+        <QuestionAnswerPanel
+          mission={mcMission}
+          status={status({ lastResult: { pass: false, submittedAnswer: '0' } })}
+          onSubmit={vi.fn()}
+          onNextQuestion={vi.fn()}
+        />,
+      )
+      expect(screen.queryByTestId('question-next-button')).not.toBeInTheDocument()
+    })
+
+    it('never renders before any answer has been submitted', () => {
+      render(<QuestionAnswerPanel mission={mcMission} status={status()} onSubmit={vi.fn()} onNextQuestion={vi.fn()} />)
+      expect(screen.queryByTestId('question-next-button')).not.toBeInTheDocument()
+    })
+  })
 })

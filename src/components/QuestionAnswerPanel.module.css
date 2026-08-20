@@ -138,6 +138,25 @@
   font-weight: 600;
 }
 
+.nextQuestionButton {
+  margin: var(--ds-space-3) 0 0;
+  min-height: 44px;
+  padding: var(--ds-space-2) var(--ds-space-5);
+  border-radius: var(--ds-radius-md);
+  border: 1px solid var(--ds-accent);
+  background: var(--ds-accent-soft);
+  color: var(--ds-text-strong);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background var(--ds-duration-base) var(--ds-ease-out),
+    border-color var(--ds-duration-base) var(--ds-ease-out);
+}
+
+.nextQuestionButton:hover {
+  border-color: var(--ds-border-strong);
+}
+
 .hintButton {
   margin-top: var(--ds-space-2);
   min-height: 44px;

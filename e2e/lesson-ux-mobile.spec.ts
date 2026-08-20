@@ -1,4 +1,17 @@
-import { expect, test } from './helpers.js'
+import { expect, test, waitForQuestionPanel } from './helpers.js'
+
+/**
+ * Mirrors questionPools/history.ts's pool[1] (Easy) exactly, in order —
+ * hardcoded rather than imported, matching every other spec in this suite
+ * (e2e specs never import from src/, since that file tree is written for
+ * tsconfig.app.json's bundler-mode resolution, not tsconfig.node.json's
+ * nodenext rules e2e runs under). Only the first two entries are needed
+ * here.
+ */
+const EASY_HISTORY_POOL: ReadonlyArray<{ taskHe: string; correctIndex: number }> = [
+  { taskHe: 'מי היה הקיסר הראשון של רומא?', correctIndex: 0 },
+  { taskHe: 'מי היה נשיאה הראשון של ארצות הברית?', correctIndex: 0 },
+]
 
 /**
  * Lesson UX bug-fix pass — coverage for two independent fixes verified
@@ -244,6 +257,111 @@ test.describe('QuestionAnswerPanel mobile audit — Records Core (first mission)
         expect(box.x).toBeGreaterThanOrEqual(0)
         expect(box.x + box.width).toBeLessThanOrEqual(bp.width + 1)
       }
+    })
+  }
+})
+
+// Question-selection fix pass — the new Next Question button, in the
+// Terminal (where the pre-existing return-to-world-button lives) at the two
+// genuine phone sizes this file's other Records Core walk-in audits above
+// already cover reliably. Reuses walkToRecordsCore and the same
+// EASY_HISTORY_POOL content above.
+test.describe('Next Question mobile audit — Records Core (first mission)', () => {
+  const PHONE_BREAKPOINTS = [
+    { name: '390x844', width: 390, height: 844 },
+    { name: '412x915', width: 412, height: 915 },
+  ] as const
+
+  for (const bp of PHONE_BREAKPOINTS) {
+    test(`${bp.name}: Next Question is reachable and readable, and Return to World stays visible throughout`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: bp.width, height: bp.height })
+      await page.goto('/world')
+      await walkToRecordsCore(page)
+      await page.keyboard.press('KeyE')
+      await expect(page.getByTestId('terminal-view')).toBeVisible()
+      await expect(page.getByTestId('question-panel')).toBeVisible()
+
+      // Item 9's explicit requirement: Return to World never disappears,
+      // not before, during, or after answering.
+      const returnButton = page.getByTestId('return-to-world-button')
+      await expect(returnButton).toBeVisible()
+
+      await page.getByTestId(`question-option-${EASY_HISTORY_POOL[0].correctIndex}`).click()
+      await page.getByTestId('question-submit-button').click()
+      await expect(page.getByTestId('question-feedback')).toHaveAttribute('data-verdict', 'pass')
+
+      expect(await hasNoHorizontalOverflow(page)).toBe(true)
+      await expect(returnButton).toBeVisible()
+
+      const nextButton = page.getByTestId('question-next-button')
+      await expect(nextButton).toBeVisible()
+      const box = await nextButton.boundingBox()
+      if (!box) throw new Error('missing bounding box for question-next-button')
+      // A real, tappable target — same 44px minimum every other control in
+      // this panel already uses (see QuestionAnswerPanel.module.css).
+      expect(box.height).toBeGreaterThanOrEqual(44)
+      expect(box.x).toBeGreaterThanOrEqual(0)
+      expect(box.x + box.width).toBeLessThanOrEqual(bp.width + 1)
+
+      await nextButton.click()
+      await expect(page.getByTestId('question-task')).toHaveText(EASY_HISTORY_POOL[1].taskHe)
+      expect(await hasNoHorizontalOverflow(page)).toBe(true)
+      await expect(returnButton).toBeVisible()
+    })
+  }
+})
+
+// The three larger breakpoints (tablet/desktop) via the classic dashboard's
+// own QuestionAnswerPanel host instead of a 3D-world walk-in: reaching the
+// Records Core requires a timed WASD walk whose landing spot this file
+// found to be unreliable at these specific larger sizes under touch
+// emulation — a pre-existing world-movement/touch-input quirk unrelated to
+// question selection (out of scope for this pass, and pre-existing: no
+// prior test ever drove that walk at these sizes). The dashboard path
+// exercises the exact same QuestionAnswerPanel component without depending
+// on that walk at all.
+test.describe('Next Question layout audit — classic dashboard (tablet/desktop)', () => {
+  // Explicitly opts back into a fine/mouse pointer, same as world-scene-
+  // mobile-layout.spec.ts's own "desktop/tablet regression (no touch)"
+  // block: these sizes never show touch-only affordances and never match
+  // (pointer: coarse) CSS, so they should behave like a real tablet/
+  // desktop, not a touch device stretched wide.
+  test.use({ hasTouch: false, isMobile: false })
+
+  const LARGER_BREAKPOINTS = [
+    { name: '768x1024', width: 768, height: 1024 },
+    { name: '1280x800', width: 1280, height: 800 },
+    { name: '1920x1080', width: 1920, height: 1080 },
+  ] as const
+
+  for (const bp of LARGER_BREAKPOINTS) {
+    // Scoped to the Next Question button itself, not whole-page overflow:
+    // this file found the classic dashboard already has its own horizontal
+    // overflow at 768x1024 with no interaction at all (confirmed present
+    // immediately after waitForQuestionPanel, before any answer) — a
+    // pre-existing dashboard-layout issue unrelated to question selection
+    // and out of scope for this pass.
+    test(`${bp.name}: Next Question is reachable and readable`, async ({ page }) => {
+      await page.setViewportSize({ width: bp.width, height: bp.height })
+      await page.goto('/world')
+      await waitForQuestionPanel(page)
+
+      await page.getByTestId(`question-option-${EASY_HISTORY_POOL[0].correctIndex}`).click()
+      await page.getByTestId('question-submit-button').click()
+      await expect(page.getByTestId('question-feedback')).toHaveAttribute('data-verdict', 'pass')
+
+      const nextButton = page.getByTestId('question-next-button')
+      await expect(nextButton).toBeVisible()
+      const box = await nextButton.boundingBox()
+      if (!box) throw new Error('missing bounding box for question-next-button')
+      expect(box.height).toBeGreaterThanOrEqual(44)
+      expect(box.x).toBeGreaterThanOrEqual(0)
+      expect(box.x + box.width).toBeLessThanOrEqual(bp.width + 1)
+
+      await nextButton.click()
+      await expect(page.getByTestId('question-task')).toHaveText(EASY_HISTORY_POOL[1].taskHe)
     })
   }
 })
