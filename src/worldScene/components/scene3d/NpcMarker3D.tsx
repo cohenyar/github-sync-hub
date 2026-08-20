@@ -39,6 +39,13 @@ const GROUND_RING_OUTER_RADIUS = 0.5
 const GROUND_RING_IDLE_INTENSITY = 0.35
 const GROUND_RING_HIGHLIGHT_INTENSITY = 1.1
 
+// Perf pass — a contact-shadow disc was added here during the art-direction
+// pass and then removed again during the follow-up performance pass: it was
+// confirmed (via live A/B screenshots) to be barely perceptible against this
+// scene's already-dark ground, while costing one extra draw call and geometry
+// buffer per NPC. Per the "spend geometry where the player can see it" rule,
+// that's not a good trade — cut rather than kept as invisible ornament.
+
 export interface NpcMarker3DProps {
   npcId: string
   districtId: string

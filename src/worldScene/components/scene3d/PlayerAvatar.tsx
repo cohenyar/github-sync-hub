@@ -27,6 +27,12 @@ import { getPlayerAvatarPreset } from '../../logic/playerAppearance'
 import { PLAYER_PELVIS_HEIGHT, PlayerCharacter, usePlayerJointRefs } from './PlayerCharacter'
 import { useWasdInput } from './useWasdInput'
 
+// Perf pass — see NpcMarker3D.tsx's own comment: a contact-shadow disc was
+// added here during the art-direction pass and removed again during the
+// follow-up performance pass after confirming (live A/B screenshots) it was
+// barely perceptible against this scene's already-dark ground, for the cost
+// of one extra draw call and geometry buffer per instance.
+
 export interface PlayerAvatarProps {
   initialPosition: Position2D
   districts: readonly DistrictPoint[]
@@ -96,7 +102,26 @@ export function PlayerAvatar({
   const pulseStateRef = useRef<PulseState>({ isPlaying: false, elapsed: 0 })
   const lastPulseTokenRef = useRef(interactionPulseToken)
 
-  useFrame((state, delta) => {
+  useFrame((state, rawDelta) => {
+    // Remount/perf-regression pass — clamp the per-frame timestep before
+    // it drives any movement/animation math. R3F's delta is real elapsed
+    // wall-clock time since the last frame; a single slow frame (GC pause,
+    // shader/buffer setup after a scene remount, tab throttling) can
+    // legitimately spike to hundreds of milliseconds, injecting a
+    // correspondingly oversized position jump if left unclamped — measured
+    // directly in this environment: frame deltas up to 333ms right after a
+    // remount (vs ~16ms at 60fps). But this environment's normal (not
+    // pathological) frame pace during ordinary play, under software-
+    // rendered WebGL, also runs measurably slower than a typical 60fps
+    // target (100-133ms/frame observed during a plain walk) — a naive low
+    // clamp (e.g. 1/20s = 50ms) would silently truncate those *legitimate*
+    // slow frames too, undercounting real elapsed time and making the
+    // player travel measurably less distance than intended for a given
+    // hold duration. 1/6s (~167ms) sits above every frame measured during
+    // normal play here, so it never touches ordinary operation, while
+    // still catching the genuinely pathological post-remount spikes.
+    // Speed/feel during ordinary play is completely unaffected either way.
+    const delta = Math.min(rawDelta, 1 / 6)
     const heldInput = mergeMovementInput(inputRef.current, touchInputRef?.current)
 
     if (isMovementEnabled) {

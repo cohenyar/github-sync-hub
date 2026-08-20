@@ -28,6 +28,7 @@ import { LearningPlazaProps } from './scene3d/LearningPlazaProps'
 import { SkyDome } from './scene3d/SkyDome'
 import { NpcMarker3D } from './scene3d/NpcMarker3D'
 import { PathNetwork } from './scene3d/PathNetwork'
+import { PlaygroundArea } from './scene3d/PlaygroundArea'
 import { PlayerAvatar } from './scene3d/PlayerAvatar'
 import { SceneCamera } from './scene3d/SceneCamera'
 import { TeacherNpcAccents } from './scene3d/TeacherNpcAccents'
@@ -247,6 +248,17 @@ export function WorldScene3D({
         <directionalLight color="#ffdca8" position={[4, 14, 6]} intensity={1.05} />
         <directionalLight color="#7ea0c9" position={[-8, 6, -10]} intensity={0.25} />
 
+        {/* Lighting hierarchy pass — a fourth, purely local light: a faint
+            violet point light hovering over the Records Core/Signal Beacon
+            (which sits between the district marker at {0,0} and the Core
+            Archive building at {0,4}), so the plaza's own light source
+            visually motivates the Core's signature glow instead of every
+            building being lit only by the shared sun/rim pair above. Low
+            intensity and a short distance/decay keep it a local wash, not a
+            second key light — no shadow-casting, matching every other light
+            in this scene. */}
+        <pointLight color="#9d7bff" position={[0, 3, 1.6]} intensity={2.2} distance={7} decay={2} />
+
         {/* Background color + fog give the scene actual air: the
             BackgroundSkyline ring now fades into the sky instead of
             stopping at a hard silhouette edge, and everything at the far
@@ -267,6 +279,7 @@ export function WorldScene3D({
         <SouthCommunityHall />
         <EastTradingPost />
         <TownProps />
+        <PlaygroundArea />
 
         {/* Batch 3A.2 — the new Central Plaza's two learning buildings. Not
             gated by unlock/NPC state, same as every other building above. */}

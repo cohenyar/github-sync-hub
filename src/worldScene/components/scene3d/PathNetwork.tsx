@@ -132,7 +132,16 @@ function Road({ points, y }: { points: RoadPoint[]; y: number }) {
 }
 
 const CURB_COLOR = '#6b6455'
+// A lighter inlay tone for the thin inner ring below — one step lighter/
+// warmer than the outer curb so it reads as a second course of paving
+// stone, not a duplicate of the same rim.
+const CURB_INNER_COLOR = '#948c76'
 const PLAZA_RADIUS = 4.2
+// Sits right where the lit-plaza pad's own edge-fade begins (smoothstep
+// starts at 0.88 × 4.2 ≈ 3.7 — see useLitPlazaGeometry below), so the inlay
+// visually caps the start of that fade instead of floating over the middle
+// of the plaza or sitting flush against the outer curb.
+const CURB_INNER_RADIUS = 3.8
 
 /**
  * A low stone curb along the plaza's true outer edge — the "the town is
@@ -143,13 +152,25 @@ const PLAZA_RADIUS = 4.2
  * clear. A torus lying flat needs rotation.x = PI/2; the OPPOSITE mistake
  * (an unrotated torus reading as a vertical ring) was the sandbox archway
  * bug — here the flat orientation is the one actually wanted.
+ *
+ * Ground/path richness pass: a second, thinner inlay ring just inside the
+ * outer curb — a cheap two-tier paving detail real civic plazas use, rather
+ * than one flat rim doing all the work. Thin tube radius and a close-by
+ * radius keep it a quiet accent, not a second curb competing with the
+ * first.
  */
 function PlazaCurb() {
   return (
-    <mesh position={[0, 0.09, 0]} rotation={[Math.PI / 2, 0, 0]}>
-      <torusGeometry args={[PLAZA_RADIUS, 0.09, 8, 48]} />
-      <meshStandardMaterial color={CURB_COLOR} flatShading />
-    </mesh>
+    <>
+      <mesh position={[0, 0.09, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[PLAZA_RADIUS, 0.09, 8, 48]} />
+        <meshStandardMaterial color={CURB_COLOR} flatShading />
+      </mesh>
+      <mesh position={[0, 0.05, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[CURB_INNER_RADIUS, 0.035, 6, 48]} />
+        <meshStandardMaterial color={CURB_INNER_COLOR} flatShading />
+      </mesh>
+    </>
   )
 }
 

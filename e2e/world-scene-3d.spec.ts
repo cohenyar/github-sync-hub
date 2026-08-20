@@ -951,6 +951,17 @@ test.describe('Meridian 1.0 closeout: auto-save on leaving /world', () => {
     await page.keyboard.down('KeyA')
     await page.waitForTimeout(900)
     await page.keyboard.up('KeyA')
+    // Same settle-wait walkToMathTeacher already does for the first walk above
+    // (line ~914) — without it, pressing E races the proximity state's own
+    // north-warden -> null -> math-teacher transition (a real, correct gap
+    // between the two NPCs' interaction radii, confirmed via direct
+    // instrumentation of PlayerAvatar's onNearestInteractableChange/
+    // WorldScene3D's handleInteract): whichever side of that transition E
+    // happens to land on is a coin flip tied to animation-frame timing, not a
+    // gameplay defect. A real player always sees the prompt update before
+    // acting on it; this makes the test do the same instead of pressing E in
+    // the same instant as the final key-up.
+    await expect(page.getByTestId('interaction-prompt')).toHaveAttribute('data-interactable-id', 'math-teacher')
     await page.keyboard.press('KeyE')
 
     // d. Completion remains persisted.

@@ -9,6 +9,20 @@ function groundHash(x: number, y: number): number {
 }
 
 /**
+ * A second, coarser hash sampled at a much lower frequency than groundHash
+ * above (and a different magic-number seed, so the two never visibly line
+ * up) — broad, soft patches of hue/saturation variation layered under the
+ * existing fine per-vertex lightness jitter. Two scales of variation read as
+ * unevenly weathered stone; one scale alone reads as uniform grain no matter
+ * how strong. Still color-only, same as the mottle it complements — no
+ * geometry, no height change.
+ */
+function groundHashCoarse(x: number, y: number): number {
+  const v = Math.sin(x * 2.1 + y * 3.7 + 11.3) * 24634.6345
+  return v - Math.floor(v)
+}
+
+/**
  * The plaza floor — flat-shaded, no texture. A per-vertex color gradient
  * (warmer near the Core at the center, cooling toward the districts at the
  * edges) gives the floor its own sense of depth independent of camera
@@ -35,7 +49,12 @@ function useGroundGeometry() {
       const t = THREE.MathUtils.clamp(Math.sqrt(x * x + y * y) / 16, 0, 1)
       const c = warm.clone().lerp(cool, t)
       const mottle = (groundHash(x, y) - 0.5) * 0.05
-      c.offsetHSL(0, 0, mottle)
+      // Coarse hash re-centered to -1..1 so it can drive a small hue/
+      // saturation swing (patches leaning slightly warmer or cooler,
+      // slightly more or less saturated) alongside the fine lightness
+      // jitter above — richer mottling, still no new geometry or texture.
+      const coarse = (groundHashCoarse(x, y) - 0.5) * 2
+      c.offsetHSL(coarse * 0.015, coarse * 0.05, mottle)
       colors[i * 3] = c.r
       colors[i * 3 + 1] = c.g
       colors[i * 3 + 2] = c.b
