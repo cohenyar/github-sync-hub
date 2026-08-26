@@ -68,10 +68,11 @@ test.describe('First Mission UX pass — difficulty persistence and Settings', (
     await page.getByTestId('difficulty-level-2-button').click()
     await expect(page.getByTestId('difficulty-level-2-button')).toHaveAttribute('aria-checked', 'true')
 
-    // Difficulty selection doesn't close the popover (see file header); Save does.
-    await page.getByTestId('save-button').click()
-    await expect(page.getByTestId('saved-confirmation')).toBeVisible()
-
+    // Pre-presentation cleanup — the manual Save button was removed from
+    // the Settings menu; a real page.reload() is a genuine browser
+    // navigation, firing the same 'pagehide' event GameApp's own
+    // auto-save-on-leaving-world effect already listens for, so this still
+    // exercises the real persistence path end to end without it.
     await page.reload()
     await openSettingsMenu(page)
     await expect(page.getByTestId('difficulty-level-2-button')).toHaveAttribute('aria-checked', 'true')
@@ -92,24 +93,14 @@ test.describe('First Mission UX pass — difficulty persistence and Settings', (
     await questionFeedbackIsPass(page)
   })
 
-  test('Save/Load round-trips the chosen difficulty level', async ({ page }) => {
-    await page.goto('/world')
-    await openSettingsMenu(page)
-    await page.getByTestId('difficulty-level-3-button').click()
-    // The menu is still open here (difficulty selection doesn't close it) —
-    // Save does, via its own one-shot runAndClose.
-    await page.getByTestId('save-button').click()
-    await expect(page.getByTestId('saved-confirmation')).toBeVisible()
-
-    await openSettingsMenu(page)
-    await page.getByTestId('difficulty-level-1-button').click()
-    await expect(page.getByTestId('difficulty-level-1-button')).toHaveAttribute('aria-checked', 'true')
-    // Menu is still open (same reason) — Load closes it after loading.
-    await page.getByTestId('load-button').click()
-
-    await openSettingsMenu(page)
-    await expect(page.getByTestId('difficulty-level-3-button')).toHaveAttribute('aria-checked', 'true')
-  })
+  // Pre-presentation cleanup — the manual Save/Load round-trip test that
+  // lived here was removed: it specifically exercised reverting live,
+  // unsaved in-session changes back to the last save WITHOUT a page
+  // reload, a scenario with no reachable UI path once the manual Load
+  // button is gone. The underlying persistence guarantee (does a save
+  // survive and correctly restore) remains covered above ("persists across
+  // a real reload") and at the service level (gameSaveService.test.ts),
+  // unweakened.
 
   // difficultyLevel is a learning-preference setting, not gameplay
   // progression — New Game resets missions/lessons/campaign progress but

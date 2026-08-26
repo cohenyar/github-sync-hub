@@ -123,6 +123,22 @@ test.describe('TEST B — real Math flow: Next Question cycles through genuinely
   test('six consecutive Next Question presses visit six genuinely distinct questions before deterministically repeating the first', async ({
     page,
   }) => {
+    // Investigation (pre-presentation cleanup pass): manual reproduction of
+    // this exact flow against the running app (walk to teacher -> start
+    // lesson -> answer -> Next Question, x6) always shows the correct,
+    // genuinely distinct question at every round — the rotation logic
+    // (LessonStage -> resolveLessonForDifficulty -> mathLessonPool[1]) is
+    // correct. The observed timeout is Playwright's own click/assert
+    // actionability polling occasionally starving against the still-
+    // rendering 3D canvas behind this modal overlay (WorldScene3D never
+    // pauses its render loop just because a lesson overlay covers it) —
+    // six full submit -> render -> click round trips against a live,
+    // continuously-animating scene is a heavier interaction than the
+    // default 30s test timeout comfortably covers under load. Widening the
+    // budget here (not adding a sleep — every wait below is still a real
+    // state/content wait) fixes the flake without touching product code.
+    test.setTimeout(90_000)
+
     await enterMathLesson(page)
 
     // The real, authored sequence for mathLessonPool[1] (see

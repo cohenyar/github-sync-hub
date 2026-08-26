@@ -60,8 +60,11 @@ describe('Save/Load restores world and progress across a simulated reload', () =
     await waitFor(() => expect(screen.getByText(/"signal": 100/)).toBeInTheDocument())
     await waitFor(() => expect(screen.getByText(`${he.progressLabelPrefix}${expectedPercentage}%`)).toBeInTheDocument())
 
-    ensureSettingsMenuOpen()
-    fireEvent.click(screen.getByTestId('save-button'))
+    // Pre-presentation cleanup — the manual Save button was removed from
+    // the Settings menu; unmount() alone still triggers a real save via
+    // GameApp's own auto-save-on-leaving-world effect cleanup (the exact
+    // same saveCurrentGame call the button used to trigger directly), so
+    // this test keeps exercising the genuine persistence round trip.
     first.unmount()
 
     // A brand new App instance starts from the same fresh initial state a
@@ -85,14 +88,11 @@ describe('Save/Load restores world and progress across a simulated reload', () =
     ).toBeInTheDocument()
   })
 
-  it('does nothing when Load is clicked with no save present', async () => {
-    renderGameApp()
-    switchToClassicDashboard()
-
-    expect(screen.getByText(`${he.progressLabelPrefix}0%`)).toBeInTheDocument()
-    ensureSettingsMenuOpen()
-    fireEvent.click(screen.getByTestId('load-button'))
-
-    expect(screen.getByText(`${he.progressLabelPrefix}0%`)).toBeInTheDocument()
-  })
+  // Pre-presentation cleanup — the manual Load button was removed from the
+  // Settings menu (its "no save present -> no-op" behavior is still fully
+  // covered at the service level, unweakened: see
+  // gameSaveService.test.ts's "returns null when nothing has been saved
+  // yet"). Load-on-boot itself (the only load path left) already relies on
+  // the same loadCurrentGame returning null for a fresh game, exercised by
+  // every other test in this suite that boots with no prior save.
 })

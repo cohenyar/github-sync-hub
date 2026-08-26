@@ -70,23 +70,6 @@ describe('Meridian 1.0 closeout — auto-save on leaving /world (unmount)', () =
     expect(screen.getByText(`${he.progressLabelPrefix}${expectedPercentage}%`)).toBeInTheDocument()
   })
 
-  it('does not affect the manual Save button — it keeps working exactly as before', async () => {
-    const first = renderClassicDashboard()
-
-    ensureSettingsMenuOpen()
-    fireEvent.click(screen.getByTestId('save-button'))
-    expect(await screen.findByTestId('saved-confirmation')).toBeInTheDocument()
-
-    // Option 0 (אוגוסטוס) is the correct answer for First Contact.
-    submitMultipleChoiceAnswer(0)
-    await screen.findByText(he.exerciseCorrectFeedback)
-    first.unmount()
-
-    renderClassicDashboard()
-    const expectedPercentage = Math.round(100 / missionRegistry.length)
-    expect(screen.getByText(`${he.progressLabelPrefix}${expectedPercentage}%`)).toBeInTheDocument()
-  })
-
   it('does not throw or warn when unmounted immediately after mount, before any progress exists', () => {
     const first = renderClassicDashboard()
     expect(() => first.unmount()).not.toThrow()

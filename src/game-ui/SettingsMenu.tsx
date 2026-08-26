@@ -28,12 +28,9 @@ function blurOnPointerActivation(handler: () => void) {
 }
 
 export interface SettingsMenuProps {
-  justSaved: boolean
   confirmingNewGame: boolean
   showWorldScene: boolean
   isMuted: boolean
-  onSave: () => void
-  onLoad: () => void
   onRequestNewGame: () => void
   onConfirmNewGame: () => void
   onCancelNewGame: () => void
@@ -58,8 +55,6 @@ export function SettingsMenu({
   confirmingNewGame,
   showWorldScene,
   isMuted,
-  onSave,
-  onLoad,
   onRequestNewGame,
   onConfirmNewGame,
   onCancelNewGame,
@@ -174,24 +169,14 @@ export function SettingsMenu({
             </div>
           </div>
 
-          <Button
-            variant="ghost"
-            size="md"
-            data-testid="save-button"
-            onClick={runAndClose(onSave)}
-            leadingIcon={<span aria-hidden>💾</span>}
-          >
-            {he.save}
-          </Button>
-          <Button
-            variant="ghost"
-            size="md"
-            data-testid="load-button"
-            onClick={runAndClose(onLoad)}
-            leadingIcon={<span aria-hidden>📂</span>}
-          >
-            {he.load}
-          </Button>
+          {/* Pre-presentation cleanup — Save/Load's manual UI entry points
+              were removed here (unreliable in the real preview build). The
+              underlying persistence architecture (src/persistence/*,
+              GameApp.tsx's own auto-save-on-leaving-world effect, and
+              load-on-boot) is untouched and can back a restored control
+              here later; only this menu's two buttons and their GameApp-
+              level wiring (handleSave/handleLoad/justSaved/eventBanner)
+              were removed as UI-only dead ends. */}
 
           {confirmingNewGame ? (
             <span className={styles.confirmPrompt} data-testid="reset-confirm-prompt">

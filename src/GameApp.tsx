@@ -80,11 +80,9 @@ import {
   getCompanionNpc,
   getDistrictIdForMission,
   JourneyHeader,
-  loadBanner,
   MissionStage,
   NotificationsRail,
   QuestTrack,
-  saveBanner,
   WorldMapPanel,
 } from './game-ui'
 
@@ -122,16 +120,9 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
   // Raw world-state JSON is a debug view, not something a player needs to
   // see by default — collapsed until explicitly opened.
   const [showDebug, setShowDebug] = useState(false)
-  // Transient "Saved." confirmation and the New Game confirmation step are
-  // both pure UI state — nothing here touches persistence or progression.
-  const [justSaved, setJustSaved] = useState(false)
+  // The New Game confirmation step is pure UI state — nothing here touches
+  // persistence or progression.
   const [confirmingNewGame, setConfirmingNewGame] = useState(false)
-  // Transient Save/Load feedback shown in the notifications rail. The recent
-  // *game* events shown alongside it are derived directly from odinHistory
-  // (see recentNotifications below) — no new event system, no subscription.
-  // bannerNonceRef just gives Save/Load banners a unique key.
-  const [eventBanner, setEventBanner] = useState<GameEventBannerModel | null>(null)
-  const bannerNonceRef = useRef(0)
   // Which NPC's bio is open, if any — session-scoped UI state, same as
   // showDebug/confirmingNewGame. Not part of SaveGame.
   const [selectedNpcId, setSelectedNpcId] = useState<string | null>(null)
@@ -158,12 +149,6 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
   // so it can never disagree with what's actually saved.
   const [showWelcomeScreen, setShowWelcomeScreen] = useState(true)
   const [showProfileEditor, setShowProfileEditor] = useState(false)
-  const savedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  useEffect(() => {
-    return () => {
-      if (savedTimeoutRef.current) clearTimeout(savedTimeoutRef.current)
-    }
-  }, [])
   // Which mission is loaded in the SQL console — session-scoped UI state,
   // not part of SaveGame (Save/Load persists world/progress only, same as
   // before Step 28). useMissionManager already resets its own runtime and
@@ -297,11 +282,10 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
 
   // Meridian 1.0 closeout: auto-saves whenever the player leaves /world, so
   // a lesson (or mission) completion they already saw acknowledged isn't
-  // silently lost just because they didn't press the manual Save button
-  // first. Reuses the exact same saveCurrentGame the Save button calls
-  // (same format, no new persisted shape); the manual button and its
-  // "Saved." confirmation are completely untouched — this never calls
-  // setJustSaved/setEventBanner, so it has no visible UI side effect.
+  // silently lost. Pre-presentation cleanup — this is now the only save
+  // trigger left in the running app (the manual Save/Load buttons and their
+  // GameApp-level wiring were removed as unreliable UI entry points); this
+  // effect and saveCurrentGame itself are untouched and unaffected.
   //
   // There is no in-app link from /world back to /dashboard (the Dashboard
   // is only reached by the browser's own Back button or the address bar),
@@ -344,33 +328,15 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
     setUnlockReactionHandler(() => createUnlockReactionHandler(gameEventBus, () => playerProgressRef.current))
   }
 
-  // Save/Load/New Game only ever go through the persistence service's
-  // saveCurrentGame/loadCurrentGame/clearSavedGame — this component has no
-  // idea localStorage exists.
-  function handleSave() {
-    saveCurrentGame(world, playerProgress)
-
-    setJustSaved(true)
-    bannerNonceRef.current += 1
-    setEventBanner(saveBanner(bannerNonceRef.current))
-    if (savedTimeoutRef.current) clearTimeout(savedTimeoutRef.current)
-    savedTimeoutRef.current = setTimeout(() => setJustSaved(false), 2000)
-  }
-
-  function handleLoad() {
-    const saved = loadCurrentGame()
-    if (!saved) return
-
-    setWorld(saved.world)
-    restoreProgress(saved.playerProgress)
-    resetUnlockBaseline(saved.playerProgress)
-    // Same staleness fix as the boot-time initializer above: without this,
-    // Load silently reopens whatever mission happened to be in the console
-    // before, not the loaded save's own current mission.
-    setActiveMissionId(saved.playerProgress.campaignProgress.currentMissionId ?? getDefaultMission().id)
-    bannerNonceRef.current += 1
-    setEventBanner(loadBanner(bannerNonceRef.current))
-  }
+  // Pre-presentation cleanup — the manual Save/Load UI entry points (and
+  // their GameApp-level handleSave/handleLoad wiring) were removed as
+  // unreliable in the real preview build; New Game still only ever goes
+  // through the persistence service's clearSavedGame below — this
+  // component has no idea localStorage exists beyond that. saveCurrentGame/
+  // loadCurrentGame remain imported and in active use elsewhere
+  // (auto-save-on-leaving-world and load-on-boot, both untouched), so the
+  // underlying save/load architecture a restored manual control would need
+  // is fully intact.
 
   // New Game is destructive, so the header only ever wires it up behind an
   // explicit confirmation step — this function is the actual reset.
@@ -760,12 +726,9 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
         explorerRank={explorerRank}
         archivePageCount={collectedArchivePages.length}
         onToggleArchivePages={() => setShowArchivePages((current) => !current)}
-        justSaved={justSaved}
         confirmingNewGame={confirmingNewGame}
         showWorldScene={showWorldScene}
         isMuted={isMuted}
-        onSave={handleSave}
-        onLoad={handleLoad}
         onRequestNewGame={() => setConfirmingNewGame(true)}
         onConfirmNewGame={handleConfirmNewGame}
         onCancelNewGame={() => setConfirmingNewGame(false)}
@@ -891,11 +854,11 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
             />
           }
           notifications={
-            <NotificationsRail
-              transient={eventBanner}
-              recent={recentNotifications}
-              onDismiss={() => setEventBanner(null)}
-            />
+            // transient was exclusively the Save/Load confirmation banner
+            // (see the removed handleSave/handleLoad above) — always null
+            // now that those UI entry points are gone; onDismiss is a
+            // no-op for the same reason. recent (Odin-derived) is unaffected.
+            <NotificationsRail transient={null} recent={recentNotifications} onDismiss={() => {}} />
           }
           worldMap={
             <WorldMapPanel

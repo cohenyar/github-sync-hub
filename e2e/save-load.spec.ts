@@ -33,10 +33,11 @@ test.describe('Save/Load and load-on-boot persist world and progress across a re
     await expect(page.getByTestId('progress-badge')).toHaveAttribute('data-percentage', '17')
     await expect(page.getByText(/"signal": 100/)).toBeVisible()
 
-    await page.getByTestId('settings-menu-button').click()
-    await page.getByTestId('save-button').click()
-    await expect(page.getByTestId('saved-confirmation')).toBeVisible()
-
+    // Pre-presentation cleanup — the manual Save button was removed from
+    // the Settings menu; page.reload() is a genuine browser navigation,
+    // firing the same 'pagehide' event GameApp's own
+    // auto-save-on-leaving-world effect already listens for, so this still
+    // exercises the real persistence path end to end without it.
     await page.reload()
     await waitForQuestionPanel(page)
     await openDebugView(page)

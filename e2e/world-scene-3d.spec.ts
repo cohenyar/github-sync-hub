@@ -721,7 +721,7 @@ test.describe('Batch 3A.3: teacher NPC interaction reliability', () => {
     await expect(page.getByTestId('lesson-success-message')).toBeVisible()
   })
 
-  test('completedLessonIds persists through Save and a full page reload', async ({ page }) => {
+  test('completedLessonIds persists through a full page reload', async ({ page }) => {
     await page.goto('/world')
     await walkToMathTeacher(page)
     await page.keyboard.press('KeyE')
@@ -731,13 +731,11 @@ test.describe('Batch 3A.3: teacher NPC interaction reliability', () => {
     await expect(page.getByTestId('lesson-success-message')).toBeVisible()
     await page.getByTestId('lesson-return-to-world-button').click()
 
-    // Save happens from the classic dashboard, same as every other Save/Load test in this codebase.
-    await page.getByTestId('settings-menu-button').click()
-    await page.getByTestId('toggle-world-scene-button').click()
-    await page.getByTestId('settings-menu-button').click()
-    await page.getByTestId('save-button').click()
-    await expect(page.getByTestId('saved-confirmation')).toBeVisible()
-
+    // Pre-presentation cleanup — the manual Save button was removed from
+    // the Settings menu; page.reload() is a genuine browser navigation,
+    // firing the same 'pagehide' event GameApp's own
+    // auto-save-on-leaving-world effect already listens for, so this still
+    // exercises the real persistence path end to end without it.
     await page.reload()
 
     await walkToMathTeacher(page)
@@ -971,14 +969,11 @@ test.describe('Meridian 1.0 closeout: auto-save on leaving /world', () => {
     await expect(page.getByTestId('npc-dialogue-start-lesson-button')).toContainText('תרגל/י שוב')
   })
 
-  test('does not interfere with the manual Save button or its confirmation', async ({ page }) => {
-    await page.goto('/world')
-    await page.getByTestId('settings-menu-button').click()
-    await page.getByTestId('toggle-world-scene-button').click()
-    await page.getByTestId('settings-menu-button').click()
-    await page.getByTestId('save-button').click()
-    await expect(page.getByTestId('saved-confirmation')).toBeVisible()
-  })
+  // Pre-presentation cleanup — "does not interfere with the manual Save
+  // button or its confirmation" was removed: both were removed as
+  // unreliable UI entry points, so there is nothing left for auto-save to
+  // avoid interfering with. The auto-save mechanism itself is fully
+  // exercised by the test above.
 })
 
 test.describe('Meridian UI stability pass: game container size', () => {

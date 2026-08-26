@@ -250,8 +250,13 @@ describe('New Game reset', () => {
     await screen.findByText(he.exerciseCorrectFeedback)
     await waitFor(() => expect(screen.getByText(`${he.progressLabelPrefix}${ONE_MISSION_PERCENTAGE}%`)).toBeInTheDocument())
 
-    ensureSettingsMenuOpen()
-    fireEvent.click(screen.getByTestId('save-button'))
+    // Pre-presentation cleanup — the manual Save button was removed from
+    // the Settings menu; a direct saveCurrentGame call (already imported
+    // and used elsewhere in this file) establishes a real save to clear,
+    // so the "save was cleared too" assertion below stays meaningful
+    // rather than trivially true against an already-empty localStorage.
+    const preReset = completedFirstContactSave()
+    saveCurrentGame(preReset.world, preReset.playerProgress)
     newGame()
 
     await waitFor(() => expect(screen.getByText(`${he.progressLabelPrefix}0%`)).toBeInTheDocument())
@@ -302,8 +307,11 @@ describe('New Game reset', () => {
     submitMultipleChoiceAnswer(0) // אוגוסטוס — the correct answer
     await screen.findByText(he.exerciseCorrectFeedback)
 
-    ensureSettingsMenuOpen()
-    fireEvent.click(screen.getByTestId('save-button'))
+    // Pre-presentation cleanup — see the "clears the save and resets..."
+    // test above for why a direct saveCurrentGame call replaces the
+    // removed manual Save button here.
+    const preReset = completedFirstContactSave()
+    saveCurrentGame(preReset.world, preReset.playerProgress)
     newGame()
     await waitFor(() => expect(screen.getByText(`${he.progressLabelPrefix}0%`)).toBeInTheDocument())
 
@@ -343,7 +351,7 @@ describe('New Game reset', () => {
     }
     saveCurrentGame(createWorldState(initialDistricts), progress)
 
-    renderGameApp()
+    const rendered = renderGameApp()
     switchToClassicDashboard()
     expect(screen.getByTestId('quest-track-archive-pages-button')).toHaveTextContent(/1$/)
 
@@ -353,9 +361,11 @@ describe('New Game reset', () => {
 
     // Confirm the reset actually lands in a fresh save, not just this
     // render — these are both optional PlayerProgress fields a partial
-    // reset could silently leave behind.
-    ensureSettingsMenuOpen()
-    fireEvent.click(screen.getByTestId('save-button'))
+    // reset could silently leave behind. Pre-presentation cleanup — the
+    // manual Save button was removed; unmount() triggers the exact same
+    // saveCurrentGame call via GameApp's auto-save-on-leaving-world effect
+    // cleanup, reflecting the live post-reset state just as the button did.
+    rendered.unmount()
     const saved = JSON.parse(window.localStorage.getItem(SAVE_KEY)!)
     expect(saved.playerProgress.collectedArchivePageIds ?? []).toEqual([])
     expect(saved.playerProgress.npcFamiliarity ?? {}).toEqual({})
@@ -379,7 +389,7 @@ describe('New Game reset', () => {
     )
     saveCurrentGame(createWorldState(initialDistricts), progressed)
 
-    renderGameApp()
+    const rendered = renderGameApp()
     switchToClassicDashboard()
     ensureSettingsMenuOpen()
     expect(screen.getByTestId('difficulty-level-3-button')).toHaveAttribute('aria-checked', 'true')
@@ -395,7 +405,9 @@ describe('New Game reset', () => {
     expect(screen.getByTestId('difficulty-level-3-button')).toHaveAttribute('aria-checked', 'true')
     expect(screen.getByTestId('difficulty-level-1-button')).toHaveAttribute('aria-checked', 'false')
 
-    fireEvent.click(screen.getByTestId('save-button'))
+    // Pre-presentation cleanup — see the Archive Pages test above for why
+    // unmount() (auto-save-on-leaving-world) replaces the removed Save button.
+    rendered.unmount()
     const saved = JSON.parse(window.localStorage.getItem(SAVE_KEY)!)
     expect(saved.playerProgress.difficultyLevel).toBe(3)
     expect(saved.playerProgress.completedMissionIds).toEqual([])

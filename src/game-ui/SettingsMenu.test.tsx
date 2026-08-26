@@ -5,12 +5,9 @@ import { SettingsMenu, type SettingsMenuProps } from './SettingsMenu'
 
 function renderMenu(overrides: Partial<SettingsMenuProps> = {}) {
   const props: SettingsMenuProps = {
-    justSaved: false,
     confirmingNewGame: false,
     showWorldScene: true,
     isMuted: false,
-    onSave: vi.fn(),
-    onLoad: vi.fn(),
     onRequestNewGame: vi.fn(),
     onConfirmNewGame: vi.fn(),
     onCancelNewGame: vi.fn(),
@@ -28,16 +25,16 @@ describe('SettingsMenu', () => {
   it('starts closed, with none of its controls in the document', () => {
     renderMenu()
     expect(screen.getByTestId('settings-menu-button')).toHaveAttribute('aria-expanded', 'false')
-    expect(screen.queryByTestId('save-button')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('toggle-world-scene-button')).not.toBeInTheDocument()
   })
 
   it('opens on trigger click and closes again on a second click', () => {
     renderMenu()
     fireEvent.click(screen.getByTestId('settings-menu-button'))
-    expect(screen.getByTestId('save-button')).toBeInTheDocument()
+    expect(screen.getByTestId('toggle-world-scene-button')).toBeInTheDocument()
 
     fireEvent.click(screen.getByTestId('settings-menu-button'))
-    expect(screen.queryByTestId('save-button')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('toggle-world-scene-button')).not.toBeInTheDocument()
   })
 
   it('closes on Escape', () => {
@@ -49,28 +46,31 @@ describe('SettingsMenu', () => {
     expect(screen.queryByRole('menu')).not.toBeInTheDocument()
   })
 
-  it('closes after a real pointer click on Save (a completed action)', () => {
-    const onSave = vi.fn()
-    renderMenu({ onSave })
+  // Pre-presentation cleanup — these two used to exercise runAndClose via
+  // the (now-removed) Save button; Classic View goes through the exact
+  // same runAndClose wrapper, so the underlying pointer-vs-keyboard
+  // distinction stays fully covered.
+  it('closes after a real pointer click on Classic View (a completed action)', () => {
+    const onToggleWorldScene = vi.fn()
+    renderMenu({ onToggleWorldScene })
     fireEvent.click(screen.getByTestId('settings-menu-button'))
     // detail: 1 marks this as a genuine pointer click, not a keyboard
     // activation — see runAndClose's own detail check, mirroring
     // blurOnPointerActivation exactly. A plain fireEvent.click (detail: 0)
-    // must NOT close the menu; that case is covered by the "stays open"
-    // test above/below.
-    fireEvent.click(screen.getByTestId('save-button'), { detail: 1 })
+    // must NOT close the menu; that case is covered by the next test.
+    fireEvent.click(screen.getByTestId('toggle-world-scene-button'), { detail: 1 })
 
-    expect(onSave).toHaveBeenCalledTimes(1)
+    expect(onToggleWorldScene).toHaveBeenCalledTimes(1)
     expect(screen.queryByRole('menu')).not.toBeInTheDocument()
   })
 
-  it('does not close on a keyboard-sourced activation of Save, so Tab/Enter sequences keep working', () => {
-    const onSave = vi.fn()
-    renderMenu({ onSave })
+  it('does not close on a keyboard-sourced activation of Classic View, so Tab/Enter sequences keep working', () => {
+    const onToggleWorldScene = vi.fn()
+    renderMenu({ onToggleWorldScene })
     fireEvent.click(screen.getByTestId('settings-menu-button'))
-    fireEvent.click(screen.getByTestId('save-button'), { detail: 0 })
+    fireEvent.click(screen.getByTestId('toggle-world-scene-button'), { detail: 0 })
 
-    expect(onSave).toHaveBeenCalledTimes(1)
+    expect(onToggleWorldScene).toHaveBeenCalledTimes(1)
     expect(screen.getByRole('menu')).toBeInTheDocument()
   })
 
@@ -78,12 +78,9 @@ describe('SettingsMenu', () => {
     const onRequestNewGame = vi.fn()
     const { rerender } = render(
       <SettingsMenu
-        justSaved={false}
         confirmingNewGame={false}
         showWorldScene={true}
         isMuted={false}
-        onSave={vi.fn()}
-        onLoad={vi.fn()}
         onRequestNewGame={onRequestNewGame}
         onConfirmNewGame={vi.fn()}
         onCancelNewGame={vi.fn()}
@@ -100,12 +97,9 @@ describe('SettingsMenu', () => {
     // GameApp would now flip confirmingNewGame to true in response.
     rerender(
       <SettingsMenu
-        justSaved={false}
         confirmingNewGame={true}
         showWorldScene={true}
         isMuted={false}
-        onSave={vi.fn()}
-        onLoad={vi.fn()}
         onRequestNewGame={onRequestNewGame}
         onConfirmNewGame={vi.fn()}
         onCancelNewGame={vi.fn()}
@@ -160,7 +154,7 @@ describe('SettingsMenu', () => {
       expect(screen.getByTestId('difficulty-level-1-button')).toHaveAttribute('aria-checked', 'false')
     })
 
-    it('calls onSelectDifficulty with the chosen level, and never touches Save/Load/New Game', () => {
+    it('calls onSelectDifficulty with the chosen level, and never touches New Game', () => {
       const onSelectDifficulty = vi.fn()
       renderMenu({ difficultyLevel: 1, onSelectDifficulty })
       fireEvent.click(screen.getByTestId('settings-menu-button'))

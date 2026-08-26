@@ -15,12 +15,9 @@ function renderBar(overrides: Partial<Parameters<typeof GameControlBar>[0]> = {}
     explorerRank: DEFAULT_EXPLORER_RANK,
     archivePageCount: 0,
     onToggleArchivePages: vi.fn(),
-    justSaved: false,
     confirmingNewGame: false,
     showWorldScene: false,
     isMuted: false,
-    onSave: vi.fn(),
-    onLoad: vi.fn(),
     onRequestNewGame: vi.fn(),
     onConfirmNewGame: vi.fn(),
     onCancelNewGame: vi.fn(),
@@ -42,31 +39,31 @@ describe('GameControlBar — Bug A fix (stray focus double-fire on Enter)', () =
   it('blurs a button after a mouse-sourced click, so it cannot later re-activate on an unrelated Enter press', () => {
     const props = renderBar()
     openSettingsMenu()
-    const saveButton = screen.getByTestId('save-button')
+    const muteButton = screen.getByTestId('mute-toggle-button')
 
-    saveButton.focus()
-    expect(document.activeElement).toBe(saveButton)
+    muteButton.focus()
+    expect(document.activeElement).toBe(muteButton)
 
-    fireEvent.click(saveButton, { detail: 1 })
+    fireEvent.click(muteButton, { detail: 1 })
 
-    expect(props.onSave).toHaveBeenCalledTimes(1)
-    expect(document.activeElement).not.toBe(saveButton)
+    expect(props.onToggleMuted).toHaveBeenCalledTimes(1)
+    expect(document.activeElement).not.toBe(muteButton)
   })
 
   it('does not blur a button after a keyboard-sourced activation, preserving normal Tab+Enter/Space operation', () => {
     const props = renderBar()
     openSettingsMenu()
-    const saveButton = screen.getByTestId('save-button')
+    const muteButton = screen.getByTestId('mute-toggle-button')
 
-    saveButton.focus()
-    expect(document.activeElement).toBe(saveButton)
+    muteButton.focus()
+    expect(document.activeElement).toBe(muteButton)
 
     // Browsers report detail: 0 for a click synthesized by Enter/Space on a
     // focused button, as opposed to a real pointer click.
-    fireEvent.click(saveButton, { detail: 0 })
+    fireEvent.click(muteButton, { detail: 0 })
 
-    expect(props.onSave).toHaveBeenCalledTimes(1)
-    expect(document.activeElement).toBe(saveButton)
+    expect(props.onToggleMuted).toHaveBeenCalledTimes(1)
+    expect(document.activeElement).toBe(muteButton)
   })
 
   it('applies the same pointer-only blur behavior to every control-bar button', () => {
@@ -79,48 +76,6 @@ describe('GameControlBar — Bug A fix (stray focus double-fire on Enter)', () =
 
     expect(props.onToggleWorldScene).toHaveBeenCalledTimes(1)
     expect(document.activeElement).not.toBe(worldToggle)
-  })
-})
-
-describe('GameControlBar — "Saved." confirmation survives the settings menu closing', () => {
-  it('shows the confirmation even while the settings menu is closed', () => {
-    renderBar({ justSaved: true })
-    expect(screen.getByTestId('saved-confirmation')).toBeInTheDocument()
-    expect(screen.queryByRole('menu')).not.toBeInTheDocument()
-  })
-
-  it('keeps showing the confirmation after Save closes the popover it was clicked from', () => {
-    const props = {
-      explorerRank: DEFAULT_EXPLORER_RANK,
-      archivePageCount: 0,
-      onToggleArchivePages: vi.fn(),
-      justSaved: false,
-      confirmingNewGame: false,
-      showWorldScene: false,
-      isMuted: false,
-      onSave: vi.fn(),
-      onLoad: vi.fn(),
-      onRequestNewGame: vi.fn(),
-      onConfirmNewGame: vi.fn(),
-      onCancelNewGame: vi.fn(),
-      onToggleWorldScene: vi.fn(),
-      onToggleMuted: vi.fn(),
-      onEditProfile: vi.fn(),
-      onSelectDifficulty: vi.fn(),
-    }
-    const { rerender } = render(<GameControlBar {...props} />)
-    openSettingsMenu()
-    // detail: 1 marks this as a genuine pointer click — see SettingsMenu's
-    // runAndClose, which only closes the popover on a real pointer click
-    // (mirroring the existing blurOnPointerActivation convention), not on a
-    // plain fireEvent.click (detail: 0).
-    fireEvent.click(screen.getByTestId('save-button'), { detail: 1 })
-    expect(props.onSave).toHaveBeenCalledTimes(1)
-    expect(screen.queryByRole('menu')).not.toBeInTheDocument()
-
-    // GameApp would now set justSaved to true in response to onSave.
-    rerender(<GameControlBar {...props} justSaved />)
-    expect(screen.getByTestId('saved-confirmation')).toBeInTheDocument()
   })
 })
 
@@ -167,12 +122,9 @@ function renderBarWithAuth(authValue: AuthContextValue) {
     explorerRank: DEFAULT_EXPLORER_RANK,
     archivePageCount: 0,
     onToggleArchivePages: vi.fn(),
-    justSaved: false,
     confirmingNewGame: false,
     showWorldScene: false,
     isMuted: false,
-    onSave: vi.fn(),
-    onLoad: vi.fn(),
     onRequestNewGame: vi.fn(),
     onConfirmNewGame: vi.fn(),
     onCancelNewGame: vi.fn(),
@@ -238,7 +190,7 @@ describe('GameControlBar — persistent auth control (main-flow auth access)', (
     expect(screen.queryByTestId('auth-account')).not.toBeInTheDocument()
     // The rest of the control bar is completely unaffected.
     openSettingsMenu()
-    expect(screen.getByRole('button', { name: he.save })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: he.newGame })).toBeInTheDocument()
   })
 })
 
@@ -247,12 +199,9 @@ function barProps() {
     explorerRank: DEFAULT_EXPLORER_RANK,
     archivePageCount: 0,
     onToggleArchivePages: vi.fn(),
-    justSaved: false,
     confirmingNewGame: false,
     showWorldScene: false,
     isMuted: false,
-    onSave: vi.fn(),
-    onLoad: vi.fn(),
     onRequestNewGame: vi.fn(),
     onConfirmNewGame: vi.fn(),
     onCancelNewGame: vi.fn(),

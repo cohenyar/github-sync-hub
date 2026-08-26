@@ -44,14 +44,6 @@ export function GameControlBar(props: GameControlBarProps) {
       </HomeLink>
 
       <div className={styles.actionsCorner}>
-        {/* Lives here, not inside SettingsMenu — clicking Save closes that
-            popover (see SettingsMenu's runAndClose), which would otherwise
-            hide this confirmation in the same instant it appears. */}
-        {props.justSaved && (
-          <span className={styles.savedConfirmation} role="status" data-testid="saved-confirmation">
-            {he.saved}
-          </span>
-        )}
         {isAdmin && (
           <Link to="/admin" className={styles.adminButton} data-testid="global-admin-button">
             {he.navAdminLabel}
