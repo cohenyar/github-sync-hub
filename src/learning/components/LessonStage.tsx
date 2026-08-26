@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { he } from '../../i18n'
+import type { DifficultyLevel } from '../../progression/types'
+import { resolveLessonForDifficulty } from '../resolveLessonForDifficulty'
 import { isEnglishLesson, isMathLesson, type LessonConfig } from '../types'
 import { EnglishExercisePanel } from './EnglishExercisePanel'
 import { MathExercisePanel } from './MathExercisePanel'
@@ -9,6 +11,15 @@ export interface LessonStageProps {
   lesson: LessonConfig
   onResult: (pass: boolean) => void
   onReturnToWorld: () => void
+  /**
+   * Question-selection fix pass — optional so every existing caller/test
+   * that omits it keeps the exact original one-question behavior (no pool,
+   * no Next Question button, a fresh pass permanently shows the success
+   * screen). When provided, the lesson's own subject+difficulty pool (see
+   * ../questionPools/{math,english}.ts) drives which exercise shows, and a
+   * "Next Question" action appears after passing.
+   */
+  difficultyLevel?: DifficultyLevel
 }
 
 /**
@@ -24,16 +35,54 @@ export interface LessonStageProps {
  * (completedLessonIds) intentionally has no say over what this component
  * shows — a replay must behave exactly like the first attempt, so success
  * is shown only once the player actually passes again in this session.
+ *
+ * Question-selection fix pass — this used to be the ONE learning system with
+ * no difficulty/pool concept at all (see resolveLessonForDifficulty.ts's own
+ * doc comment); it's now brought up to the same subject/difficulty/Next-
+ * Question contract the Terminal mission system already has
+ * (QuestionAnswerPanel), reusing the identical edge-trigger completion guard
+ * (onResult(true) fires only on the session's first-ever pass, mirroring
+ * useQuestionMission's wasCompleted/nextCompleted pattern) so answering
+ * extra practice questions can never fire a second completion event. The
+ * question-slot seed lives entirely inside this component (not lifted to
+ * GameApp) since there is only one lesson per subject and GameApp always
+ * fully unmounts/remounts this component between lessons (activeLessonId
+ * cycles null -> id -> null -> id, never id -> a different id directly).
  */
-export function LessonStage({ lesson, onResult, onReturnToWorld }: LessonStageProps) {
-  const [justPassed, setJustPassed] = useState(false)
+export function LessonStage({ lesson, onResult, onReturnToWorld, difficultyLevel }: LessonStageProps) {
+  const [questionSlotSeed, setQuestionSlotSeed] = useState(0)
+  const [sessionCompleted, setSessionCompleted] = useState(false)
+  // Distinct from sessionCompleted: this is "did the CURRENTLY shown
+  // question just pass," reset by Next Question so a fresh question never
+  // shows a stale success screen — sessionCompleted, once true, never
+  // resets within this mount (mission/lesson completion is permanent for
+  // the session), exactly mirroring useQuestionMission's own
+  // completed/lastResult split.
+  const [lastPass, setLastPass] = useState<boolean | null>(null)
+
+  const resolvedLesson = difficultyLevel === undefined ? lesson : resolveLessonForDifficulty(lesson, difficultyLevel, questionSlotSeed)
 
   function handleResult(pass: boolean) {
-    onResult(pass)
-    if (pass) setJustPassed(true)
+    setLastPass(pass)
+    if (pass) {
+      const wasCompleted = sessionCompleted
+      setSessionCompleted(true)
+      if (!wasCompleted) onResult(true)
+    } else {
+      onResult(false)
+    }
   }
 
-  const showSuccess = justPassed
+  function handleNextQuestion() {
+    setQuestionSlotSeed((seed) => seed + 1)
+    setLastPass(null)
+  }
+
+  const showSuccess = lastPass === true
+  // Next Question only ever offered when a real pool is available — an
+  // omitted difficultyLevel (every existing test/caller) never renders it,
+  // so the success screen stays exactly as permanent as it always was.
+  const canShowNextQuestion = difficultyLevel !== undefined
 
   return (
     <div className={styles.overlay} role="dialog" data-testid="lesson-stage" data-lesson-id={lesson.id}>
@@ -67,10 +116,34 @@ export function LessonStage({ lesson, onResult, onReturnToWorld }: LessonStagePr
               <p className={styles.nextStepsMessage} data-testid="lesson-success-next-steps">
                 {he.lessonSuccessNextStepsMessage}
               </p>
+              {canShowNextQuestion && (
+                <button
+                  type="button"
+                  className={styles.nextQuestionButton}
+                  data-testid="lesson-next-question-button"
+                  onClick={handleNextQuestion}
+                >
+                  {he.nextQuestionCta}
+                </button>
+              )}
             </>
           )}
-          {!showSuccess && isMathLesson(lesson) && <MathExercisePanel lesson={lesson} onResult={handleResult} />}
-          {!showSuccess && isEnglishLesson(lesson) && <EnglishExercisePanel lesson={lesson} onResult={handleResult} />}
+          {/* Keyed on both the current pool slot AND difficultyLevel — either
+              one changing means genuinely different resolved content (same
+              lesson id), so either must force a fresh exercise-panel mount,
+              resetting its own local answer/verdict/hint state without
+              either panel needing a reset effect of its own. Difficulty is
+              included even though switching it while this stays mounted
+              isn't reachable through today's UI (Settings lives behind the
+              lesson overlay) — this is what the "difficulty change must
+              clear previous answer/feedback" contract actually requires if
+              that ever changes, and it costs nothing today. */}
+          {!showSuccess && isMathLesson(resolvedLesson) && (
+            <MathExercisePanel key={`${difficultyLevel}-${questionSlotSeed}`} lesson={resolvedLesson} onResult={handleResult} />
+          )}
+          {!showSuccess && isEnglishLesson(resolvedLesson) && (
+            <EnglishExercisePanel key={`${difficultyLevel}-${questionSlotSeed}`} lesson={resolvedLesson} onResult={handleResult} />
+          )}
         </div>
       </div>
     </div>

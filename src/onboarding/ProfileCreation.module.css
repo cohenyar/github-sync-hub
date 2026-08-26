@@ -3,8 +3,21 @@
   inset: 0;
   z-index: 60;
   display: flex;
+  /* Mobile viewport-accessibility fix — matches WelcomeScreen.module.css's
+     own .screen exactly. Without overflow-y: auto, a card taller than the
+     real (chrome-shrunk) mobile viewport had no way to scroll at all,
+     leaving the submit button permanently unreachable below the fold —
+     confirmed via a direct scrollHeight/clientHeight measurement. The
+     plain `center` fallback keeps every current browser's behavior
+     unchanged; `safe center` (Chrome 129+/Safari 16.4+/Firefox) then wins
+     where supported, so content that still overflows despite the new
+     scroll container starts from the top instead of clipping there — the
+     classic "centered flex content clips at the start" bug this keyword
+     exists to fix. */
   align-items: center;
+  align-items: safe center;
   justify-content: center;
+  overflow-y: auto;
   padding: var(--ds-space-6);
   background: radial-gradient(circle at 50% 20%, rgba(124, 156, 255, 0.14), transparent 60%), var(--ds-bg);
 }

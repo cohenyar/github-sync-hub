@@ -365,3 +365,44 @@ test.describe('Next Question layout audit — classic dashboard (tablet/desktop)
     })
   }
 })
+
+// Question-selection fix pass, round 2 — the NPC-teacher lesson flow's own
+// Next Question button (LessonStage/MathExercisePanel), the REAL,
+// most-discoverable Math flow a player reaches via the Math Academy
+// teacher, distinct from the Terminal's QuestionAnswerPanel tested above.
+test.describe('Lesson Next Question mobile audit — Math Academy teacher (390x844, touch)', () => {
+  test('Next Question is reachable and readable, and Return to World stays visible throughout', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto('/world')
+    await walkToMathTeacher(page)
+    await page.keyboard.press('KeyE')
+    await expect(page.getByTestId('npc-dialogue-start-lesson-button')).toBeVisible()
+    await page.getByTestId('npc-dialogue-start-lesson-button').click()
+    await expect(page.getByTestId('math-exercise-panel')).toBeVisible()
+
+    const returnButton = page.getByTestId('lesson-return-to-world-button')
+    await expect(returnButton).toBeVisible()
+
+    // mathLessonPool[1][0] is lesson:math-001 itself (see questionPools/math.ts).
+    await page.getByTestId('math-answer-input').fill('11')
+    await page.getByTestId('math-submit-button').click()
+    await expect(page.getByTestId('lesson-success-message')).toBeVisible()
+
+    expect(await hasNoHorizontalOverflow(page)).toBe(true)
+    await expect(returnButton).toBeVisible()
+
+    const nextButton = page.getByTestId('lesson-next-question-button')
+    await expect(nextButton).toBeVisible()
+    const box = await nextButton.boundingBox()
+    if (!box) throw new Error('missing bounding box for lesson-next-question-button')
+    expect(box.height).toBeGreaterThanOrEqual(44)
+    expect(box.x).toBeGreaterThanOrEqual(0)
+    expect(box.x + box.width).toBeLessThanOrEqual(390 + 1)
+
+    await nextButton.click()
+    await expect(page.getByTestId('lesson-success-message')).not.toBeVisible()
+    await expect(page.getByTestId('math-exercise-panel')).toBeVisible()
+    expect(await hasNoHorizontalOverflow(page)).toBe(true)
+    await expect(returnButton).toBeVisible()
+  })
+})

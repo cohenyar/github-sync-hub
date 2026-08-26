@@ -179,3 +179,102 @@ describe('LessonStage — return-to-world button is unique across every render s
     expect(onResult).toHaveBeenCalledTimes(1)
   })
 })
+
+describe('LessonStage — question-selection fix pass (difficultyLevel provided)', () => {
+  it('never renders a Next Question button when difficultyLevel is omitted, even after passing (every existing caller is unaffected)', () => {
+    render(<LessonStage lesson={MATH_LESSON} onResult={vi.fn()} onReturnToWorld={vi.fn()} />)
+    fireEvent.change(screen.getByTestId('math-answer-input'), { target: { value: '11' } })
+    fireEvent.click(screen.getByTestId('math-submit-button'))
+
+    expect(screen.getByTestId('lesson-success-message')).toBeInTheDocument()
+    expect(screen.queryByTestId('lesson-next-question-button')).not.toBeInTheDocument()
+  })
+
+  it('shows a Next Question button after passing once difficultyLevel is provided', () => {
+    render(<LessonStage lesson={MATH_LESSON} onResult={vi.fn()} onReturnToWorld={vi.fn()} difficultyLevel={1} />)
+    fireEvent.change(screen.getByTestId('math-answer-input'), { target: { value: '11' } })
+    fireEvent.click(screen.getByTestId('math-submit-button'))
+
+    expect(screen.getByTestId('lesson-success-message')).toBeInTheDocument()
+    expect(screen.getByTestId('lesson-next-question-button')).toBeInTheDocument()
+  })
+
+  it('clicking Next Question loads a genuinely different question, with the previous answer/hint/success state cleared', () => {
+    render(<LessonStage lesson={MATH_LESSON} onResult={vi.fn()} onReturnToWorld={vi.fn()} difficultyLevel={1} />)
+    // difficultyLevel resolves from the real mathLessonPool (subject-keyed,
+    // independent of this fixture's own instructions text) — capture
+    // whatever level-1/slot-0 actually renders rather than assuming it
+    // matches MATH_LESSON's own fixture text.
+    const firstQuestionText = screen.getByTestId('math-exercise-panel').textContent
+
+    fireEvent.change(screen.getByTestId('math-answer-input'), { target: { value: '11' } })
+    fireEvent.click(screen.getByTestId('math-submit-button'))
+    fireEvent.click(screen.getByTestId('lesson-next-question-button'))
+
+    // Back to the exercise panel, not the success screen.
+    expect(screen.queryByTestId('lesson-success-message')).not.toBeInTheDocument()
+    expect(screen.getByTestId('math-exercise-panel')).toBeInTheDocument()
+    // A genuinely different question.
+    expect(screen.getByTestId('math-exercise-panel').textContent).not.toBe(firstQuestionText)
+    // Fresh, unanswered exercise panel (a new key forces a real remount).
+    expect(screen.getByTestId('math-answer-input')).toHaveValue(null)
+  })
+
+  it('answering a Next Question practice round correctly never fires onResult again — mirrors useQuestionMission: a repeat pass fires neither onComplete nor onFailure', () => {
+    const onResult = vi.fn()
+    render(<LessonStage lesson={MATH_LESSON} onResult={onResult} onReturnToWorld={vi.fn()} difficultyLevel={1} />)
+
+    fireEvent.change(screen.getByTestId('math-answer-input'), { target: { value: '11' } })
+    fireEvent.click(screen.getByTestId('math-submit-button'))
+    expect(onResult).toHaveBeenCalledTimes(1)
+    expect(onResult).toHaveBeenNthCalledWith(1, true)
+
+    fireEvent.click(screen.getByTestId('lesson-next-question-button'))
+    // lesson-math-l1-b is "כמה זה 4 + 5?" -> 9 (see questionPools/math.ts).
+    fireEvent.change(screen.getByTestId('math-answer-input'), { target: { value: '9' } })
+    fireEvent.click(screen.getByTestId('math-submit-button'))
+
+    // Still exactly once overall — the session was already complete, so
+    // this second correct answer triggers no further onResult call at all
+    // (not even a redundant onResult(true)), matching useQuestionMission's
+    // own wasCompleted/nextCompleted edge trigger exactly.
+    expect(onResult).toHaveBeenCalledTimes(1)
+    expect(screen.getByTestId('lesson-success-message')).toBeInTheDocument()
+  })
+
+  it('a wrong answer on a practice question still calls onResult(false), without un-completing the lesson', () => {
+    const onResult = vi.fn()
+    render(<LessonStage lesson={MATH_LESSON} onResult={onResult} onReturnToWorld={vi.fn()} difficultyLevel={1} />)
+
+    fireEvent.change(screen.getByTestId('math-answer-input'), { target: { value: '11' } })
+    fireEvent.click(screen.getByTestId('math-submit-button'))
+    fireEvent.click(screen.getByTestId('lesson-next-question-button'))
+    fireEvent.change(screen.getByTestId('math-answer-input'), { target: { value: '999' } })
+    fireEvent.click(screen.getByTestId('math-submit-button'))
+
+    expect(onResult).toHaveBeenNthCalledWith(2, false)
+    // Still showing the exercise (failed), not a broken/success state.
+    expect(screen.getByTestId('math-exercise-panel')).toBeInTheDocument()
+    expect(screen.queryByTestId('lesson-next-question-button')).not.toBeInTheDocument()
+  })
+
+  it('cycles through genuinely distinct English words via Next Question, driven by the real englishLessonPool at Level 1', () => {
+    // Real content from questionPools/english.ts's level-1 pool: slot 0 is
+    // the original 5-item list (correctly answered here as dog/cat/house/
+    // book/water), slot 1 is a single word ("window").
+    render(<LessonStage lesson={ENGLISH_LESSON} onResult={vi.fn()} onReturnToWorld={vi.fn()} difficultyLevel={1} />)
+
+    expect(screen.getByTestId('english-answer-input-0')).toHaveAttribute('aria-label', expect.stringContaining('כלב'))
+    ;['dog', 'cat', 'house', 'book', 'water'].forEach((answer, index) => {
+      fireEvent.change(screen.getByTestId(`english-answer-input-${index}`), { target: { value: answer } })
+    })
+    fireEvent.click(screen.getByTestId('english-submit-button'))
+    expect(screen.getByTestId('lesson-success-message')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByTestId('lesson-next-question-button'))
+
+    // A genuinely different, single-word question — not the same 5-item batch.
+    expect(screen.queryByTestId('english-answer-input-1')).not.toBeInTheDocument()
+    expect(screen.getByTestId('english-answer-input-0')).toHaveAttribute('aria-label', expect.stringContaining('חלון'))
+  })
+})

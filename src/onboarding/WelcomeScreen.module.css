@@ -3,7 +3,14 @@
   inset: 0;
   z-index: 70;
   display: flex;
+  /* Mobile viewport-accessibility fix — see ProfileCreation.module.css's
+     own .screen for the full rationale (same pattern, applied here too):
+     `safe center` prevents this screen's sign-in actions from clipping at
+     the top on a real (chrome-shrunk) mobile viewport shorter than this
+     content's natural height. Plain `center` stays as the fallback for
+     browsers that don't support the keyword. */
   align-items: center;
+  align-items: safe center;
   justify-content: center;
   overflow-y: auto;
   padding: var(--ds-space-6);

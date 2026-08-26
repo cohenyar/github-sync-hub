@@ -864,6 +864,7 @@ function GameApp({ initialLearningPathId }: GameAppProps = {}) {
                   lesson={activeLesson}
                   onResult={(pass) => handleLessonResult(activeLesson.id, pass)}
                   onReturnToWorld={handleReturnFromLesson}
+                  difficultyLevel={difficultyLevel}
                 />
               )}
             </>

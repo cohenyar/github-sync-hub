@@ -164,6 +164,57 @@ test.describe('Onboarding — Welcome Screen auth state (bug-fix pass)', () => {
     expect(box.x).toBeGreaterThanOrEqual(0)
     expect(box.x + box.width).toBeLessThanOrEqual(412)
   })
+
+  // Question-selection fix pass, round 2 — the other required breakpoints,
+  // plus the Profile Creation screen right after Continue Journey (its own
+  // login-adjacent action: submitting a name/avatar/difficulty choice).
+  const REQUIRED_BREAKPOINTS = [
+    { name: '390x844', width: 390, height: 844 },
+    { name: '768x1024', width: 768, height: 1024 },
+    { name: '1280x800', width: 1280, height: 800 },
+  ] as const
+
+  for (const bp of REQUIRED_BREAKPOINTS) {
+    test(`${bp.name}: sign-in choice and Profile Creation submit are both visible and reachable`, async ({ page }) => {
+      await page.setViewportSize({ width: bp.width, height: bp.height })
+      await page.goto('/world')
+      await expect(page.getByTestId('welcome-screen')).toBeVisible()
+
+      const signInButton = page.getByTestId('welcome-google-signin-button')
+      await expect(signInButton).toBeVisible()
+      await signInButton.scrollIntoViewIfNeeded()
+      const signInBox = (await signInButton.boundingBox())!
+      expect(signInBox.height).toBeGreaterThanOrEqual(44)
+
+      await page.getByTestId('welcome-continue-button').click()
+      await expect(page.getByTestId('profile-creation-screen')).toBeVisible()
+      await page.getByTestId('profile-name-input').fill('בודק/ת')
+      // A real click, not just a bounding-box check — proves the button is
+      // genuinely reachable and interactive, not merely present in the DOM.
+      await page.getByTestId('profile-submit-button').click()
+      await expect(page.getByTestId('profile-creation-screen')).not.toBeVisible()
+    })
+  }
+
+  test('Profile Creation submit stays reachable via scroll even when the real (chrome-shrunk) mobile viewport is shorter than the card — the actual reported bug', async ({
+    page,
+  }) => {
+    // Real mobile browsers report a smaller effective height than the
+    // nominal device size once the address bar/home indicator are counted
+    // — Playwright's setViewportSize at the "official" breakpoints alone
+    // doesn't reproduce this, which is exactly why this specific gap
+    // (ProfileCreation.module.css's .screen had no overflow-y: auto, unlike
+    // WelcomeScreen's own identical container) went unnoticed until a real
+    // device/preview session hit it.
+    await page.setViewportSize({ width: 390, height: 500 })
+    await page.goto('/world')
+    await page.getByTestId('welcome-continue-button').click()
+    await expect(page.getByTestId('profile-creation-screen')).toBeVisible()
+
+    await page.getByTestId('profile-name-input').fill('בודק/ת')
+    await page.getByTestId('profile-submit-button').click({ timeout: 3000 })
+    await expect(page.getByTestId('profile-creation-screen')).not.toBeVisible()
+  })
 })
 
 test.describe('Onboarding — New Game brings the boot sequence back', () => {

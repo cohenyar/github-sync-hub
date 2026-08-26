@@ -76,6 +76,21 @@
   cursor: pointer;
 }
 
+/* Question-selection fix pass — same treatment as QuestionAnswerPanel's own
+   .nextQuestionButton (extra practice, never required — the lesson already
+   completed on the first correct answer). */
+.nextQuestionButton {
+  align-self: flex-start;
+  min-height: 44px;
+  padding: 8px 20px;
+  border-radius: 8px;
+  border: 1px solid var(--accent);
+  background: transparent;
+  color: var(--text);
+  font-weight: 600;
+  cursor: pointer;
+}
+
 @media (max-width: 479.98px) {
   .overlay {
     padding: 12px;
