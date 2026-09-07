@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { NavLink } from 'react-router-dom'
 import { AuthButton, useAuth } from '../auth'
 import { he } from '../i18n'
+import meridianIcon from '../assets/meridian-icon.png'
 import styles from './pages.module.css'
 
 // Phase 3A.1: trimmed to the routes that render real content. /courses,
@@ -33,7 +34,7 @@ export function PageShell({ children }: { children: ReactNode }) {
     <div className={styles.shell}>
       <nav className={styles.nav} aria-label={he.navLandingLabel}>
         <NavLink to="/" className={styles.brand} aria-label="Meridian" end>
-          <span aria-hidden className={styles.brandMark} />
+          <img aria-hidden src={meridianIcon} alt="" className={styles.brandMark} />
           <span className={styles.brandName}>Meridian</span>
         </NavLink>
         {NAV_LINKS.map((link) => (

@@ -38,7 +38,7 @@
   width: 22px;
   height: 22px;
   border-radius: 6px;
-  background: var(--accent);
+  object-fit: contain;
 }
 
 .brandName {

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { NavLink } from 'react-router-dom'
+import meridianIcon from '../../assets/meridian-icon.png'
 import styles from './AppShell.module.css'
 
 export interface AppShellNavItem {
@@ -28,7 +29,7 @@ export function AppShell({ navItems = [], actions, children }: AppShellProps) {
     <div className={styles.root}>
       <header className={styles.topbar}>
         <NavLink to="/" className={styles.brand} aria-label="מרידיאן">
-          <span aria-hidden className={styles.brandMark} />
+          <img aria-hidden src={meridianIcon} alt="" className={styles.brandMark} />
           <span>מרידיאן</span>
         </NavLink>
 

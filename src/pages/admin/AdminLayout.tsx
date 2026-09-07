@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, NavLink, Outlet } from 'react-router-dom'
 import { he } from '../../i18n'
+import meridianIcon from '../../assets/meridian-icon.png'
 import styles from './AdminLayout.module.css'
 
 const NAV_ITEMS = [
@@ -36,7 +37,7 @@ export function AdminLayout() {
           <span className={styles.menuBar} aria-hidden="true" />
         </button>
         <Link to="/" className={styles.brand} aria-label="Meridian">
-          <span aria-hidden className={styles.brandMark} />
+          <img aria-hidden src={meridianIcon} alt="" className={styles.brandMark} />
           <span className={styles.brandName}>Meridian</span>
         </Link>
         <span className={styles.title}>{he.adminAreaTitle}</span>

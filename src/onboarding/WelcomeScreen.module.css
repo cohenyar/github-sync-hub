@@ -81,6 +81,7 @@
 .brandLogo {
   block-size: 96px;
   inline-size: auto;
+  object-fit: contain;
   filter: drop-shadow(0 0 18px rgba(150, 110, 255, 0.45));
 }
 
