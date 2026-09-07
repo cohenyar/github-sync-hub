@@ -44,7 +44,7 @@
   inline-size: 28px;
   block-size: 28px;
   border-radius: 8px;
-  background: var(--ds-gradient-brand);
+  object-fit: contain;
   box-shadow: var(--ds-glow-accent);
 }
 

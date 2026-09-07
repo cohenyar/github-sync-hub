@@ -36,16 +36,22 @@
   color: inherit;
 }
 
-.brandMark {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  object-fit: cover;
+.brandLogo {
+  width: auto;
+  height: 72px;
+  object-fit: contain;
 }
 
 .brandName {
-  font-weight: 700;
-  font-size: 1.05rem;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .title {
