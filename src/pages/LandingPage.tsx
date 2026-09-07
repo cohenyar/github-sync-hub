@@ -6,6 +6,7 @@ import { he } from '../i18n'
 
 import { LandingAuth } from './LandingAuth'
 import heroArt from '../assets/landing-hero.webp'
+import meridianIcon from '../assets/meridian-icon.png'
 import styles from './LandingPage.module.css'
 
 /**
@@ -63,7 +64,7 @@ export function LandingPage() {
       <header className={styles.navWrap}>
         <div className={styles.navBar}>
           <Link to="/" className={styles.brand} aria-label="Meridian">
-            <span className={styles.brandMark}>M</span>
+            <img className={styles.brandMark} src={meridianIcon} alt="" aria-hidden />
             <span className={styles.brandName}>Meridian</span>
           </Link>
           <nav className={styles.navLinks} aria-label="ניווט ראשי">

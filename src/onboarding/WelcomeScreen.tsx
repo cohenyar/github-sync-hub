@@ -3,6 +3,7 @@ import { EmailPasswordForm, useOptionalAuth } from '../auth'
 import { he } from '../i18n'
 import { Button, HomeLink } from '../platform/ui'
 import { getPlayerAvatarPreset } from '../worldScene/logic/playerAppearance'
+import meridianLogo from '../assets/meridian-logo.png'
 import styles from './WelcomeScreen.module.css'
 
 export interface WelcomeScreenProps {
@@ -121,8 +122,8 @@ export function WelcomeScreen({
 
       <div className={styles.content}>
         <HomeLink className={styles.brand} ariaLabel="Meridian">
-          <span className={styles.brandMark} aria-hidden="true" />
-          <h1 className={styles.brandName}>Meridian</h1>
+          <img className={styles.brandLogo} src={meridianLogo} alt="" aria-hidden="true" />
+          <h1 className={styles.brandNameVisuallyHidden}>Meridian</h1>
         </HomeLink>
         <p className={styles.tagline}>{he.welcomeTagline}</p>
 
