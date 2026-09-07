@@ -5,6 +5,7 @@ import { AuthButton, useOptionalAuth } from '../auth'
 import { he } from '../i18n'
 import { HomeLink } from '../platform/ui'
 import { SettingsMenu, type SettingsMenuProps } from './SettingsMenu'
+import meridianIcon from '../assets/meridian-icon.png.asset.json'
 import styles from './GameControlBar.module.css'
 
 export interface GameControlBarProps extends SettingsMenuProps {
@@ -35,7 +36,7 @@ export function GameControlBar(props: GameControlBarProps) {
   return (
     <header className={styles.bar}>
       <HomeLink className={styles.brandCorner} ariaLabel="Meridian">
-        <span aria-hidden className={styles.brandMark} />
+        <img aria-hidden src={meridianIcon.url} alt="" className={styles.brandMark} />
         <span className={styles.brandName}>Meridian</span>
         <span className={styles.rankBadge} data-testid="explorer-rank-badge">
           {getExplorerRankLabel(props.explorerRank.tier)} · {props.explorerRank.completions}/

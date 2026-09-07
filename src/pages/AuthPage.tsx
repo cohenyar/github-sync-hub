@@ -4,6 +4,7 @@ import { useAuth } from '../auth'
 import { POST_AUTH_PATH_KEY } from '../auth/AuthProvider'
 import { he } from '../i18n'
 import { GoogleIcon } from '../auth/GoogleIcon'
+import meridianIcon from '../assets/meridian-icon.png.asset.json'
 import styles from './AuthPage.module.css'
 
 /** Same-origin relative path only — never an absolute or protocol URL. */
@@ -249,7 +250,7 @@ export function AuthPage() {
     <main className={styles.page} dir="rtl">
       <section className={styles.card} aria-labelledby="auth-title" data-testid="auth-page">
         <Link to="/" className={styles.brand} aria-label="Meridian" data-testid="auth-brand-link">
-          <span aria-hidden className={styles.brandMark} />
+          <img aria-hidden src={meridianIcon.url} alt="" className={styles.brandMark} />
           <span className={styles.brandName}>Meridian</span>
         </Link>
         <h1 className={styles.title} id="auth-title">

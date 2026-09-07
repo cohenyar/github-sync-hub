@@ -76,21 +76,30 @@
   color: inherit;
 }
 
-.brandMark {
-  inline-size: 56px;
-  block-size: 56px;
-  border-radius: var(--ds-radius-lg);
-  background: var(--ds-gradient-brand);
-  box-shadow: var(--ds-glow-accent);
+/* Official Meridian wordmark (M + MERIDIAN) — the artwork already carries
+   the name, so the h1 stays for semantics/SEO but is visually hidden. */
+.brandLogo {
+  block-size: 96px;
+  inline-size: auto;
+  filter: drop-shadow(0 0 18px rgba(150, 110, 255, 0.45));
 }
 
-.brandName {
-  margin: 0;
-  font-family: var(--ds-font-display);
-  font-weight: 700;
-  font-size: var(--ds-text-4xl);
-  letter-spacing: var(--ds-tracking-tighter);
-  color: var(--ds-text-strong);
+@media (max-width: 479.98px) {
+  .brandLogo {
+    block-size: 72px;
+  }
+}
+
+.brandNameVisuallyHidden {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .tagline {
